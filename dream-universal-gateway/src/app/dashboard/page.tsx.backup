@@ -1,0 +1,546 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import "./dashboard.css";
+
+// Color system from UI_SPEC.md
+const colors = {
+  bgPrimary: "#1a1a2e",
+  bgSecondary: "#16213e",
+  bgChat: "#0f3460",
+  textPrimary: "#e4e4e7",
+  textSecondary: "#a1a1aa",
+  accentBlue: "#3b82f6",
+  accentGreen: "#22c55e",
+  accentRed: "#ef4444",
+};
+
+export default function ChatPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(false);
+  
+  // New states for collapsible modules and right panel content
+  const [dataCardExpanded, setDataCardExpanded] = useState(false);
+  const [settingsExpanded, setSettingsExpanded] = useState(false);
+  const [rightPanelContent, setRightPanelContent] = useState<'analysis' | 'market' | 'signal' | 'position' | 'api' | 'trading' | 'strategy' | 'communication'>('analysis');
+  
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<{ role: string; content: string }[]>([
+    {
+      role: "assistant",
+      content:
+        "你好！我是 Dream Gateway 智能交易助手。我可以帮你分析市场、制定策略、管理交易。试试输入「/行情」查看最新行情，或「分析一下 BTC」开始深度分析。",
+    },
+  ]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
+
+  if (!mounted || status === "loading") {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#1a1a2e]">
+        <div className="text-[#a1a1aa]">加载中...</div>
+      </div>
+    );
+  }
+
+  if (!session) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+
+    setMessages((prev) => [...prev, { role: "user", content: input }]);
+    setInput("");
+
+    // Simulate AI response
+    setTimeout(() => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: `收到你的消息：「${input}」\n\n我是 Demo 模式，实际运行时这里会调用 A 系列分析链路（市场侦察 → 深度分析 → 情景推演 → 方案验证）。`,
+        },
+      ]);
+    }, 1000);
+  };
+
+  const handleShowRightPanel = (type: 'market' | 'signal' | 'position' | 'api' | 'trading' | 'strategy' | 'communication') => {
+    setRightPanelContent(type);
+    setRightCollapsed(false); // Expand right panel when selecting an item
+  };
+
+  const renderRightPanel = () => {
+    switch (rightPanelContent) {
+      case 'market':
+        return (
+          <div>
+            <div className="panel-title">📈 行情卡片</div>
+            <div className="data-card">
+              <div className="data-card-title">📊 BTC-USDT-SWAP</div>
+              <div className="data-card-content">
+                价格: $80,630.00 <span className="text-red-500">▼ -0.23%</span><br />
+                24h高: $81,500<br />
+                24h低: $79,700<br />
+                资金费率: +0.003%<br />
+                恐惧指数: 42 (恐惧)<br />
+                市场状态: <span className="text-yellow-500">区间震荡</span>
+              </div>
+            </div>
+          </div>
+        );
+      case 'signal':
+        return (
+          <div>
+            <div className="panel-title">🎯 评分卡片</div>
+            <div className="data-card">
+              <div className="data-card-title">🎯 交易评分</div>
+              <div className="data-card-content">
+                总分: <span className="text-red-500 font-semibold">12/80</span> → 偏空<br />
+                优势评分: -35 (强空方优势)<br />
+                宏观: 3/10 (CPI超预期)<br />
+                技术: 5/10 (关键均线下方)<br />
+                情绪: 4/10 (恐惧持续)<br />
+                <span className="text-yellow-500">建议: 观望为主，谨慎做空</span>
+              </div>
+            </div>
+          </div>
+        );
+      case 'position':
+        return (
+          <div>
+            <div className="panel-title">💼 持仓卡片</div>
+            <div className="data-card">
+              <div className="data-card-title">💼 当前持仓</div>
+              <div className="data-card-content">
+                状态: <span className="text-[#a1a1aa]">空仓</span><br />
+                <span className="text-green-500">OR</span><br />
+                方向: 做多 | 杠杆: 2x<br />
+                未实现盈亏: <span className="text-green-500">+$140.5</span>
+              </div>
+            </div>
+          </div>
+        );
+      case 'api':
+        return (
+          <div>
+            <div className="panel-title">⚙️ API配置</div>
+            <div className="config-section">
+              <div className="font-semibold mb-2">OKX</div>
+              <div className="flex gap-2 items-center mb-2">
+                <span className="bg-green-500 text-black px-2 py-0.5 rounded text-xs font-semibold">● Demo</span>
+                <span className="text-[#a1a1aa]">□ Live</span>
+              </div>
+              <div className="text-xs mb-2">
+                <div>API Key: •••••••6a37d [👁]</div>
+                <div>Secret Key: •••••••mN2p [👁]</div>
+                <div>Passphrase: •••••••qR5w [👁]</div>
+              </div>
+              <div className="text-green-500 text-xs mb-2">✅ 已验证 (05-13 18:00)</div>
+              <div className="flex gap-2">
+                <button className="px-3 py-1.5 text-xs bg-[#3b82f6] text-white rounded hover:bg-blue-600 transition">
+                  测试连接
+                </button>
+                <button className="px-3 py-1.5 text-xs bg-[#2a2a4e] text-[#e4e4e7] border border-[#3b82f6] rounded hover:bg-[#1a1a2e] transition">
+                  更新
+                </button>
+                <button className="px-3 py-1.5 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition">
+                  删除
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      case 'trading':
+        return (
+          <div>
+            <div className="panel-title">💰 交易设置</div>
+            <div className="config-section">
+              <div className="font-semibold mb-2">🔗 关联交易所</div>
+              <div className="text-xs text-green-500 mb-1">● OKX (Demo) 已验证 ✅</div>
+              <div className="text-xs text-[#a1a1aa]">品种: BTC-USDT-SWAP</div>
+            </div>
+            <div className="config-section">
+              <div className="font-semibold mb-2">💵 交易金额</div>
+              <div className="text-lg font-semibold text-[#3b82f6]">每次交易: 10% 账户余额</div>
+              <div className="text-xs text-[#a1a1aa] mt-2">ℹ️ 百分比由系统统一设定，确保策略一致性</div>
+            </div>
+          </div>
+        );
+      case 'strategy':
+        return (
+          <div>
+            <div className="panel-title">🎯 策略设置</div>
+            
+            {/* 推荐策略 */}
+            <div className="text-xs text-[#a1a1aa] mb-2">📋 推荐策略 (3) <span className="text-[#3b82f6] cursor-pointer">[刷新]</span></div>
+            <div className="config-section" style={{ borderLeft: '3px solid #eab308' }}>
+              <div className="flex justify-between items-center mb-2">
+                <div className="font-semibold">🟡 观望防守策略</div>
+                <div><span className="bg-green-500 text-black px-1.5 py-0.5 rounded text-xs">新</span> <span className="text-xs text-[#a1a1aa]">1d</span></div>
+              </div>
+              <div className="text-xs text-[#a1a1aa]">区间震荡 | 置信度65% | 优势-10</div>
+              <div className="text-xs mt-1">方向: 观望 | 杠杆: 1x | 仓位: 0x</div>
+              <div className="text-xs text-[#06b6d4] mt-1">来源: A4验证 (12:00)</div>
+              <div className="flex gap-2 mt-2">
+                <button className="px-2.5 py-1 text-xs bg-[#2a2a4e] text-[#e4e4e7] border border-[#3b82f6] rounded hover:bg-[#1a1a2e] transition">
+                  查看详情
+                </button>
+                <button className="px-2.5 py-1 text-xs bg-[#3b82f6] text-white rounded hover:bg-blue-600 transition">
+                  应用
+                </button>
+              </div>
+            </div>
+            
+            {/* 自定义策略 */}
+            <div className="text-xs text-[#a1a1aa] mt-4 mb-2">✏️ 自定义策略</div>
+            <div className="config-section">
+              <div className="text-xs text-[#a1a1aa] mb-3">描述你的策略，系统自动解析并生成策略</div>
+              <textarea 
+                placeholder="RSI低于30并且MACD金叉的时候做多"
+                className="w-full bg-[#0f1729] border border-[#2a2a4e] rounded-md p-2.5 text-[#e4e4e7] text-sm min-h-[60px] resize-y focus:outline-none focus:border-[#3b82f6] transition"
+              />
+              
+              <div className="flex gap-2 flex-wrap mt-2">
+                {['RSI超卖反弹', '均线金叉', '布林带回归', '放量突破'].map((template) => (
+                  <button
+                    key={template}
+                    className="px-2.5 py-1 text-xs bg-[#16213e] text-[#e4e4e7] rounded hover:bg-[#1a1a2e] transition border border-[#2a2a4e]"
+                  >
+                    [{template}]
+                  </button>
+                ))}
+              </div>
+              
+              <button className="w-full mt-3 px-4 py-2 text-sm bg-[#3b82f6] text-white rounded-md hover:bg-blue-600 transition">
+                🔍 解析策略
+              </button>
+              
+              {/* 意图识别结果（默认隐藏，解析后显示） */}
+              <div className="mt-3 p-3 bg-[#0f1729] rounded-md text-xs">
+                <div className="text-[#06b6d4] mb-2">🧠 意图识别结果</div>
+                <div>方向: <span className="text-green-500 font-semibold">做多 ✅</span></div>
+                <div>条件1: RSI 低于 30 [AND]</div>
+                <div>条件2: MACD 上穿信号线 [AND]</div>
+                <div className="mt-1">置信度: <span className="text-green-500 font-semibold">92%</span></div>
+                <button className="mt-2 px-2.5 py-1 text-xs bg-[#16213e] text-[#e4e4e7] rounded hover:bg-[#1a1a2e] transition">
+                  修正解析
+                </button>
+                
+                <div className="mt-3 p-2 bg-[#0f1729] rounded text-xs text-green-500">
+                  ✓ 策略库匹配: 85% (RSI超卖模板) | <span className="text-[#3b82f6] cursor-pointer">[生成策略]</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      case 'communication':
+        return (
+          <div>
+            <div className="panel-title">📡 通信渠道</div>
+            <div className="config-section">
+              <div className="font-semibold mb-2">📱 Telegram - @dream_signals</div>
+              <div className="text-xs text-green-500 mb-1">● 在线 | 延迟: 120ms | 今日: 8条</div>
+              <div className="text-xs text-[#a1a1aa] mb-1">推送: 交易信号/风险告警/情报更新</div>
+              <div className="flex gap-2 mt-2">
+                <button className="px-2.5 py-1 text-xs bg-[#2a2a4e] text-[#e4e4e7] border border-[#3b82f6] rounded hover:bg-[#1a1a2e] transition">
+                  测试
+                </button>
+                <button className="px-2.5 py-1 text-xs bg-[#2a2a4e] text-[#e4e4e7] border border-[#3b82f6] rounded hover:bg-[#1a1a2e] transition">
+                  编辑规则
+                </button>
+                <button className="px-2.5 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition">
+                  断开
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      default:
+        return (
+          <div>
+            <div className="panel-title">📌 分析面板</div>
+            
+            <div className="panel-subtitle">📊 分析进度</div>
+            <div className="config-section">
+              <div className="progress-item text-green-500">✅ 情报更新  完成</div>
+              <div className="progress-item text-green-500">✅ 市场侦察  完成</div>
+              <div className="progress-item text-yellow-500">🔄 深度分析  进行中</div>
+              <div className="progress-item text-[#a1a1aa]">⏳ 情景推演  等待</div>
+              <div className="progress-item text-[#a1a1aa]">⏳ 方案验证  等待</div>
+              <div className="progress-item text-[#a1a1aa]">⏳ 风控审查  等待</div>
+            </div>
+            
+            <div className="panel-subtitle">📋 市场概况</div>
+            <div className="config-section">
+              <div className="config-row"><span>品种</span><span>BTC-USDT-SWAP</span></div>
+              <div className="config-row"><span>状态</span><span className="text-yellow-500">区间震荡</span></div>
+              <div className="config-row"><span>持仓</span><span>空仓</span></div>
+              <div className="config-row"><span>恐惧指数</span><span>42 (恐惧)</span></div>
+              <div className="config-row"><span>资金费率</span><span>+0.003%</span></div>
+            </div>
+            
+            <div className="panel-subtitle">📎 参考报告 (2)</div>
+            <div className="config-section text-xs">
+              📄 深度分析 (3h前)<br />
+              📄 情报快报 (1h前)
+            </div>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="flex h-screen bg-[#1a1a2e] text-[#e4e4e7]">
+      {/* Left Sidebar */}
+      <div
+        className={`${leftCollapsed ? "w-0" : "w-64"} flex-shrink-0 flex flex-col bg-[#16213e] border-r border-[#0f3460] transition-all duration-300 overflow-hidden`}
+      >
+        <div className="p-4 border-b border-[#0f3460]">
+          <h1 className="text-lg font-bold text-[#e4e4e7]">🧠 Dream</h1>
+        </div>
+
+        <div className="p-3">
+          <button
+            onClick={() => setLeftCollapsed(true)}
+            className="w-full text-left px-3 py-2 text-sm text-[#a1a1aa] hover:bg-[#0f3460] rounded-md transition"
+          >
+            ← 收起
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          {/* Session list */}
+          <div className="text-xs text-[#a1a1aa] px-3 py-1">今天</div>
+          <div className="px-3 py-2 text-sm bg-[#0f3460] rounded-md text-[#3b82f6] cursor-pointer">
+            🔴 BTC 行情分析
+          </div>
+          <div className="px-3 py-2 text-sm hover:bg-[#0f3460] rounded-md text-[#e4e4e7] cursor-pointer">
+            📈 ETH 走势查看
+          </div>
+        </div>
+
+        {/* Collapsible Modules */}
+        <div className="p-3 space-y-2 border-t border-[#0f3460]">
+          {/* 数据卡片 Module */}
+          <div className="collapsible-module">
+            <div 
+              className="collapsible-header"
+              onClick={() => setDataCardExpanded(!dataCardExpanded)}
+            >
+              <span className="flex items-center gap-2">
+                📊 数据卡片
+              </span>
+              <span className={`arrow ${dataCardExpanded ? 'expanded' : ''}`}>▶</span>
+            </div>
+            <div className={`collapsible-content ${dataCardExpanded ? 'expanded' : ''}`}>
+              <div 
+                className="collapsible-item"
+                onClick={() => handleShowRightPanel('market')}
+              >
+                📈 行情卡片
+              </div>
+              <div 
+                className="collapsible-item"
+                onClick={() => handleShowRightPanel('signal')}
+              >
+                📊 评分卡片
+              </div>
+              <div 
+                className="collapsible-item"
+                onClick={() => handleShowRightPanel('position')}
+              >
+                💼 持仓卡片
+              </div>
+            </div>
+          </div>
+
+          {/* 设置 Module */}
+          <div className="collapsible-module">
+            <div 
+              className="collapsible-header"
+              onClick={() => setSettingsExpanded(!settingsExpanded)}
+            >
+              <span className="flex items-center gap-2">
+                ⚙️ 设置
+              </span>
+              <span className={`arrow ${settingsExpanded ? 'expanded' : ''}`}>▶</span>
+            </div>
+            <div className={`collapsible-content ${settingsExpanded ? 'expanded' : ''}`}>
+              <div 
+                className="collapsible-item"
+                onClick={() => handleShowRightPanel('api')}
+              >
+                ⚙️ API配置
+              </div>
+              <div 
+                className="collapsible-item"
+                onClick={() => handleShowRightPanel('trading')}
+              >
+                💰 交易设置
+              </div>
+              <div 
+                className="collapsible-item"
+                onClick={() => handleShowRightPanel('strategy')}
+              >
+                🎯 策略设置
+              </div>
+              <div 
+                className="collapsible-item"
+                onClick={() => handleShowRightPanel('communication')}
+              >
+                📡 通信渠道
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* User Info (Bottom Left) */}
+        <div className="p-3 border-t border-[#0f3460] bg-[#0f1729]">
+          <div className="flex items-center space-x-3 mb-2">
+            <div className="w-8 h-8 bg-[#3b82f6] rounded-full flex items-center justify-center text-sm">
+              {session.user?.name?.[0] || "?"}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-semibold truncate">{session.user?.name || "用户"}</div>
+              <div className="text-xs text-[#a1a1aa]">U3kR***xQ</div>
+            </div>
+          </div>
+          <div className="text-xs text-yellow-500 font-semibold mb-2">💎 1,250 积分</div>
+          <div className="flex gap-2">
+            <button className="flex-1 px-2.5 py-1.5 text-xs bg-[#3b82f6] text-white rounded hover:bg-blue-600 transition">
+              签到
+            </button>
+            <button className="flex-1 px-2.5 py-1.5 text-xs bg-[#2a2a4e] text-[#e4e4e7] border border-[#3b82f6] rounded hover:bg-[#1a1a2e] transition">
+              明细
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col min-w-[600px] bg-[#0f3460]">
+        {/* Header */}
+        <div className="h-14 border-b border-[#0f3460] flex items-center justify-between px-4">
+          <div className="flex items-center space-x-2">
+            {leftCollapsed && (
+              <button
+                onClick={() => setLeftCollapsed(false)}
+                className="p-1 hover:bg-[#16213e] rounded transition"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            )}
+            <span className="text-sm font-medium">BTC 行情分析</span>
+          </div>
+          <button
+            onClick={() => setRightCollapsed(!rightCollapsed)}
+            className="p-1 hover:bg-[#16213e] rounded text-[#a1a1aa] transition"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {messages.map((msg, i) => (
+            <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div
+                className={`max-w-[80%] px-4 py-3 rounded-lg ${
+                  msg.role === "user"
+                    ? "bg-[#3b82f6] text-white"
+                    : "bg-[#16213e] text-[#e4e4e7]"
+                }`}
+              >
+                {msg.role === "assistant" && (
+                  <div className="text-[#06b6d4] text-xs mb-1.5">🤖 AI助手 · {i === 0 ? "2秒前" : "刚刚"}</div>
+                )}
+                {msg.role === "user" && (
+                  <div className="text-right text-xs mb-1.5 opacity-70">👤 你</div>
+                )}
+                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Quick Commands */}
+        <div className="px-4 py-2 border-t border-[#0f3460]">
+          <div className="flex flex-wrap gap-2 mb-2">
+            {["/行情", "/分析", "/推演", "/验证", "/开仓"].map((cmd) => (
+              <button
+                key={cmd}
+                onClick={() => setInput(cmd)}
+                className="px-3 py-1 text-xs bg-[#16213e] text-[#a1a1aa] rounded-full hover:bg-[#0f3460] transition"
+              >
+                {cmd}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Input */}
+        <form onSubmit={handleSubmit} className="p-4 border-t border-[#0f3460]">
+          <div className="flex items-center space-x-2 bg-[#16213e] rounded-lg px-4 py-3">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="输入消息... (支持 /命令)"
+              className="flex-1 bg-transparent text-sm text-[#e4e4e7] placeholder-[#a1a1aa] focus:outline-none"
+            />
+            <button type="submit" className="p-2 bg-[#3b82f6] rounded-md hover:bg-blue-600 transition">
+              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </button>
+          </div>
+          <div className="flex items-center justify-between mt-2 text-xs text-[#a1a1aa]">
+            <span>模型: GPT-4 | 产物中台: ✅</span>
+          </div>
+        </form>
+      </div>
+
+      {/* Right Panel */}
+      <div
+        className={`${rightCollapsed ? "w-0" : "w-80"} flex-shrink-0 flex flex-col bg-[#16213e] border-l border-[#0f3460] transition-all duration-300 overflow-hidden`}
+      >
+        <div className="p-4 border-b border-[#0f3460] flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-[#3b82f6]">
+            {rightPanelContent === 'analysis' ? '📌 分析面板' : 
+             rightPanelContent === 'market' ? '📈 行情卡片' :
+             rightPanelContent === 'signal' ? '🎯 评分卡片' :
+             rightPanelContent === 'position' ? '💼 持仓卡片' :
+             rightPanelContent === 'api' ? '⚙️ API配置' :
+             rightPanelContent === 'trading' ? '💰 交易设置' :
+             rightPanelContent === 'strategy' ? '🎯 策略设置' :
+             rightPanelContent === 'communication' ? '📡 通信渠道' : '面板'}
+          </h2>
+          <button onClick={() => setRightCollapsed(true)} className="p-1 hover:bg-[#0f3460] rounded transition text-[#a1a1aa]">
+            ✕
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {renderRightPanel()}
+        </div>
+      </div>
+
+    </div>
+  );
+}
