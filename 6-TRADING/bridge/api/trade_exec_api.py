@@ -27,7 +27,23 @@ MOCK_ORDERS = {}
 
 @trade_bp.route('/order', methods=['POST'])
 def place_order():
-    """下单接口"""
+    """下单接口
+    
+    Request Body:
+        inst_id: 交易对
+        side: buy/sell
+        pos_side: long/short/net
+        sz: 数量
+        ord_type: market/limit (optional, default: market)
+        px: 价格 (optional, 市价单不需要)
+    """
+    # 验证 Content-Type
+    if not request.is_json:
+        return jsonify({
+            "success": False,
+            "error": "Content-Type must be application/json"
+        }), 400
+    
     data = request.get_json() or {}
     
     # 验证必填参数
@@ -36,8 +52,75 @@ def place_order():
     if missing:
         return jsonify({
             "success": False,
-            "error": f"Missing required fields: {missing}"
+            "error": f"Missing required fields: {missing}",
+            "code": "MISSING_REQUIRED_FIELDS"
         }), 400
+    
+    # 验证参数格式
+    valid_sides = ['buy', 'sell']
+    if data['side'] not in valid_sides:
+        return jsonify({
+            "success": False,
+            "error": f"Invalid side. Must be one of: {valid_sides}",
+            "code": "INVALID_SIDE"
+        }), 400
+    
+    valid_pos_sides = ['long', 'short', 'net']
+    if data['pos_side'] not in valid_pos_sides:
+        return jsonify({
+            "success": False,
+            "error": f"Invalid pos_side. Must be one of: {valid_pos_sides}",
+            "code": "INVALID_POS_SIDE"
+        }), 400
+    
+    # 验证数量
+    try:
+        sz = float(data['sz'])
+        if sz <= 0:
+            return jsonify({
+                "success": False,
+                "error": "sz must be positive",
+                "code": "INVALID_SIZE"
+            }), 400
+    except (ValueError, TypeError):
+        return jsonify({
+            "success": False,
+            "error": "sz must be a valid number",
+            "code": "INVALID_SIZE"
+        }), 400
+    
+    # 验证订单类型
+    ord_type = data.get('ord_type', 'market')
+    valid_ord_types = ['market', 'limit']
+    if ord_type not in valid_ord_types:
+        return jsonify({
+            "success": False,
+            "error": f"Invalid ord_type. Must be one of: {valid_ord_types}",
+            "code": "INVALID_ORD_TYPE"
+        }), 400
+    
+    # 如果是限价单，验证价格
+    if ord_type == 'limit':
+        if 'px' not in data:
+            return jsonify({
+                "success": False,
+                "error": "px required for limit orders",
+                "code": "MISSING_PRICE"
+            }), 400
+        try:
+            px = float(data['px'])
+            if px <= 0:
+                return jsonify({
+                    "success": False,
+                    "error": "px must be positive",
+                    "code": "INVALID_PRICE"
+                }), 400
+        except (ValueError, TypeError):
+            return jsonify({
+                "success": False,
+                "error": "px must be a valid number",
+                "code": "INVALID_PRICE"
+            }), 400
     
     # 如果有 OKX CLI，执行真实下单
     if OKX_AVAILABLE:
