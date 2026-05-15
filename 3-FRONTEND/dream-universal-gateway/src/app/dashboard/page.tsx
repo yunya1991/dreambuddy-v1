@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic';
 import { useAutoConfigStore } from "@/stores/auto-config-store";
 import AutoConfigBubble from "@/components/chat/AutoConfigBubble";
 import AutoConfigSummary from "@/components/chat/AutoConfigSummary";
+import { useAuthStore } from "@/stores";
 import "./dashboard.css";
 
 // 动态导入 react-markdown (客户端only)
@@ -235,6 +236,22 @@ export default function ChatPage() {
   const [tradingSaving, setTradingSaving] = useState(false);
   const [tradingEditForm, setTradingEditForm] = useState<Record<string, unknown>>({});
 
+  // === 关联交易所选择状态（四选择器）===
+  const [exchangeSelect, setExchangeSelect] = useState<{
+    exchange: string;      // 交易所: okx
+    configId: string;     // 配置ID: 用于数据库凭证查询
+    accountLabel: string;  // 账户名: 主账户
+    environment: 'live' | 'demo';  // 环境: live/demo
+    symbol: string;       // 币种: USDT
+  }>({ exchange: 'okx', configId: '', accountLabel: '', environment: 'demo', symbol: 'USDT' });
+  const [balanceLoading, setBalanceLoading] = useState(false);
+  const [realtimeBalance, setRealtimeBalance] = useState<{
+    available: number;
+    totalEquity: number;
+    marginUsed: number;
+    unrealizedPnl: number;
+  } | null>(null);
+
   // 策略状态
   const [strategies, setStrategies] = useState<{
     recommended: unknown[];
@@ -372,6 +389,59 @@ export default function ChatPage() {
     } catch {}
   }, []);
 
+  // === 获取实时余额（四选择器支持，使用configId从数据库读取凭证）===
+  const fetchRealtimeBalance = useCallback(async (
+    exchange: string, 
+    configId: string,
+    accountLabel: string,
+    environment: 'live' | 'demo', 
+    symbol: string
+  ) => {
+    setBalanceLoading(true);
+    try {
+      // 构建查询参数，优先使用configId
+      const params = new URLSearchParams({ symbol });
+      
+      if (configId) {
+        // 使用configId从数据库获取凭证
+        params.set('configId', configId);
+      } else {
+        // 兼容旧参数
+        params.set('exchange', exchange);
+        params.set('environment', environment);
+        params.set('accountLabel', accountLabel);
+      }
+      
+      const res = await fetch(`/api/trade/balance?${params.toString()}`);
+      const data = await res.json();
+      if (data.success && data.data) {
+        setRealtimeBalance({
+          available: data.data.available,
+          totalEquity: data.data.totalEquity,
+          marginUsed: data.data.marginUsed,
+          unrealizedPnl: data.data.unrealizedPnl,
+        });
+        return data.data;
+      } else {
+        // 处理特定错误
+        if (data.errorCode === 'DECRYPT_FAILED') {
+          console.warn('API凭证需要重新配置:', data.error);
+          showToast('warning', 'API凭证已过期，请重新添加交易所配置');
+        } else {
+          console.warn('余额获取失败:', data.error || '未知错误');
+        }
+        setRealtimeBalance(null);
+        return null;
+      }
+    } catch (error) {
+      console.error('获取余额失败:', error);
+      setRealtimeBalance(null);
+      return null;
+    } finally {
+      setBalanceLoading(false);
+    }
+  }, []);
+
   // 获取API配置列表
   const fetchApiConfigs = useCallback(async () => {
     try {
@@ -379,9 +449,25 @@ export default function ChatPage() {
       const data = await res.json();
       if (data.success) {
         setApiConfigs(data.data);
+        
+        // 自动选择第一个模拟盘配置并获取余额（优先模拟盘，避免默认显示0）
+        if (data.data.length > 0) {
+          // 优先选择模拟盘配置
+          const demoConfig = data.data.find((c: ApiConfigItem) => c.environment === 'demo');
+          const firstConfig = demoConfig || data.data[0];
+          setExchangeSelect({
+            exchange: firstConfig.provider,
+            configId: firstConfig.id,  // 保存配置ID用于数据库查询
+            accountLabel: firstConfig.label || '默认账户',
+            environment: (firstConfig.environment as 'live' | 'demo') || 'demo',
+            symbol: 'USDT',
+          });
+          // 获取该配置的余额（使用configId从数据库读取凭证）
+          fetchRealtimeBalance(firstConfig.provider, firstConfig.id, firstConfig.label || '默认账户', firstConfig.environment as 'live' | 'demo' || 'demo', 'USDT');
+        }
       }
     } catch {}
-  }, []);
+  }, [fetchRealtimeBalance]);
 
   // 获取交易参数
   const fetchTradingParams = useCallback(async () => {
@@ -411,6 +497,25 @@ export default function ChatPage() {
       setTradingLoading(false);
     }
   }, []);
+
+  // 选择交易所/账户后自动更新可用资金（传递configId）
+  const handleExchangeChange = useCallback(async (
+    exchange: string, 
+    configId: string,
+    accountLabel: string,
+    environment: 'live' | 'demo', 
+    symbol: string
+  ) => {
+    setExchangeSelect({ exchange, configId, accountLabel, environment, symbol });
+    const balance = await fetchRealtimeBalance(exchange, configId, accountLabel, environment, symbol);
+    if (balance && balance.available > 0) {
+      // 自动更新可用资金
+      setTradingEditForm(prev => ({
+        ...prev,
+        availableCapital: balance.available,
+      }));
+    }
+  }, [fetchRealtimeBalance]);
 
   // 获取策略列表
   const fetchStrategies = useCallback(async () => {
@@ -1471,11 +1576,13 @@ export default function ChatPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs text-[#8a8a8a]">标签</label>
+                    <label className="text-xs text-[#8a8a8a]">
+                      账户名 <span className="text-red-400">*</span>
+                    </label>
                     <input
                       value={addApiForm.label}
                       onChange={(e) => setAddApiForm({ ...addApiForm, label: e.target.value })}
-                      placeholder="如: 主账户"
+                      placeholder="如: 模拟盘1 / 实盘主账户"
                       className="w-full mt-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                     />
                   </div>
@@ -1525,6 +1632,19 @@ export default function ChatPage() {
                   <div className="flex gap-2 pt-1">
                     <button
                       onClick={async () => {
+                        // 前端验证
+                        if (!addApiForm.label.trim()) {
+                          alert('请输入账户名，用于区分不同的API配置');
+                          return;
+                        }
+                        if (!addApiForm.apiKey.trim()) {
+                          alert('请输入API Key');
+                          return;
+                        }
+                        if (!addApiForm.secretKey.trim()) {
+                          alert('请输入Secret Key');
+                          return;
+                        }
                         try {
                           const res = await fetch('/api/config/api-keys', {
                             method: 'POST',
@@ -1578,7 +1698,7 @@ export default function ChatPage() {
                     </div>
                   </div>
                   <div className="text-xs text-[#8a8a8a] mb-1">
-                    <span className="text-[#3b82f6]">{config.label}</span> | {config.category}
+                    <span className="text-[#3b82f6]">账户: {config.label}</span>
                   </div>
                   <div className="text-xs mb-2">
                     <div>API Key: {config.keyHint || '•••••••'} <span className="text-[#3b82f6] cursor-pointer">[👁]</span></div>
@@ -1662,16 +1782,175 @@ export default function ChatPage() {
               <div className="config-section text-center text-xs text-[#8a8a8a]">⏳ 加载中...</div>
             ) : tradingParams ? (
               <>
-                {/* 关联交易所 */}
+                {/* 关联交易所 - 四选择器 */}
                 <div className="config-section">
                   <div className="font-semibold mb-2">🔗 关联交易所</div>
-                  {tradingParams.exchangeStatus ? (
-                    <>
-                      <div className={`text-xs mb-1 ${tradingParams.exchangeStatus.isVerified ? 'text-green-500' : 'text-yellow-500'}`}>
-                        {tradingParams.exchangeStatus.isVerified ? '●' : '○'} {tradingParams.exchangeStatus.provider.toUpperCase()} ({tradingParams.exchangeStatus.environment === 'live' ? 'Live' : 'Demo'}) {tradingParams.exchangeStatus.isVerified ? '已验证 ✅' : '未验证 ⚠️'}
+                  {apiConfigs.length > 0 ? (
+                    <div className="space-y-2">
+                      {/* 交易所选择 */}
+                      <div>
+                        <label className="text-xs text-[#8a8a8a] mb-1 block">交易所</label>
+                        <select
+                          value={exchangeSelect.exchange}
+                          onChange={(e) => {
+                            const newExchange = e.target.value;
+                            // 筛选该交易所的所有配置
+                            const exchangeConfigs = apiConfigs.filter(c => c.provider === newExchange);
+                            // 获取该交易所下的所有账户名
+                            const labels = [...new Set(exchangeConfigs.map(c => c.label || '默认账户'))];
+                            // 自动选择第一个账户名
+                            const firstLabel = labels[0] || '默认账户';
+                            // 获取该账户名+当前环境的configId
+                            const firstConfig = apiConfigs.find(c => 
+                              c.provider === newExchange && 
+                              (c.label || '默认账户') === firstLabel &&
+                              c.environment === exchangeSelect.environment
+                            );
+                            const firstConfigId = firstConfig?.id || apiConfigs.find(c => c.provider === newExchange && (c.label || '默认账户') === firstLabel)?.id || '';
+                            // 检查该账户是否有实盘/模拟盘配置
+                            const hasLive = exchangeConfigs.some(c => (c.label || '默认账户') === firstLabel && c.environment === 'live');
+                            const hasDemo = exchangeConfigs.some(c => (c.label || '默认账户') === firstLabel && c.environment === 'demo');
+                            const newEnv = hasLive ? 'live' : (hasDemo ? 'demo' : 'demo');
+                            handleExchangeChange(newExchange, firstConfigId, firstLabel, newEnv, exchangeSelect.symbol);
+                          }}
+                          className="w-full bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
+                        >
+                          {Array.from(new Set(apiConfigs.map(c => c.provider))).map(provider => (
+                            <option key={provider} value={provider}>
+                              {provider.toUpperCase()}
+                            </option>
+                          ))}
+                        </select>
                       </div>
-                      <div className="text-xs text-[#8a8a8a]">品种: {tradingParams.params.allowedSymbols.join(', ')}</div>
-                    </>
+
+                      {/* 账户名选择 */}
+                      <div>
+                        <label className="text-xs text-[#8a8a8a] mb-1 block">账户名</label>
+                        <select
+                          value={exchangeSelect.accountLabel}
+                          onChange={(e) => {
+                            const newLabel = e.target.value;
+                            // 获取该账户名+当前环境的configId
+                            const config = apiConfigs.find(c => 
+                              c.provider === exchangeSelect.exchange && 
+                              (c.label || '默认账户') === newLabel &&
+                              c.environment === exchangeSelect.environment
+                            );
+                            const configId = config?.id || apiConfigs.find(c => c.provider === exchangeSelect.exchange && (c.label || '默认账户') === newLabel)?.id || '';
+                            const newEnv = (config?.environment as 'live' | 'demo') || 'demo';
+                            handleExchangeChange(exchangeSelect.exchange, configId, newLabel, newEnv, exchangeSelect.symbol);
+                          }}
+                          className="w-full bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
+                        >
+                          {[...new Set(apiConfigs.filter(c => c.provider === exchangeSelect.exchange).map(c => c.label || '默认账户'))].map(label => (
+                            <option key={label} value={label}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* 账户类型选择 */}
+                      <div>
+                        <label className="text-xs text-[#8a8a8a] mb-1 block">账户</label>
+                        <div className="flex gap-1.5">
+                          <button
+                            onClick={async () => {
+                              // 获取该账户名+实盘环境的configId
+                              const liveConfig = apiConfigs.find(c => 
+                                c.provider === exchangeSelect.exchange && 
+                                (c.label || '默认账户') === exchangeSelect.accountLabel && 
+                                c.environment === 'live'
+                              );
+                              const liveConfigId = liveConfig?.id || '';
+                              if (!liveConfigId) {
+                                showToast('error', '该账户未配置实盘');
+                                return;
+                              }
+                              await handleExchangeChange(exchangeSelect.exchange, liveConfigId, exchangeSelect.accountLabel, 'live', exchangeSelect.symbol);
+                            }}
+                            className={`flex-1 px-3 py-1.5 text-xs rounded transition font-medium ${
+                              exchangeSelect.environment === 'live'
+                                ? 'bg-red-500/20 text-red-400 border border-red-500'
+                                : 'bg-[#141414] text-[#8a8a8a] border border-[#2a2a2a] hover:border-red-500'
+                            }`}
+                          >
+                            🔴 实盘
+                          </button>
+                          <button
+                            onClick={async () => {
+                              // 获取该账户名+模拟盘环境的configId
+                              const demoConfig = apiConfigs.find(c => 
+                                c.provider === exchangeSelect.exchange && 
+                                (c.label || '默认账户') === exchangeSelect.accountLabel && 
+                                c.environment === 'demo'
+                              );
+                              const demoConfigId = demoConfig?.id || '';
+                              if (!demoConfigId) {
+                                showToast('error', '该账户未配置模拟盘');
+                                return;
+                              }
+                              await handleExchangeChange(exchangeSelect.exchange, demoConfigId, exchangeSelect.accountLabel, 'demo', exchangeSelect.symbol);
+                            }}
+                            className={`flex-1 px-3 py-1.5 text-xs rounded transition font-medium ${
+                              exchangeSelect.environment === 'demo'
+                                ? 'bg-green-500/20 text-green-400 border border-green-500'
+                                : 'bg-[#141414] text-[#8a8a8a] border border-[#2a2a2a] hover:border-green-500'
+                            }`}
+                          >
+                            🟢 模拟
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* 交易币种选择 */}
+                      <div>
+                        <label className="text-xs text-[#8a8a8a] mb-1 block">币种</label>
+                        <select
+                          value={exchangeSelect.symbol}
+                          onChange={(e) => handleExchangeChange(exchangeSelect.exchange, exchangeSelect.configId, exchangeSelect.accountLabel, exchangeSelect.environment, e.target.value)}
+                          className="w-full bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
+                        >
+                          <option value="USDT">USDT (计息/保证金)</option>
+                          <option value="BTC">BTC</option>
+                          <option value="ETH">ETH</option>
+                        </select>
+                      </div>
+
+                      {/* 实时余额显示 */}
+                      {balanceLoading ? (
+                        <div className="text-xs text-[#8a8a8a] text-center py-2">⏳ 获取余额中...</div>
+                      ) : realtimeBalance ? (
+                        <div className="bg-[#0a0a0a] rounded-md p-2 mt-2">
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                              <div className="text-[#8a8a8a]">可用</div>
+                              <div className="text-green-400 font-semibold">{realtimeBalance.available.toLocaleString()} {exchangeSelect.symbol}</div>
+                            </div>
+                            <div>
+                              <div className="text-[#8a8a8a]">总权益</div>
+                              <div className="text-[#3b82f6] font-semibold">{realtimeBalance.totalEquity.toLocaleString()} {exchangeSelect.symbol}</div>
+                            </div>
+                            {realtimeBalance.marginUsed > 0 && (
+                              <div>
+                                <div className="text-[#8a8a8a]">保证金</div>
+                                <div className="text-yellow-400 font-semibold">{realtimeBalance.marginUsed.toLocaleString()}</div>
+                              </div>
+                            )}
+                            {realtimeBalance.unrealizedPnl !== 0 && (
+                              <div>
+                                <div className="text-[#8a8a8a]">未实现</div>
+                                <div className={`font-semibold ${realtimeBalance.unrealizedPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                  {realtimeBalance.unrealizedPnl >= 0 ? '+' : ''}{realtimeBalance.unrealizedPnl.toLocaleString()}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-yellow-500 text-center py-2">⚠️ 无法获取余额</div>
+                      )}
+                    </div>
                   ) : (
                     <>
                       <div className="text-xs text-yellow-500 mb-1">○ 未配置交易所API</div>
@@ -1691,7 +1970,20 @@ export default function ChatPage() {
                   {tradingEditing ? (
                     <div className="space-y-2">
                       <div>
-                        <label className="text-xs text-[#8a8a8a]">可用余额 (USDT)</label>
+                        <label className="text-xs text-[#8a8a8a] flex justify-between">
+                          <span>可用余额 (USDT)</span>
+                          {realtimeBalance && realtimeBalance.available > 0 && (
+                            <button
+                              onClick={() => {
+                                setTradingEditForm(prev => ({ ...prev, availableCapital: realtimeBalance.available }));
+                                showToast('success', `已同步: ${realtimeBalance.available.toLocaleString()} USDT`);
+                              }}
+                              className="text-[#3b82f6] hover:underline"
+                            >
+                              [同步余额]
+                            </button>
+                          )}
+                        </label>
                         <input
                           type="number"
                           value={tradingEditForm.availableCapital as string || ''}

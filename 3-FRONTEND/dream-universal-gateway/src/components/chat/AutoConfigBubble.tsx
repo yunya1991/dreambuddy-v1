@@ -137,7 +137,9 @@ function PillButtons({
 // Sub-component: ApiConfigForm (Step 1: API配置)
 // ============================================================
 function ApiConfigForm({ onSubmit }: { onSubmit: (data: Record<string, unknown>) => void }) {
+  const [category, setCategory] = useState("EXCHANGE");
   const [provider, setProvider] = useState("OKX");
+  const [label, setLabel] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
   const [passphrase, setPassphrase] = useState("");
@@ -146,7 +148,7 @@ function ApiConfigForm({ onSubmit }: { onSubmit: (data: Record<string, unknown>)
   const [error, setError] = useState("");
   const [verifyResult, setVerifyResult] = useState<"success" | "fail" | null>(null);
 
-  const hasContent = apiKey.trim() !== "" && apiSecret.trim() !== "" && passphrase.trim() !== "";
+  const hasContent = label.trim() !== "" && apiKey.trim() !== "" && apiSecret.trim() !== "";
 
   const handleVerify = async () => {
     setLoading(true);
@@ -155,7 +157,7 @@ function ApiConfigForm({ onSubmit }: { onSubmit: (data: Record<string, unknown>)
       const res = await fetch("/api/config/api-keys/test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider, apiKey, apiSecret, passphrase, environment }),
+        body: JSON.stringify({ provider, apiKey, secretKey: apiSecret, passphrase, environment }),
       });
       if (res.ok) {
         setVerifyResult("success");
@@ -178,10 +180,10 @@ function ApiConfigForm({ onSubmit }: { onSubmit: (data: Record<string, unknown>)
       const res = await fetch("/api/config/api-keys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider, apiKey, apiSecret, passphrase, environment }),
+        body: JSON.stringify({ category, provider, label, apiKey, secretKey: apiSecret, passphrase, environment }),
       });
       if (res.ok) {
-        onSubmit({ provider, apiKey, apiSecret, passphrase, environment });
+        onSubmit({ category, provider, label, apiKey, secretKey: apiSecret, passphrase, environment });
       } else {
         const data = await res.json();
         setError(data.error || "保存失败");
@@ -194,6 +196,20 @@ function ApiConfigForm({ onSubmit }: { onSubmit: (data: Record<string, unknown>)
 
   return (
     <div className="space-y-3 mt-3">
+      <div>
+        <label className="text-xs text-[#8a8a8a] mb-1 block">
+          账户名 <span className="text-red-400">*</span>
+        </label>
+        <input
+          type="text"
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          placeholder="如: 模拟盘1 / 实盘主账户"
+          className="w-full px-3 py-2 rounded text-sm text-white placeholder-[#5F5E5A] focus:outline-none focus:border-[#378ADD]"
+          style={{ backgroundColor: COLORS.inputBg, border: `1px solid ${COLORS.inputBorder}` }}
+        />
+      </div>
+
       <div>
         <label className="text-xs text-[#8a8a8a] mb-1 block">Exchange Provider</label>
         <select

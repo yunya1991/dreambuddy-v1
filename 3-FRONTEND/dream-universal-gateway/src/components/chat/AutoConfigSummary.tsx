@@ -31,7 +31,7 @@ function getResultSummary(result: AutoConfigResult): string {
   const d = result.data;
   switch (result.key) {
     case "api":
-      return `${d.provider || "OKX"} | ${d.environment === "live" ? "实盘" : "Demo"}`;
+      return `账户: ${d.label || "未命名"} | ${d.provider || "OKX"} | ${d.environment === "live" ? "实盘" : "Demo"}`;
     case "trading": {
       const riskMap: Record<string, string> = {
         CONSERVATIVE: "保守",

@@ -236,17 +236,141 @@ def get_positions():
 
 @trade_bp.route('/balance', methods=['GET'])
 def get_balance():
-    """获取账户余额"""
+    """获取账户余额
+    
+    Query Parameters:
+        exchange: 交易所类型 (okx, binance, etc.) - 默认为 okx
+        accountLabel: 账户名/标签 - 默认为 空
+        environment: 账户类型 (live, demo) - 默认为 demo
+        symbol: 币种 (USDT, BTC, etc.) - 默认为 USDT
+    """
+    exchange = request.args.get('exchange', 'okx').lower()
+    account_label = request.args.get('accountLabel', '')
+    environment = request.args.get('environment', 'demo')
+    symbol = request.args.get('symbol', 'USDT')
+    
+    # 根据账户名生成不同的模拟数据（便于测试区分）
+    def gen_mock_balance(label: str, is_live: bool) -> dict:
+        # 不同账户名映射到不同余额
+        label_seed = sum(ord(c) for c in label) if label else 0
+        base = 5000 + label_seed * 100  # 不同账户基础余额不同
+        total = base + (200 if is_live else 0)  # 实盘多加200
+        available = total * 0.8
+        margin = total * 0.2
+        return {
+            "success": True,
+            "data": {
+                "exchange": exchange,
+                "environment": environment,
+                "currency": symbol,
+                "accountLabel": label,
+                "totalEquity": total,
+                "available": available,
+                "marginUsed": margin,
+                "unrealizedPnl": -50.0 if is_live else 50.0,  # 实盘模拟亏损，模拟盘盈利
+                "positions": []
+            }
+        }
+    
+    # 检查OKX API凭证是否配置
+    def check_okx_credentials() -> bool:
+        import os
+        return bool(os.environ.get('OKX_API_KEY') and os.environ.get('OKX_SECRET_KEY') and os.environ.get('OKX_PASSPHRASE'))
+    
+    # 检查是否配置了实盘API
+    if environment == 'live':
+        # 先检查凭证是否配置
+        if not check_okx_credentials():
+            return jsonify({
+                "success": False,
+                "error": "实盘账户未配置API凭证。请在系统环境变量中设置 OKX_API_KEY、OKX_SECRET_KEY、OKX_PASSPHRASE",
+                "mode": "live",
+                "data": {
+                    "exchange": exchange,
+                    "environment": environment,
+                    "currency": symbol,
+                    "accountLabel": account_label,
+                    "totalEquity": 0,
+                    "available": 0,
+                    "marginUsed": 0,
+                    "unrealizedPnl": 0,
+                    "positions": []
+                }
+            })
+        
+        # 实盘模式 - 需要真实的OKX API调用
+        if OKX_AVAILABLE:
+            try:
+                okx = OKXCLI(profile='live')
+                # 获取账户余额 (使用okx CLI的get_balance方法)
+                result = okx.get_balance()
+                
+                if result.get('success'):
+                    balance_data = result.get('data', {})
+                    # 解析USDT余额
+                    usdt_data = balance_data.get('USDT', {})
+                    total_equity = float(usdt_data.get('equity', '0'))
+                    available = float(usdt_data.get('available', '0'))
+                    return jsonify({
+                        "success": True,
+                        "data": {
+                            "exchange": exchange,
+                            "environment": environment,
+                            "currency": symbol,
+                            "accountLabel": account_label,
+                            "totalEquity": total_equity,
+                            "available": available,
+                            "marginUsed": total_equity - available,
+                            "unrealizedPnl": 0,
+                            "positions": []
+                        }
+                    })
+                else:
+                    return jsonify({
+                        "success": False,
+                        "error": f"获取实盘余额失败: {result.get('error', '未知错误')}",
+                        "mode": "live",
+                        "data": {
+                            "exchange": exchange,
+                            "environment": environment,
+                            "currency": symbol,
+                            "accountLabel": account_label,
+                            "totalEquity": 0,
+                            "available": 0,
+                            "marginUsed": 0,
+                            "unrealizedPnl": 0,
+                            "positions": []
+                        }
+                    }), 500
+            except Exception as e:
+                return jsonify({
+                    "success": False,
+                    "error": f"获取实盘余额失败: {str(e)}",
+                    "mode": "live"
+                }), 500
+        
+        # 实盘API不可用但请求实盘模式，返回错误提示
+        return jsonify({
+            "success": False,
+            "error": f"实盘账户 [{account_label}] 未配置或API不可用",
+            "mode": "live",
+            "data": None
+        }), 404
+    
+    # 模拟盘模式 - 根据账户名返回不同模拟数据
     return jsonify({
         "success": True,
-        "balance": {
-            "total_equity": "10000.00",
-            "available": "8000.00",
-            "margin_used": "2000.00",
-            "unrealized_pnl": "100.00",
-            "currency": "USDT"
-        },
-        "mode": "simulation"
+        "data": {
+            "exchange": exchange,
+            "environment": environment,
+            "currency": symbol,
+            "accountLabel": account_label,
+            "totalEquity": 5000 if not account_label else 5000 + sum(ord(c) for c in account_label) * 50,
+            "available": 4000 if not account_label else (5000 + sum(ord(c) for c in account_label) * 50) * 0.8,
+            "marginUsed": 1000 if not account_label else (5000 + sum(ord(c) for c in account_label) * 50) * 0.2,
+            "unrealizedPnl": 50.0,
+            "positions": []
+        }
     })
 
 
