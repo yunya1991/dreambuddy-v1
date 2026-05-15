@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   useAutoConfigStore,
   CONFIG_STEPS_LIST,
-  type StepKey,
   type AutoConfigResult,
 } from "@/stores/auto-config-store";
 import type {
