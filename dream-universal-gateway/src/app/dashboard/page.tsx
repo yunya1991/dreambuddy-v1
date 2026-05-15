@@ -2,22 +2,23 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import dynamic from 'next/dynamic';
 import "./dashboard.css";
 
 // 动态导入 react-markdown (客户端only)
 const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false });
 
-// Color system
+// Color system - 腾讯云控制台风格
 const colors = {
-  bgPrimary: "#1a1a2e",
-  bgSecondary: "#16213e",
-  bgChat: "#0f3460",
-  textPrimary: "#e4e4e7",
-  textSecondary: "#a1a1aa",
-  accentBlue: "#3b82f6",
-  accentGreen: "#22c55e",
-  accentRed: "#ef4444",
+  bgPrimary: "#0d0d0d",
+  bgSecondary: "#1a1a1a",
+  bgChat: "#141414",
+  textPrimary: "#ffffff",
+  textSecondary: "#8a8a8a",
+  accentBlue: "#0066ff",
+  accentGreen: "#00c853",
+  accentRed: "#ff3b30",
 };
 
 // Qwen 模型列表
@@ -98,6 +99,7 @@ interface ReportMeta {
 }
 
 export default function ChatPage() {
+  const router = useRouter();
   const { data: session, status } = useSession();
   const [mounted, setMounted] = useState(false);
   const [leftCollapsed, setLeftCollapsed] = useState(false);
@@ -290,6 +292,56 @@ export default function ChatPage() {
   const [channelTesting, setChannelTesting] = useState<string | null>(null);
   const [channelTestResult, setChannelTestResult] = useState<Record<string, { success: boolean; message: string }> | null>(null);
 
+  // 积分状态
+  const [creditsBalance, setCreditsBalance] = useState(0);
+  const [signedInToday, setSignedInToday] = useState(false);
+  const [checkinLoading, setCheckinLoading] = useState(false);
+
+  // 获取积分状态
+  const fetchCreditsStatus = useCallback(async () => {
+    try {
+      const res = await fetch('/api/user/checkin');
+      const data = await res.json();
+      if (data.success) {
+        setCreditsBalance(data.data.balance || 0);
+        setSignedInToday(data.data.signedInToday || false);
+      }
+    } catch {}
+  }, []);
+
+  // 签到
+  const handleCheckin = async () => {
+    if (signedInToday) {
+      showToast('error', '今日已签到，明日再来吧！');
+      return;
+    }
+    setCheckinLoading(true);
+    try {
+      const res = await fetch('/api/user/checkin', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setCreditsBalance(data.data.newBalance);
+        setSignedInToday(true);
+        showToast('success', `签到成功！获得 ${data.data.bonus} 积分`);
+      } else {
+        showToast('error', data.error || '签到失败');
+      }
+    } catch {
+      showToast('error', '签到失败，请稍后重试');
+    } finally {
+      setCheckinLoading(false);
+    }
+  };
+
+  // 退出登录
+  const handleLogout = async () => {
+    if (!confirm('确定要退出登录吗？')) return;
+    try {
+      await fetch('/api/auth/signout', { method: 'POST' });
+    } catch {}
+    router.push('/login');
+  };
+
   // 行情数据状态
   const [marketData, setMarketData] = useState<MarketData | null>(null);
   const [marketLoading, setMarketLoading] = useState(false);
@@ -447,6 +499,7 @@ export default function ChatPage() {
     fetchChannels();
     fetchMarketData();
     fetchReportList();
+    fetchCreditsStatus();
     // 每30秒刷新一次状态
     const interval = setInterval(fetchLLMStatus, 30000);
     // 每60秒刷新行情
@@ -458,7 +511,7 @@ export default function ChatPage() {
       if (marketIntervalRef.current) clearInterval(marketIntervalRef.current);
       if (reportIntervalRef.current) clearInterval(reportIntervalRef.current);
     };
-  }, [fetchLLMStatus, fetchApiConfigs, fetchTradingParams, fetchStrategies, fetchChannels, fetchMarketData, fetchReportList]);
+  }, [fetchLLMStatus, fetchApiConfigs, fetchTradingParams, fetchStrategies, fetchChannels, fetchMarketData, fetchReportList, fetchCreditsStatus]);
 
   // ========== 监控面板 SSE 连接 ==========
   useEffect(() => {
@@ -1100,15 +1153,15 @@ export default function ChatPage() {
             <div className="config-section">
               <div className="font-semibold mb-2">📊 服务状态</div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-[#a1a1aa]">LLM 连接</span>
+                <span className="text-xs text-[#8a8a8a]">LLM 连接</span>
                 {renderStatusDot(llmStatus)}
               </div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-[#a1a1aa]">当前模型</span>
+                <span className="text-xs text-[#8a8a8a]">当前模型</span>
                 <span className="text-xs text-[#3b82f6] font-semibold">{llmModel}</span>
               </div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-[#a1a1aa]">识别方法</span>
+                <span className="text-xs text-[#8a8a8a]">识别方法</span>
                 <span className={`text-xs font-semibold ${intentMethod === 'llm' ? 'text-green-500' : 'text-yellow-500'}`}>
                   {intentMethod === 'llm' ? '🧠 LLM' : '📋 规则'}
                 </span>
@@ -1135,12 +1188,12 @@ export default function ChatPage() {
                     onClick={() => switchModel(model.id)}
                     className={`w-full text-left px-3 py-2 rounded-md text-xs transition ${
                       llmModel === model.id
-                        ? 'bg-[#3b82f6] text-white'
-                        : 'bg-[#0f1729] text-[#a1a1aa] hover:bg-[#0f3460] hover:text-[#e4e4e7]'
+                        ? 'bg-[#0066ff] text-white'
+                        : 'bg-[#141414] text-[#8a8a8a] hover:bg-[#1f1f1f] hover:text-[#e0e0e0]'
                     }`}
                   >
                     <div className="font-semibold">{model.name}</div>
-                    <div className={`${llmModel === model.id ? 'text-white/70' : 'text-[#a1a1aa]'}`}>{model.desc}</div>
+                    <div className={`${llmModel === model.id ? 'text-white/70' : 'text-[#8a8a8a]'}`}>{model.desc}</div>
                   </button>
                 ))}
               </div>
@@ -1154,8 +1207,8 @@ export default function ChatPage() {
                   onClick={() => switchMethod('llm')}
                   className={`flex-1 px-3 py-2 text-xs rounded-md transition ${
                     intentMethod === 'llm'
-                      ? 'bg-[#3b82f6] text-white'
-                      : 'bg-[#0f1729] text-[#a1a1aa] hover:bg-[#0f3460]'
+                      ? 'bg-[#0066ff] text-white'
+                      : 'bg-[#141414] text-[#8a8a8a] hover:bg-[#1f1f1f]'
                   }`}
                 >
                   🧠 LLM识别
@@ -1164,14 +1217,14 @@ export default function ChatPage() {
                   onClick={() => switchMethod('rule')}
                   className={`flex-1 px-3 py-2 text-xs rounded-md transition ${
                     intentMethod === 'rule'
-                      ? 'bg-[#eab308] text-black'
-                      : 'bg-[#0f1729] text-[#a1a1aa] hover:bg-[#0f3460]'
+                      ? 'bg-[#ffb74d] text-black'
+                      : 'bg-[#141414] text-[#8a8a8a] hover:bg-[#1f1f1f]'
                   }`}
                 >
                   📋 规则识别
                 </button>
               </div>
-              <div className="text-xs text-[#a1a1aa] mt-2">
+              <div className="text-xs text-[#8a8a8a] mt-2">
                 {intentMethod === 'llm' 
                   ? '使用大模型进行意图识别，更精准但消耗API额度'
                   : '基于关键词规则匹配，不消耗API额度'}
@@ -1181,13 +1234,13 @@ export default function ChatPage() {
             {/* API 配置 */}
             <div className="config-section">
               <div className="font-semibold mb-2">🔑 API Key</div>
-              <div className="text-xs text-[#a1a1aa] mb-2">
+              <div className="text-xs text-[#8a8a8a] mb-2">
                 <div>Key: sk-***•••***8cb8 <span className="text-[#3b82f6] cursor-pointer">[👁]</span></div>
                 <div>Endpoint: dashscope.aliyuncs.com</div>
               </div>
               <button 
                 onClick={fetchLLMStatus}
-                className="px-3 py-1.5 text-xs bg-[#3b82f6] text-white rounded hover:bg-blue-600 transition"
+                className="px-3 py-1.5 text-xs bg-[#0066ff] text-white rounded hover:bg-blue-700 transition"
               >
                 🔄 测试连接
               </button>
@@ -1211,8 +1264,8 @@ export default function ChatPage() {
                   }}
                   className={`px-3 py-1.5 text-xs rounded-md transition ${
                     selectedSymbol === `${sym}-USDT-SWAP`
-                      ? 'bg-[#3b82f6] text-white'
-                      : 'bg-[#0f1729] text-[#a1a1aa] hover:bg-[#0f3460]'
+                      ? 'bg-[#0066ff] text-white'
+                      : 'bg-[#141414] text-[#8a8a8a] hover:bg-[#1f1f1f]'
                   }`}
                 >
                   {sym}
@@ -1220,7 +1273,7 @@ export default function ChatPage() {
               ))}
               <button
                 onClick={() => fetchMarketData()}
-                className="px-2 py-1.5 text-xs bg-[#0f1729] text-[#3b82f6] rounded-md hover:bg-[#0f3460] transition"
+                className="px-2 py-1.5 text-xs bg-[#141414] text-[#3b82f6] rounded-md hover:bg-[#1f1f1f] transition"
                 title="刷新数据"
               >
                 🔄
@@ -1232,7 +1285,7 @@ export default function ChatPage() {
               <div className="data-card">
                 <div className="data-card-title">📊 {selectedSymbol}</div>
                 <div className="data-card-content">
-                  <span className="text-[#a1a1aa]">⏳ 加载中...</span>
+                  <span className="text-[#8a8a8a]">⏳ 加载中...</span>
                 </div>
               </div>
             ) : marketError ? (
@@ -1256,7 +1309,7 @@ export default function ChatPage() {
                           </span>
                         )}
                       </div>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-[#a1a1aa]">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-[#8a8a8a]">
                         {marketData.open24h && <div>开盘: ${typeof marketData.open24h === 'number' ? marketData.open24h.toLocaleString() : marketData.open24h}</div>}
                         {marketData.high24h && <div>24h高: <span className="text-red-400">${typeof marketData.high24h === 'number' ? marketData.high24h.toLocaleString() : marketData.high24h}</span></div>}
                         {marketData.low24h && <div>24h低: <span className="text-green-400">${typeof marketData.low24h === 'number' ? marketData.low24h.toLocaleString() : marketData.low24h}</span></div>}
@@ -1273,7 +1326,7 @@ export default function ChatPage() {
                       </div>
                     </>
                   ) : (
-                    <div className="text-[#a1a1aa]">数据解析中，请刷新重试</div>
+                    <div className="text-[#8a8a8a]">数据解析中，请刷新重试</div>
                   )}
                   {marketData.fundingRate && (
                     <div className="mt-1 text-xs">
@@ -1296,7 +1349,7 @@ export default function ChatPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="mt-1">持仓: <span className="text-[#a1a1aa]">空仓</span></div>
+                    <div className="mt-1">持仓: <span className="text-[#8a8a8a]">空仓</span></div>
                   )}
                   <div className="text-[10px] text-[#555] mt-2">
                     更新: {marketData.timestamp ? new Date(marketData.timestamp).toLocaleTimeString('zh-CN') : 'N/A'}
@@ -1306,7 +1359,7 @@ export default function ChatPage() {
             ) : (
               <div className="data-card">
                 <div className="data-card-title">📊 {selectedSymbol}</div>
-                <div className="data-card-content text-[#a1a1aa]">暂无数据</div>
+                <div className="data-card-content text-[#8a8a8a]">暂无数据</div>
               </div>
             )}
 
@@ -1317,7 +1370,7 @@ export default function ChatPage() {
                 <input
                   type="text"
                   placeholder="如: DOGE, XRP-USDT"
-                  className="flex-1 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6] transition"
+                  className="flex-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff] transition"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       const val = (e.target as HTMLInputElement).value.trim();
@@ -1331,7 +1384,7 @@ export default function ChatPage() {
                 />
                 <button
                   onClick={() => fetchMarketData()}
-                  className="px-3 py-1.5 text-xs bg-[#3b82f6] text-white rounded-md hover:bg-blue-600 transition"
+                  className="px-3 py-1.5 text-xs bg-[#0066ff] text-white rounded-md hover:bg-blue-700 transition"
                 >
                   查询
                 </button>
@@ -1363,7 +1416,7 @@ export default function ChatPage() {
             <div className="data-card">
               <div className="data-card-title">💼 当前持仓</div>
               <div className="data-card-content">
-                状态: <span className="text-[#a1a1aa]">空仓</span><br />
+                状态: <span className="text-[#8a8a8a]">空仓</span><br />
                 <span className="text-green-500">OR</span><br />
                 方向: 做多 | 杠杆: 2x<br />
                 未实现盈亏: <span className="text-green-500">+$140.5</span>
@@ -1390,11 +1443,11 @@ export default function ChatPage() {
                 <div className="font-semibold mb-2">➕ 新增API配置</div>
                 <div className="space-y-2">
                   <div>
-                    <label className="text-xs text-[#a1a1aa]">类别</label>
+                    <label className="text-xs text-[#8a8a8a]">类别</label>
                     <select
                       value={addApiForm.category}
                       onChange={(e) => setAddApiForm({ ...addApiForm, category: e.target.value })}
-                      className="w-full mt-1 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                      className="w-full mt-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                     >
                       <option value="EXCHANGE">交易所</option>
                       <option value="LLM">AI模型</option>
@@ -1402,11 +1455,11 @@ export default function ChatPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs text-[#a1a1aa]">提供商</label>
+                    <label className="text-xs text-[#8a8a8a]">提供商</label>
                     <select
                       value={addApiForm.provider}
                       onChange={(e) => setAddApiForm({ ...addApiForm, provider: e.target.value })}
-                      className="w-full mt-1 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                      className="w-full mt-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                     >
                       <option value="okx">OKX</option>
                       <option value="openai">OpenAI</option>
@@ -1415,52 +1468,52 @@ export default function ChatPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs text-[#a1a1aa]">标签</label>
+                    <label className="text-xs text-[#8a8a8a]">标签</label>
                     <input
                       value={addApiForm.label}
                       onChange={(e) => setAddApiForm({ ...addApiForm, label: e.target.value })}
                       placeholder="如: 主账户"
-                      className="w-full mt-1 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                      className="w-full mt-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-[#a1a1aa]">API Key</label>
+                    <label className="text-xs text-[#8a8a8a]">API Key</label>
                     <input
                       value={addApiForm.apiKey}
                       onChange={(e) => setAddApiForm({ ...addApiForm, apiKey: e.target.value })}
                       placeholder="输入API Key"
                       type="password"
-                      className="w-full mt-1 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                      className="w-full mt-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-[#a1a1aa]">Secret Key</label>
+                    <label className="text-xs text-[#8a8a8a]">Secret Key</label>
                     <input
                       value={addApiForm.secretKey}
                       onChange={(e) => setAddApiForm({ ...addApiForm, secretKey: e.target.value })}
                       placeholder="输入Secret Key"
                       type="password"
-                      className="w-full mt-1 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                      className="w-full mt-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                     />
                   </div>
                   {addApiForm.provider === 'okx' && (
                     <div>
-                      <label className="text-xs text-[#a1a1aa]">Passphrase</label>
+                      <label className="text-xs text-[#8a8a8a]">Passphrase</label>
                       <input
                         value={addApiForm.passphrase}
                         onChange={(e) => setAddApiForm({ ...addApiForm, passphrase: e.target.value })}
                         placeholder="输入Passphrase"
                         type="password"
-                        className="w-full mt-1 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                        className="w-full mt-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                       />
                     </div>
                   )}
                   <div>
-                    <label className="text-xs text-[#a1a1aa]">环境</label>
+                    <label className="text-xs text-[#8a8a8a]">环境</label>
                     <select
                       value={addApiForm.environment}
                       onChange={(e) => setAddApiForm({ ...addApiForm, environment: e.target.value })}
-                      className="w-full mt-1 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                      className="w-full mt-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                     >
                       <option value="demo">Demo模拟盘</option>
                       <option value="live">Live实盘</option>
@@ -1487,13 +1540,13 @@ export default function ChatPage() {
                           alert('添加失败: ' + (error instanceof Error ? error.message : '未知错误'));
                         }
                       }}
-                      className="flex-1 px-3 py-2 text-xs bg-[#3b82f6] text-white rounded-md hover:bg-blue-600 transition font-medium"
+                      className="flex-1 px-3 py-2 text-xs bg-[#0066ff] text-white rounded-md hover:bg-blue-700 transition font-medium"
                     >
                       💾 保存
                     </button>
                     <button
                       onClick={() => setShowAddApiForm(false)}
-                      className="px-3 py-2 text-xs bg-[#2a2a4e] text-[#a1a1aa] rounded-md hover:bg-[#1a1a2e] transition"
+                      className="px-3 py-2 text-xs bg-[#2a2a2a] text-[#8a8a8a] rounded-md hover:bg-[#1a1a1a] transition"
                     >
                       取消
                     </button>
@@ -1505,8 +1558,8 @@ export default function ChatPage() {
             {/* API配置列表 */}
             {apiConfigs.length === 0 ? (
               <div className="config-section text-center">
-                <div className="text-xs text-[#a1a1aa] mb-2">暂无API配置</div>
-                <div className="text-xs text-[#a1a1aa]">点击上方"➕ 添加"按钮添加新的API配置</div>
+                <div className="text-xs text-[#8a8a8a] mb-2">暂无API配置</div>
+                <div className="text-xs text-[#8a8a8a]">点击上方"➕ 添加"按钮添加新的API配置</div>
               </div>
             ) : (
               apiConfigs.map((config) => (
@@ -1521,7 +1574,7 @@ export default function ChatPage() {
                       </span>
                     </div>
                   </div>
-                  <div className="text-xs text-[#a1a1aa] mb-1">
+                  <div className="text-xs text-[#8a8a8a] mb-1">
                     <span className="text-[#3b82f6]">{config.label}</span> | {config.category}
                   </div>
                   <div className="text-xs mb-2">
@@ -1565,7 +1618,7 @@ export default function ChatPage() {
                         }
                       }}
                       disabled={apiTesting === config.id}
-                      className="px-3 py-1.5 text-xs bg-[#3b82f6] text-white rounded hover:bg-blue-600 transition disabled:opacity-50"
+                      className="px-3 py-1.5 text-xs bg-[#0066ff] text-white rounded hover:bg-blue-700 transition disabled:opacity-50"
                     >
                       {apiTesting === config.id ? '⏳ 测试中...' : '测试连接'}
                     </button>
@@ -1595,7 +1648,7 @@ export default function ChatPage() {
               <button
                 onClick={() => setTradingEditing(!tradingEditing)}
                 className={`px-3 py-1.5 text-xs rounded transition font-medium ${
-                  tradingEditing ? 'bg-[#3b82f6] text-white' : 'bg-[#2a2a4e] text-[#e4e4e7] border border-[#3b82f6]'
+                  tradingEditing ? 'bg-[#0066ff] text-white' : 'bg-[#2a2a2a] text-[#e0e0e0] border border-[#0066ff]'
                 }`}
               >
                 {tradingEditing ? '✕ 取消' : '✏️ 编辑'}
@@ -1603,7 +1656,7 @@ export default function ChatPage() {
             </div>
 
             {tradingLoading && !tradingParams ? (
-              <div className="config-section text-center text-xs text-[#a1a1aa]">⏳ 加载中...</div>
+              <div className="config-section text-center text-xs text-[#8a8a8a]">⏳ 加载中...</div>
             ) : tradingParams ? (
               <>
                 {/* 关联交易所 */}
@@ -1614,7 +1667,7 @@ export default function ChatPage() {
                       <div className={`text-xs mb-1 ${tradingParams.exchangeStatus.isVerified ? 'text-green-500' : 'text-yellow-500'}`}>
                         {tradingParams.exchangeStatus.isVerified ? '●' : '○'} {tradingParams.exchangeStatus.provider.toUpperCase()} ({tradingParams.exchangeStatus.environment === 'live' ? 'Live' : 'Demo'}) {tradingParams.exchangeStatus.isVerified ? '已验证 ✅' : '未验证 ⚠️'}
                       </div>
-                      <div className="text-xs text-[#a1a1aa]">品种: {tradingParams.params.allowedSymbols.join(', ')}</div>
+                      <div className="text-xs text-[#8a8a8a]">品种: {tradingParams.params.allowedSymbols.join(', ')}</div>
                     </>
                   ) : (
                     <>
@@ -1635,12 +1688,12 @@ export default function ChatPage() {
                   {tradingEditing ? (
                     <div className="space-y-2">
                       <div>
-                        <label className="text-xs text-[#a1a1aa]">可用余额 (USDT)</label>
+                        <label className="text-xs text-[#8a8a8a]">可用余额 (USDT)</label>
                         <input
                           type="number"
                           value={tradingEditForm.availableCapital as string || ''}
                           onChange={(e) => setTradingEditForm({ ...tradingEditForm, availableCapital: e.target.value ? parseFloat(e.target.value) : '' })}
-                          className="w-full mt-1 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                          className="w-full mt-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                           placeholder="输入可用余额"
                         />
                       </div>
@@ -1650,12 +1703,12 @@ export default function ChatPage() {
                       <div className="text-lg font-semibold text-[#3b82f6]">
                         {tradingParams.params.availableCapital != null ? `${tradingParams.params.availableCapital.toLocaleString()} USDT` : '未设置'}
                       </div>
-                      <div className="text-xs text-[#a1a1aa] mt-1">
+                      <div className="text-xs text-[#8a8a8a] mt-1">
                         每次交易: {Math.round(tradingParams.params.capitalPercentage * 100)}% 账户余额
                       </div>
                     </>
                   )}
-                  <div className="text-xs text-[#a1a1aa] mt-2">ℹ️ 百分比由系统统一设定，确保策略一致性</div>
+                  <div className="text-xs text-[#8a8a8a] mt-2">ℹ️ 百分比由系统统一设定，确保策略一致性</div>
                 </div>
 
                 {/* 交易模式 */}
@@ -1671,8 +1724,8 @@ export default function ChatPage() {
                             onClick={() => setTradingEditForm({ ...tradingEditForm, tradeMode: mode })}
                             className={`px-3 py-1.5 text-xs rounded transition font-medium ${
                               tradingEditForm.tradeMode === mode
-                                ? 'bg-[#3b82f6] text-white'
-                                : 'bg-[#0f1729] text-[#a1a1aa] border border-[#2a2a4e] hover:border-[#3b82f6]'
+                                ? 'bg-[#0066ff] text-white'
+                                : 'bg-[#141414] text-[#8a8a8a] border border-[#2a2a2a] hover:border-[#0066ff]'
                             }`}
                           >
                             {mode === 'SPOT_MODE' ? '💰 现货' : '⚡ 合约'}
@@ -1681,24 +1734,24 @@ export default function ChatPage() {
                       </div>
                       {/* 合约模式特有设置 */}
                       {tradingEditForm.tradeMode !== 'SPOT_MODE' && (
-                        <div className="space-y-2 pl-2 border-l-2 border-[#3b82f6]/30">
+                        <div className="space-y-2 pl-2 border-l-2 border-[#0066ff]/30">
                           <div>
-                            <label className="text-xs text-[#a1a1aa]">保证金模式</label>
+                            <label className="text-xs text-[#8a8a8a]">保证金模式</label>
                             <select
                               value={tradingEditForm.marginMode as string || 'CROSS'}
                               onChange={(e) => setTradingEditForm({ ...tradingEditForm, marginMode: e.target.value })}
-                              className="w-full mt-1 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                              className="w-full mt-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                             >
                               <option value="CROSS">全仓 (Cross)</option>
                               <option value="ISOLATED">逐仓 (Isolated)</option>
                             </select>
                           </div>
                           <div>
-                            <label className="text-xs text-[#a1a1aa]">持仓模式</label>
+                            <label className="text-xs text-[#8a8a8a]">持仓模式</label>
                             <select
                               value={tradingEditForm.positionMode as string || 'NET'}
                               onChange={(e) => setTradingEditForm({ ...tradingEditForm, positionMode: e.target.value })}
-                              className="w-full mt-1 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                              className="w-full mt-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                             >
                               <option value="NET">净仓 (One-way)</option>
                               <option value="HEDGE">逐仓双向 (Hedge)</option>
@@ -1712,17 +1765,17 @@ export default function ChatPage() {
                       <div className="flex items-center gap-2 mb-2">
                         <span className={`px-2.5 py-1 text-xs rounded font-medium ${
                           tradingParams.params.tradeMode === 'SPOT_MODE'
-                            ? 'bg-[#3b82f6] text-white'
+                            ? 'bg-[#0066ff] text-white'
                             : 'bg-[#eab308]/20 text-[#eab308]'
                         }`}>
                           {tradingParams.params.tradeMode === 'SPOT_MODE' ? '💰 现货' : '⚡ 合约'}
                         </span>
-                        <span className="text-xs text-[#a1a1aa]">
+                        <span className="text-xs text-[#8a8a8a]">
                           {tradingParams.params.tradeType}
                         </span>
                       </div>
                       {tradingParams.params.tradeMode !== 'SPOT_MODE' && (
-                        <div className="text-xs text-[#a1a1aa] space-y-0.5 pl-2">
+                        <div className="text-xs text-[#8a8a8a] space-y-0.5 pl-2">
                           <div>保证金: {tradingParams.params.marginMode === 'ISOLATED' ? '逐仓' : '全仓'}</div>
                           <div>持仓模式: {tradingParams.params.positionMode === 'HEDGE' ? '逐仓双向' : '净仓'}</div>
                         </div>
@@ -1737,9 +1790,9 @@ export default function ChatPage() {
                   {tradingEditing ? (
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-[#a1a1aa]">1x</span>
+                        <span className="text-xs text-[#8a8a8a]">1x</span>
                         <span className="text-sm font-semibold text-[#3b82f6]">{String(tradingEditForm.leverageMax)}x</span>
-                        <span className="text-xs text-[#a1a1aa]">5x</span>
+                        <span className="text-xs text-[#8a8a8a]">5x</span>
                       </div>
                       <input
                         type="range"
@@ -1748,7 +1801,7 @@ export default function ChatPage() {
                         step={1}
                         value={tradingEditForm.leverageMax as number}
                         onChange={(e) => setTradingEditForm({ ...tradingEditForm, leverageMax: parseInt(e.target.value) })}
-                        className="w-full h-1.5 bg-[#2a2a4e] rounded-lg appearance-none cursor-pointer accent-[#3b82f6]"
+                        className="w-full h-1.5 bg-[#2a2a2a] rounded-lg appearance-none cursor-pointer accent-[#3b82f6]"
                       />
                       {(tradingEditForm.leverageMax as number) >= 3 && (
                         <div className={`mt-2 p-2 rounded text-xs ${
@@ -1760,7 +1813,7 @@ export default function ChatPage() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 h-2 bg-[#2a2a4e] rounded-full overflow-hidden">
+                      <div className="flex-1 h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all"
                           style={{
@@ -1780,7 +1833,7 @@ export default function ChatPage() {
                   {tradingEditing ? (
                     <div className="space-y-3">
                       <div>
-                        <label className="text-xs text-[#a1a1aa]">日亏损限制</label>
+                        <label className="text-xs text-[#8a8a8a]">日亏损限制</label>
                         <div className="flex gap-2 mt-1">
                           <input
                             type="number"
@@ -1793,9 +1846,9 @@ export default function ChatPage() {
                                 dailyLossPercent: tradingParams?.params?.availableCapital ? Math.round((val / tradingParams.params.availableCapital) * 10000) / 100 : tradingEditForm.dailyLossPercent,
                               });
                             }}
-                            className="flex-1 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                            className="flex-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                           />
-                          <span className="text-xs text-[#a1a1aa] self-center">USDT /</span>
+                          <span className="text-xs text-[#8a8a8a] self-center">USDT /</span>
                           <input
                             type="number"
                             value={tradingEditForm.dailyLossPercent as number}
@@ -1807,13 +1860,13 @@ export default function ChatPage() {
                                 dailyLossLimit: tradingParams?.params?.availableCapital ? Math.round(tradingParams.params.availableCapital * val / 100 * 100) / 100 : tradingEditForm.dailyLossLimit,
                               });
                             }}
-                            className="w-16 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                            className="w-16 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                           />
-                          <span className="text-xs text-[#a1a1aa] self-center">%</span>
+                          <span className="text-xs text-[#8a8a8a] self-center">%</span>
                         </div>
                       </div>
                       <div>
-                        <label className="text-xs text-[#a1a1aa]">账户亏损限制</label>
+                        <label className="text-xs text-[#8a8a8a]">账户亏损限制</label>
                         <div className="flex gap-2 mt-1">
                           <input
                             type="number"
@@ -1826,9 +1879,9 @@ export default function ChatPage() {
                                 accountLossPercent: tradingParams?.params?.availableCapital ? Math.round((val / tradingParams.params.availableCapital) * 10000) / 100 : tradingEditForm.accountLossPercent,
                               });
                             }}
-                            className="flex-1 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                            className="flex-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                           />
-                          <span className="text-xs text-[#a1a1aa] self-center">USDT /</span>
+                          <span className="text-xs text-[#8a8a8a] self-center">USDT /</span>
                           <input
                             type="number"
                             value={tradingEditForm.accountLossPercent as number}
@@ -1840,22 +1893,22 @@ export default function ChatPage() {
                                 accountLossLimit: tradingParams?.params?.availableCapital ? Math.round(tradingParams.params.availableCapital * val / 100 * 100) / 100 : tradingEditForm.accountLossLimit,
                               });
                             }}
-                            className="w-16 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                            className="w-16 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                           />
-                          <span className="text-xs text-[#a1a1aa] self-center">%</span>
+                          <span className="text-xs text-[#8a8a8a] self-center">%</span>
                         </div>
                       </div>
-                      <div className="text-xs text-[#a1a1aa]">ℹ️ 绝对金额与百分比两个维度取更严格值</div>
+                      <div className="text-xs text-[#8a8a8a]">ℹ️ 绝对金额与百分比两个维度取更严格值</div>
                     </div>
                   ) : (
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-xs text-[#a1a1aa]">日亏损限制</span>
-                        <span className="text-xs text-[#e4e4e7] font-medium">{tradingParams.params.dailyLossLimit} USDT / {Math.round(tradingParams.params.dailyLossPercent * 100)}%</span>
+                        <span className="text-xs text-[#8a8a8a]">日亏损限制</span>
+                        <span className="text-xs text-[#e0e0e0] font-medium">{tradingParams.params.dailyLossLimit} USDT / {Math.round(tradingParams.params.dailyLossPercent * 100)}%</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-xs text-[#a1a1aa]">账户亏损限制</span>
-                        <span className="text-xs text-[#e4e4e7] font-medium">{tradingParams.params.accountLossLimit} USDT / {Math.round(tradingParams.params.accountLossPercent * 100)}%</span>
+                        <span className="text-xs text-[#8a8a8a]">账户亏损限制</span>
+                        <span className="text-xs text-[#e0e0e0] font-medium">{tradingParams.params.accountLossLimit} USDT / {Math.round(tradingParams.params.accountLossPercent * 100)}%</span>
                       </div>
                     </div>
                   )}
@@ -1874,8 +1927,8 @@ export default function ChatPage() {
                             tradingEditForm.riskTolerance === tol
                               ? tol === 'CONSERVATIVE' ? 'bg-green-500 text-white'
                                 : tol === 'AGGRESSIVE' ? 'bg-red-500 text-white'
-                                : 'bg-[#3b82f6] text-white'
-                              : 'bg-[#0f1729] text-[#a1a1aa] border border-[#2a2a4e]'
+                                : 'bg-[#0066ff] text-white'
+                              : 'bg-[#141414] text-[#8a8a8a] border border-[#2a2a2a]'
                           }`}
                         >
                           {tol === 'CONSERVATIVE' ? '🛡️ 保守' : tol === 'MODERATE' ? '⚖️ 适中' : '🔥 激进'}
@@ -1887,7 +1940,7 @@ export default function ChatPage() {
                       <span className={`px-2 py-0.5 rounded font-medium ${
                         tradingParams.params.riskTolerance === 'CONSERVATIVE' ? 'bg-green-500/20 text-green-400'
                           : tradingParams.params.riskTolerance === 'AGGRESSIVE' ? 'bg-red-500/20 text-red-400'
-                          : 'bg-[#3b82f6]/20 text-[#3b82f6]'
+                          : 'bg-[#0066ff]/20 text-[#3b82f6]'
                       }`}>
                         {tradingParams.params.riskTolerance === 'CONSERVATIVE' ? '🛡️ 保守' : tradingParams.params.riskTolerance === 'AGGRESSIVE' ? '🔥 激进' : '⚖️ 适中'}
                       </span>
@@ -1901,12 +1954,12 @@ export default function ChatPage() {
                   <div className="space-y-2">
                     <div>
                       <div className="flex justify-between text-xs mb-1">
-                        <span className="text-[#a1a1aa]">日亏损</span>
-                        <span className={tradingParams.liveStatus.todayLoss > 0 ? 'text-red-400' : 'text-[#a1a1aa]'}>
+                        <span className="text-[#8a8a8a]">日亏损</span>
+                        <span className={tradingParams.liveStatus.todayLoss > 0 ? 'text-red-400' : 'text-[#8a8a8a]'}>
                           {tradingParams.liveStatus.todayLoss.toFixed(1)} / {tradingParams.params.dailyLossLimit} USDT
                         </span>
                       </div>
-                      <div className="w-full h-1.5 bg-[#2a2a4e] rounded-full overflow-hidden">
+                      <div className="w-full h-1.5 bg-[#2a2a2a] rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all"
                           style={{
@@ -1918,12 +1971,12 @@ export default function ChatPage() {
                     </div>
                     <div>
                       <div className="flex justify-between text-xs mb-1">
-                        <span className="text-[#a1a1aa]">账户亏损</span>
-                        <span className={tradingParams.liveStatus.totalLoss > 0 ? 'text-red-400' : 'text-[#a1a1aa]'}>
+                        <span className="text-[#8a8a8a]">账户亏损</span>
+                        <span className={tradingParams.liveStatus.totalLoss > 0 ? 'text-red-400' : 'text-[#8a8a8a]'}>
                           {tradingParams.liveStatus.totalLoss.toFixed(1)} / {tradingParams.params.accountLossLimit} USDT
                         </span>
                       </div>
-                      <div className="w-full h-1.5 bg-[#2a2a4e] rounded-full overflow-hidden">
+                      <div className="w-full h-1.5 bg-[#2a2a2a] rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all"
                           style={{
@@ -1934,8 +1987,8 @@ export default function ChatPage() {
                       </div>
                     </div>
                     <div className="flex justify-between text-xs">
-                      <span className="text-[#a1a1aa]">今日交易</span>
-                      <span className="text-[#e4e4e7]">{tradingParams.liveStatus.todayTradeCount} 次</span>
+                      <span className="text-[#8a8a8a]">今日交易</span>
+                      <span className="text-[#e0e0e0]">{tradingParams.liveStatus.todayTradeCount} 次</span>
                     </div>
                   </div>
                 </div>
@@ -1993,7 +2046,7 @@ export default function ChatPage() {
                           if ((await res.json()).success) fetchTradingParams();
                         } catch {}
                       }}
-                      className="px-3 py-2 text-xs bg-[#2a2a4e] text-[#a1a1aa] rounded hover:bg-[#1a1a2e] transition"
+                      className="px-3 py-2 text-xs bg-[#2a2a2a] text-[#8a8a8a] rounded hover:bg-[#1a1a1a] transition"
                     >
                       🔄 重置日亏损
                     </button>
@@ -2036,13 +2089,13 @@ export default function ChatPage() {
                         finally { setTradingSaving(false); }
                       }}
                       disabled={tradingSaving}
-                      className="flex-1 px-3 py-2 text-xs bg-[#3b82f6] text-white rounded hover:bg-blue-600 transition disabled:opacity-50 font-medium"
+                      className="flex-1 px-3 py-2 text-xs bg-[#0066ff] text-white rounded hover:bg-blue-700 transition disabled:opacity-50 font-medium"
                     >
                       {tradingSaving ? '⏳ 保存中...' : '💾 保存设置'}
                     </button>
                     <button
                       onClick={() => setTradingEditing(false)}
-                      className="px-3 py-2 text-xs bg-[#2a2a4e] text-[#a1a1aa] rounded hover:bg-[#1a1a2e] transition"
+                      className="px-3 py-2 text-xs bg-[#2a2a2a] text-[#8a8a8a] rounded hover:bg-[#1a1a1a] transition"
                     >
                       取消
                     </button>
@@ -2050,7 +2103,7 @@ export default function ChatPage() {
                 )}
               </>
             ) : (
-              <div className="config-section text-center text-xs text-[#a1a1aa]">暂无交易配置</div>
+              <div className="config-section text-center text-xs text-[#8a8a8a]">暂无交易配置</div>
             )}
           </div>
         );
@@ -2074,8 +2127,8 @@ export default function ChatPage() {
                       onClick={() => setShowDrafts(!showDrafts)}
                       className={`px-3 py-1.5 text-xs rounded transition flex items-center gap-1 ${
                         showDrafts
-                          ? 'bg-[#3b82f6] text-white border border-[#3b82f6]'
-                          : 'bg-[#2a2a4e] text-[#e4e4e7] border border-[#f59e0b] hover:bg-[#1a1a2e]'
+                          ? 'bg-[#0066ff] text-white border border-[#0066ff]'
+                          : 'bg-[#2a2a2a] text-[#e0e0e0] border border-[#f59e0b] hover:bg-[#1a1a1a]'
                       }`}
                     >
                       📝 查看草稿
@@ -2087,7 +2140,7 @@ export default function ChatPage() {
                 })()}
                 <button
                   onClick={() => { fetchStrategies(); setWizardStep('input'); setParsedStrategy(null); setStrategyError(null); }}
-                  className="px-3 py-1.5 text-xs bg-[#2a2a4e] text-[#e4e4e7] border border-[#3b82f6] rounded hover:bg-[#1a1a2e] transition"
+                  className="px-3 py-1.5 text-xs bg-[#2a2a2a] text-[#e0e0e0] border border-[#0066ff] rounded hover:bg-[#1a1a1a] transition"
                 >
                   🔄 刷新
                 </button>
@@ -2095,7 +2148,7 @@ export default function ChatPage() {
             </div>
 
             {strategiesLoading ? (
-              <div className="config-section text-center text-xs text-[#a1a1aa]">⏳ 加载中...</div>
+              <div className="config-section text-center text-xs text-[#8a8a8a]">⏳ 加载中...</div>
             ) : (
               <>
                 {/* ===== 草稿箱展开面板 ===== */}
@@ -2110,20 +2163,20 @@ export default function ChatPage() {
                         </div>
                         <button
                           onClick={() => setShowDrafts(false)}
-                          className="text-xs text-[#a1a1aa] hover:text-white transition"
+                          className="text-xs text-[#8a8a8a] hover:text-white transition"
                         >
                           ✕ 收起
                         </button>
                       </div>
                       {drafts.length === 0 ? (
-                        <div className="px-3 py-4 text-center text-xs text-[#a1a1aa]">暂无草稿策略</div>
+                        <div className="px-3 py-4 text-center text-xs text-[#8a8a8a]">暂无草稿策略</div>
                       ) : (
                         <div className="p-2 space-y-2 max-h-[400px] overflow-y-auto">
                           {drafts.map((s: any) => (
-                            <div key={s.id} className="rounded-lg p-3 bg-[#0f172a]/80 border border-[#2a2a4e]" style={{ borderLeft: '3px solid #f59e0b' }}>
+                            <div key={s.id} className="rounded-lg p-3 bg-[#0f172a]/80 border border-[#2a2a2a]" style={{ borderLeft: '3px solid #f59e0b' }}>
                               {/* 策略名 + 状态标签 */}
                               <div className="flex justify-between items-center mb-2">
-                                <div className="font-semibold text-sm text-[#e4e4e7] flex items-center gap-1.5">
+                                <div className="font-semibold text-sm text-[#e0e0e0] flex items-center gap-1.5">
                                   📝 {s.name}
                                   <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#f59e0b]/20 text-[#f59e0b] border border-[#f59e0b]/30">
                                     草稿
@@ -2143,7 +2196,7 @@ export default function ChatPage() {
                                         }
                                       } catch { showToast('error', '网络错误'); }
                                     }}
-                                    className="px-2.5 py-1 text-xs bg-[#3b82f6] text-white rounded hover:bg-blue-600 transition flex items-center gap-1"
+                                    className="px-2.5 py-1 text-xs bg-[#0066ff] text-white rounded hover:bg-blue-700 transition flex items-center gap-1"
                                   >
                                     🚀 应用
                                   </button>
@@ -2164,27 +2217,27 @@ export default function ChatPage() {
                               </div>
                               {/* 策略参数详情 */}
                               <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                                <div className="text-[#a1a1aa]">
+                                <div className="text-[#8a8a8a]">
                                   方向: <span className={s.direction === 'BUY' ? 'text-[#22c55e]' : s.direction === 'SHORT' ? 'text-[#ef4444]' : 'text-[#eab308]'}>
                                     {s.direction === 'BUY' ? '📈 做多' : s.direction === 'SHORT' ? '📉 做空' : '👀 观望'}
                                   </span>
                                 </div>
-                                <div className="text-[#a1a1aa]">
-                                  杠杆: <span className="text-[#e4e4e7] font-medium">{s.leverage}x</span>
+                                <div className="text-[#8a8a8a]">
+                                  杠杆: <span className="text-[#e0e0e0] font-medium">{s.leverage}x</span>
                                 </div>
-                                <div className="text-[#a1a1aa]">
-                                  仓位: <span className="text-[#e4e4e7] font-medium">{s.positionSize}x</span>
+                                <div className="text-[#8a8a8a]">
+                                  仓位: <span className="text-[#e0e0e0] font-medium">{s.positionSize}x</span>
                                 </div>
-                                <div className="text-[#a1a1aa]">
-                                  类型: <span className="text-[#e4e4e7] font-medium">{s.tradeType || 'N/A'}</span>
+                                <div className="text-[#8a8a8a]">
+                                  类型: <span className="text-[#e0e0e0] font-medium">{s.tradeType || 'N/A'}</span>
                                 </div>
                                 {s.stopLoss && (
-                                  <div className="text-[#a1a1aa]">
+                                  <div className="text-[#8a8a8a]">
                                     止损: <span className="text-[#ef4444] font-medium">{s.stopLoss}</span>
                                   </div>
                                 )}
                                 {s.takeProfit && (
-                                  <div className="text-[#a1a1aa]">
+                                  <div className="text-[#8a8a8a]">
                                     止盈: <span className="text-[#22c55e] font-medium">{s.takeProfit}</span>
                                   </div>
                                 )}
@@ -2212,9 +2265,9 @@ export default function ChatPage() {
                 })()}
 
                 {/* ===== 推荐策略 (保持原有逻辑，修复应用按钮) ===== */}
-                <div className="text-xs text-[#a1a1aa] mb-2">📋 推荐策略 ({(strategies.recommended as unknown[]).length})</div>
+                <div className="text-xs text-[#8a8a8a] mb-2">📋 推荐策略 ({(strategies.recommended as unknown[]).length})</div>
                 {(strategies.recommended as any[]).length === 0 ? (
-                  <div className="config-section text-center text-xs text-[#a1a1aa]">
+                  <div className="config-section text-center text-xs text-[#8a8a8a]">
                     暂无推荐策略，等待A4验证推送
                   </div>
                 ) : (
@@ -2224,10 +2277,10 @@ export default function ChatPage() {
                         <div className="font-semibold">{s.direction === 'SKIP' ? '🟡' : s.direction === 'BUY' ? '🟢' : '🔴'} {s.name}</div>
                         <div>
                           {!s.isRead && <span className="bg-green-500 text-black px-1.5 py-0.5 rounded text-xs mr-1">新</span>}
-                          <span className="text-xs text-[#a1a1aa]">{s.regime || ''}</span>
+                          <span className="text-xs text-[#8a8a8a]">{s.regime || ''}</span>
                         </div>
                       </div>
-                      <div className="text-xs text-[#a1a1aa]">
+                      <div className="text-xs text-[#8a8a8a]">
                         {s.regime && `${s.regime} | `}置信度{s.confidence || '?'}% | Edge {s.edgeScore || '?'}
                       </div>
                       <div className="text-xs mt-1">方向: {s.direction === 'BUY' ? '做多' : s.direction === 'SHORT' ? '做空' : '观望'} | 杠杆: {s.leverage}x | 仓位: {s.positionSize}x</div>
@@ -2246,7 +2299,7 @@ export default function ChatPage() {
                               }
                             } catch { showToast('error', '网络错误'); }
                           }}
-                          className="px-2.5 py-1 text-xs bg-[#3b82f6] text-white rounded hover:bg-blue-600 transition"
+                          className="px-2.5 py-1 text-xs bg-[#0066ff] text-white rounded hover:bg-blue-700 transition"
                         >
                           应用
                         </button>
@@ -2258,7 +2311,7 @@ export default function ChatPage() {
                 {/* ===== 已有自定义策略列表 ===== */}
                 {(strategies.custom as any[]).length > 0 && (
                   <>
-                    <div className="text-xs text-[#a1a1aa] mt-4 mb-2">📝 已有自定义策略 ({(strategies.custom as any[]).length})</div>
+                    <div className="text-xs text-[#8a8a8a] mt-4 mb-2">📝 已有自定义策略 ({(strategies.custom as any[]).length})</div>
                     {(strategies.custom as any[]).map((s: any) => (
                       <div key={s.id} className="config-section" style={{ borderLeft: `3px solid ${s.status === 'APPLIED' ? '#22c55e' : s.status === 'PAUSED' ? '#eab308' : '#6b7280'}` }}>
                         <div className="flex justify-between items-center mb-1">
@@ -2280,7 +2333,7 @@ export default function ChatPage() {
                                     }
                                   } catch { showToast('error', '网络错误'); }
                                 }}
-                                className="px-2 py-0.5 text-xs bg-[#3b82f6] text-white rounded hover:bg-blue-600 transition"
+                                className="px-2 py-0.5 text-xs bg-[#0066ff] text-white rounded hover:bg-blue-700 transition"
                               >
                                 应用
                               </button>
@@ -2314,7 +2367,7 @@ export default function ChatPage() {
                             </button>
                           </div>
                         </div>
-                        <div className="text-xs text-[#a1a1aa]">
+                        <div className="text-xs text-[#8a8a8a]">
                           方向: {s.direction === 'BUY' ? '做多' : s.direction === 'SHORT' ? '做空' : '观望'} | 杠杆: {s.leverage}x | 仓位: {s.positionSize}x
                         </div>
                         {s.stopLoss && <div className="text-xs text-[#ef4444]">止损: {s.stopLoss}</div>}
@@ -2327,7 +2380,7 @@ export default function ChatPage() {
                 )}
 
                 {/* ===== 自定义策略 — 三步向导 ===== */}
-                <div className="text-xs text-[#a1a1aa] mt-4 mb-2">✏️ 自定义策略</div>
+                <div className="text-xs text-[#8a8a8a] mt-4 mb-2">✏️ 自定义策略</div>
                 <div className="config-section">
 
                   {/* 步骤指示器 */}
@@ -2358,13 +2411,13 @@ export default function ChatPage() {
                   {/* ── Step 1: 意图输入 ── */}
                   {wizardStep === 'input' && (
                     <>
-                      <div className="text-xs text-[#a1a1aa] mb-3">描述你的策略意图，系统将自动解析并生成可调参数</div>
+                      <div className="text-xs text-[#8a8a8a] mb-3">描述你的策略意图，系统将自动解析并生成可调参数</div>
 
                       <textarea
                         value={customStrategyInput}
                         onChange={(e) => setCustomStrategyInput(e.target.value)}
                         placeholder="例如：RSI低于30并且MACD金叉的时候做多BTC，2x杠杆..."
-                        className="w-full bg-[#0f1729] border border-[#2a2a4e] rounded-md p-2.5 text-[#e4e4e7] text-sm min-h-[64px] resize-y focus:outline-none focus:border-[#3b82f6] transition"
+                        className="w-full bg-[#141414] border border-[#2a2a2a] rounded-md p-2.5 text-[#e0e0e0] text-sm min-h-[64px] resize-y focus:outline-none focus:border-[#0066ff] transition"
                       />
 
                       {/* 模板卡片 */}
@@ -2428,7 +2481,7 @@ export default function ChatPage() {
                           finally { setWizardParsing(false); }
                         }}
                         disabled={wizardParsing || !customStrategyInput.trim()}
-                        className="w-full mt-3 px-4 py-2.5 text-sm bg-[#3b82f6] text-white rounded-md hover:bg-blue-600 transition disabled:opacity-50 font-medium"
+                        className="w-full mt-3 px-4 py-2.5 text-sm bg-[#0066ff] text-white rounded-md hover:bg-blue-700 transition disabled:opacity-50 font-medium"
                       >
                         {wizardParsing ? (
                           <span>⏳ 正在解析...</span>
@@ -2460,7 +2513,7 @@ export default function ChatPage() {
 
                       {/* 置信度 */}
                       <div className="confidence-bar-container">
-                        <span className="text-xs text-[#a1a1aa]">置信度</span>
+                        <span className="text-xs text-[#8a8a8a]">置信度</span>
                         <div className="confidence-bar-track">
                           <div className="confidence-bar-fill" style={{ width: `${parsedStrategy.confidence}%` }} />
                         </div>
@@ -2703,7 +2756,7 @@ export default function ChatPage() {
                 {/* ===== 已应用策略 (保持原有逻辑) ===== */}
                 {(strategies.applied as any[]).length > 0 && (
                   <>
-                    <div className="text-xs text-[#a1a1aa] mt-4 mb-2">📊 已应用策略 ({(strategies.applied as any[]).length})</div>
+                    <div className="text-xs text-[#8a8a8a] mt-4 mb-2">📊 已应用策略 ({(strategies.applied as any[]).length})</div>
                     {(strategies.applied as any[]).map((s: any) => (
                       <div key={s.id} className="config-section" style={{ borderLeft: '3px solid #22c55e' }}>
                         <div className="flex justify-between items-center mb-1">
@@ -2736,7 +2789,7 @@ export default function ChatPage() {
                             </button>
                           </div>
                         </div>
-                        <div className="text-xs text-[#a1a1aa]">
+                        <div className="text-xs text-[#8a8a8a]">
                           {s.leverage}x | {s.direction === 'BUY' ? '做多' : s.direction === 'SHORT' ? '做空' : '观望'}
                           {s.tasks?.[0] && ` | ${s.tasks[0].executionFrequency}`}
                         </div>
@@ -2767,11 +2820,11 @@ export default function ChatPage() {
                 <div className="font-semibold mb-3 text-sm">添加新渠道</div>
                 <div className="space-y-2">
                   <div>
-                    <label className="text-xs text-[#a1a1aa]">渠道类型</label>
+                    <label className="text-xs text-[#8a8a8a]">渠道类型</label>
                     <select
                       value={addChannelForm.channelType}
                       onChange={(e) => setAddChannelForm({ ...addChannelForm, channelType: e.target.value })}
-                      className="w-full mt-1 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                      className="w-full mt-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                     >
                       <option value="TELEGRAM">📱 Telegram</option>
                       <option value="WECHAT_SERVERCHAN">💬 微信 (Server酱)</option>
@@ -2781,11 +2834,11 @@ export default function ChatPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs text-[#a1a1aa]">标签</label>
+                    <label className="text-xs text-[#8a8a8a]">标签</label>
                     <input
                       value={addChannelForm.label}
                       onChange={(e) => setAddChannelForm({ ...addChannelForm, label: e.target.value })}
-                      className="w-full mt-1 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                      className="w-full mt-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                       placeholder="我的信号群"
                     />
                   </div>
@@ -2794,21 +2847,21 @@ export default function ChatPage() {
                   {addChannelForm.channelType === 'TELEGRAM' && (
                     <>
                       <div>
-                        <label className="text-xs text-[#a1a1aa]">Bot Token</label>
+                        <label className="text-xs text-[#8a8a8a]">Bot Token</label>
                         <input
                           type="password"
                           value={addChannelForm.botToken}
                           onChange={(e) => setAddChannelForm({ ...addChannelForm, botToken: e.target.value })}
-                          className="w-full mt-1 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                          className="w-full mt-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                           placeholder="123456:ABC-DEF..."
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-[#a1a1aa]">Chat ID</label>
+                        <label className="text-xs text-[#8a8a8a]">Chat ID</label>
                         <input
                           value={addChannelForm.chatId}
                           onChange={(e) => setAddChannelForm({ ...addChannelForm, chatId: e.target.value })}
-                          className="w-full mt-1 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                          className="w-full mt-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                           placeholder="-1001234567890"
                         />
                       </div>
@@ -2818,12 +2871,12 @@ export default function ChatPage() {
                   {/* Server酱 配置 */}
                   {addChannelForm.channelType === 'WECHAT_SERVERCHAN' && (
                     <div>
-                      <label className="text-xs text-[#a1a1aa]">SendKey</label>
+                      <label className="text-xs text-[#8a8a8a]">SendKey</label>
                       <input
                         type="password"
                         value={addChannelForm.sendKey}
                         onChange={(e) => setAddChannelForm({ ...addChannelForm, sendKey: e.target.value })}
-                        className="w-full mt-1 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                        className="w-full mt-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                         placeholder="SCTxxxx..."
                       />
                     </div>
@@ -2831,7 +2884,7 @@ export default function ChatPage() {
 
                   {/* 推送类型 */}
                   <div>
-                    <label className="text-xs text-[#a1a1aa]">推送类型</label>
+                    <label className="text-xs text-[#8a8a8a]">推送类型</label>
                     <div className="flex flex-wrap gap-1.5 mt-1">
                       {[
                         { key: 'trade_signal', label: '交易信号' },
@@ -2850,8 +2903,8 @@ export default function ChatPage() {
                           }}
                           className={`px-2 py-0.5 text-xs rounded transition ${
                             addChannelForm.enabledTypes.includes(key)
-                              ? 'bg-[#3b82f6] text-white'
-                              : 'bg-[#0f1729] text-[#a1a1aa] border border-[#2a2a4e]'
+                              ? 'bg-[#0066ff] text-white'
+                              : 'bg-[#141414] text-[#8a8a8a] border border-[#2a2a2a]'
                           }`}
                         >
                           {label}
@@ -2862,19 +2915,19 @@ export default function ChatPage() {
 
                   {/* 静默时段 */}
                   <div>
-                    <label className="text-xs text-[#a1a1aa]">静默时段 (可选)</label>
+                    <label className="text-xs text-[#8a8a8a]">静默时段 (可选)</label>
                     <div className="flex gap-2 mt-1">
                       <input
                         value={addChannelForm.silentStart}
                         onChange={(e) => setAddChannelForm({ ...addChannelForm, silentStart: e.target.value })}
-                        className="flex-1 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                        className="flex-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                         placeholder="23:00"
                       />
-                      <span className="text-xs text-[#a1a1aa] self-center">-</span>
+                      <span className="text-xs text-[#8a8a8a] self-center">-</span>
                       <input
                         value={addChannelForm.silentEnd}
                         onChange={(e) => setAddChannelForm({ ...addChannelForm, silentEnd: e.target.value })}
-                        className="flex-1 bg-[#0f1729] border border-[#2a2a4e] rounded-md px-2.5 py-1.5 text-xs text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                        className="flex-1 bg-[#141414] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-xs text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                         placeholder="07:00"
                       />
                     </div>
@@ -2916,13 +2969,13 @@ export default function ChatPage() {
                           } else { alert(data.error || '添加失败'); }
                         } catch { alert('添加失败'); }
                       }}
-                      className="flex-1 px-3 py-2 text-xs bg-[#3b82f6] text-white rounded hover:bg-blue-600 transition font-medium"
+                      className="flex-1 px-3 py-2 text-xs bg-[#0066ff] text-white rounded hover:bg-blue-700 transition font-medium"
                     >
                       💾 保存
                     </button>
                     <button
                       onClick={() => setShowAddChannelForm(false)}
-                      className="px-3 py-2 text-xs bg-[#2a2a4e] text-[#a1a1aa] rounded hover:bg-[#1a1a2e] transition"
+                      className="px-3 py-2 text-xs bg-[#2a2a2a] text-[#8a8a8a] rounded hover:bg-[#1a1a1a] transition"
                     >
                       取消
                     </button>
@@ -2933,9 +2986,9 @@ export default function ChatPage() {
 
             {/* 渠道列表 */}
             {channelsLoading ? (
-              <div className="config-section text-center text-xs text-[#a1a1aa]">⏳ 加载中...</div>
+              <div className="config-section text-center text-xs text-[#8a8a8a]">⏳ 加载中...</div>
             ) : (channels as any[]).length === 0 ? (
-              <div className="config-section text-center text-xs text-[#a1a1aa]">
+              <div className="config-section text-center text-xs text-[#8a8a8a]">
                 暂无通信渠道配置<br />
                 <span className="text-xs">点击上方"➕ 添加"按钮配置</span>
               </div>
@@ -2951,7 +3004,7 @@ export default function ChatPage() {
                     </span>
                   </div>
                   {ch.pushRules?.enabledTypes && (
-                    <div className="text-xs text-[#a1a1aa] mb-1">
+                    <div className="text-xs text-[#8a8a8a] mb-1">
                       推送: {ch.pushRules.enabledTypes.map((t: string) => {
                         const labels: Record<string, string> = { trade_signal: '交易信号', risk_alert: '风险告警', intel_update: '情报更新', daily_report: '每日报告', strategy_update: '策略推荐' };
                         return labels[t] || t;
@@ -2959,7 +3012,7 @@ export default function ChatPage() {
                     </div>
                   )}
                   {(ch.silentStart && ch.silentEnd) && (
-                    <div className="text-xs text-[#a1a1aa]">静默: {ch.silentStart} - {ch.silentEnd}</div>
+                    <div className="text-xs text-[#8a8a8a]">静默: {ch.silentStart} - {ch.silentEnd}</div>
                   )}
                   {/* 测试结果 */}
                   {channelTestResult && channelTestResult[ch.id] && (
@@ -2982,7 +3035,7 @@ export default function ChatPage() {
                         } catch {} finally { setChannelTesting(null); }
                       }}
                       disabled={channelTesting === ch.id}
-                      className="px-2.5 py-1 text-xs bg-[#3b82f6] text-white rounded hover:bg-blue-600 transition disabled:opacity-50"
+                      className="px-2.5 py-1 text-xs bg-[#0066ff] text-white rounded hover:bg-blue-700 transition disabled:opacity-50"
                     >
                       {channelTesting === ch.id ? '⏳ 测试中...' : '测试'}
                     </button>
@@ -3019,7 +3072,7 @@ export default function ChatPage() {
                 </button>
                 <button
                   onClick={() => setMonitorEvents([])}
-                  className="text-[10px] px-2 py-1 rounded bg-[#0f3460] text-[#a1a1aa] hover:text-[#e4e4e7] transition"
+                  className="text-[10px] px-2 py-1 rounded bg-[#0f3460] text-[#8a8a8a] hover:text-[#e0e0e0] transition"
                 >
                   🗑 清除
                 </button>
@@ -3028,7 +3081,7 @@ export default function ChatPage() {
 
             {/* ===== 全链路状态概览 ===== */}
             <div className="config-section mb-3">
-              <div className="text-[10px] text-[#a1a1aa] mb-2 font-semibold">全链路状态</div>
+              <div className="text-[10px] text-[#8a8a8a] mb-2 font-semibold">全链路状态</div>
               <div className="flex items-center gap-1 text-[10px]">
                 {monitorPipeline ? (
                   <>
@@ -3044,7 +3097,7 @@ export default function ChatPage() {
                       const isWarning = info.rate !== '--' && parseInt(info.rate) >= 70 && parseInt(info.rate) < 90;
                       return (
                         <div key={layer} className="flex items-center gap-0.5">
-                          {idx > 0 && <span className="text-[#a1a1aa]">→</span>}
+                          {idx > 0 && <span className="text-[#8a8a8a]">→</span>}
                           <div className={`px-1.5 py-1 rounded text-center min-w-[52px] ${
                             isHealthy ? 'bg-green-500/15 border border-green-500/20' :
                             isWarning ? 'bg-yellow-500/15 border border-yellow-500/20' :
@@ -3052,29 +3105,29 @@ export default function ChatPage() {
                           }`}>
                             <div className="text-[9px]">{icons[layer]} {labels[layer]}</div>
                             <div className={`font-bold ${
-                              isHealthy ? 'text-green-400' : isWarning ? 'text-yellow-400' : 'text-[#a1a1aa]'
+                              isHealthy ? 'text-green-400' : isWarning ? 'text-yellow-400' : 'text-[#8a8a8a]'
                             }`}>
                               {info.rate === '--' ? '--' : info.rate}
                             </div>
-                            <div className="text-[8px] text-[#a1a1aa]">{info.completed}/{info.total}</div>
+                            <div className="text-[8px] text-[#8a8a8a]">{info.completed}/{info.total}</div>
                           </div>
                         </div>
                       );
                     })}
                   </>
                 ) : (
-                  <span className="text-[#a1a1aa]">等待数据...</span>
+                  <span className="text-[#8a8a8a]">等待数据...</span>
                 )}
               </div>
             </div>
 
             {/* ===== 实时事件流 ===== */}
             <div className="config-section mb-3" style={{ maxHeight: '240px', overflowY: 'auto' }}>
-              <div className="text-[10px] text-[#a1a1aa] mb-2 font-semibold">
+              <div className="text-[10px] text-[#8a8a8a] mb-2 font-semibold">
                 实时事件流 {monitorPaused && <span className="text-yellow-400">（已暂停）</span>}
               </div>
               {monitorEvents.length === 0 ? (
-                <div className="text-[10px] text-[#a1a1aa] text-center py-3">
+                <div className="text-[10px] text-[#8a8a8a] text-center py-3">
                   暂无事件 — 提交请求后自动显示
                 </div>
               ) : (
@@ -3104,11 +3157,11 @@ export default function ChatPage() {
                           event.status === 'failed' || event.status === 'timeout'
                             ? 'bg-red-500/10 border border-red-500/20'
                             : isSelected
-                            ? 'bg-[#3b82f6]/15 border border-[#3b82f6]/30'
-                            : 'hover:bg-[#0f3460]/40'
+                            ? 'bg-[#0066ff]/15 border border-[#0066ff]/30'
+                            : 'hover:bg-[#1f1f1f]/40'
                         }`}
                       >
-                        <span className="text-[9px] text-[#a1a1aa] flex-shrink-0">{time}</span>
+                        <span className="text-[9px] text-[#8a8a8a] flex-shrink-0">{time}</span>
                         <span>{statusIcon[event.status] || '❓'}</span>
                         <span
                           className="px-1 rounded text-[8px] font-bold text-white flex-shrink-0"
@@ -3116,11 +3169,11 @@ export default function ChatPage() {
                         >
                           {event.layer.slice(0, 3).toUpperCase()}
                         </span>
-                        <span className="text-[#e4e4e7] flex-1 truncate">
+                        <span className="text-[#e0e0e0] flex-1 truncate">
                           {phaseLabels[event.phase] || event.phase}
                         </span>
                         {event.duration_ms != null && (
-                          <span className="text-[8px] text-[#a1a1aa] flex-shrink-0">{event.duration_ms}ms</span>
+                          <span className="text-[8px] text-[#8a8a8a] flex-shrink-0">{event.duration_ms}ms</span>
                         )}
                         {event.intent && (
                           <span className="text-[8px] text-[#3b82f6] flex-shrink-0 truncate max-w-[50px]">{event.intent}</span>
@@ -3134,7 +3187,7 @@ export default function ChatPage() {
 
             {/* ===== 链路追踪详情 ===== */}
             {monitorSelectedTrace && (
-              <div className="config-section mb-3 border border-[#3b82f6]/20 rounded-lg p-2">
+              <div className="config-section mb-3 border border-[#0066ff]/20 rounded-lg p-2">
                 <div className="text-[10px] text-[#3b82f6] font-semibold mb-2">
                   🔗 链路追踪: {monitorSelectedTrace.slice(0, 30)}...
                 </div>
@@ -3151,17 +3204,17 @@ export default function ChatPage() {
                         };
                         return (
                           <div key={event.id} className="flex items-center gap-1.5 text-[9px]">
-                            <span className="text-[#a1a1aa] w-16 flex-shrink-0">{time}</span>
+                            <span className="text-[#8a8a8a] w-16 flex-shrink-0">{time}</span>
                             <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColors[event.status] || '#666' }} />
-                            <span className="text-[#e4e4e7]">{event.phase}</span>
+                            <span className="text-[#e0e0e0]">{event.phase}</span>
                             {event.intent && <span className="text-[#3b82f6]">[{event.intent}]</span>}
-                            {event.duration_ms != null && <span className="text-[#a1a1aa]">{event.duration_ms}ms</span>}
+                            {event.duration_ms != null && <span className="text-[#8a8a8a]">{event.duration_ms}ms</span>}
                             {event.error && <span className="text-red-400 truncate max-w-[80px]">{event.error}</span>}
                           </div>
                         );
                       })}
                       {traceEvents.length === 0 && (
-                        <span className="text-[#a1a1aa] text-[9px]">暂无此 trace 的事件</span>
+                        <span className="text-[#8a8a8a] text-[9px]">暂无此 trace 的事件</span>
                       )}
                     </div>
                   );
@@ -3171,35 +3224,35 @@ export default function ChatPage() {
 
             {/* ===== 统计面板 ===== */}
             <div className="config-section">
-              <div className="text-[10px] text-[#a1a1aa] mb-2 font-semibold">统计</div>
+              <div className="text-[10px] text-[#8a8a8a] mb-2 font-semibold">统计</div>
               {monitorStats ? (
                 <div className="grid grid-cols-2 gap-2 text-[10px]">
                   <div className="bg-[#0f3460] rounded p-1.5 text-center">
-                    <div className="text-[#a1a1aa] text-[8px]">今日请求</div>
-                    <div className="font-bold text-[#e4e4e7]">{monitorStats.total_requests}</div>
+                    <div className="text-[#8a8a8a] text-[8px]">今日请求</div>
+                    <div className="font-bold text-[#e0e0e0]">{monitorStats.total_requests}</div>
                   </div>
                   <div className="bg-[#0f3460] rounded p-1.5 text-center">
-                    <div className="text-[#a1a1aa] text-[8px]">成功率</div>
+                    <div className="text-[#8a8a8a] text-[8px]">成功率</div>
                     <div className={`font-bold ${monitorStats.success_rate >= 90 ? 'text-green-400' : monitorStats.success_rate >= 70 ? 'text-yellow-400' : 'text-red-400'}`}>
                       {monitorStats.success_rate}%
                     </div>
                   </div>
                   <div className="bg-[#0f3460] rounded p-1.5 text-center">
-                    <div className="text-[#a1a1aa] text-[8px]">均耗时</div>
-                    <div className="font-bold text-[#e4e4e7]">{monitorStats.avg_duration_ms}ms</div>
+                    <div className="text-[#8a8a8a] text-[8px]">均耗时</div>
+                    <div className="font-bold text-[#e0e0e0]">{monitorStats.avg_duration_ms}ms</div>
                   </div>
                   <div className="bg-[#0f3460] rounded p-1.5 text-center">
-                    <div className="text-[#a1a1aa] text-[8px]">活跃Trace</div>
+                    <div className="text-[#8a8a8a] text-[8px]">活跃Trace</div>
                     <div className="font-bold text-[#3b82f6]">{monitorStats.active_traces}</div>
                   </div>
                 </div>
               ) : (
-                <span className="text-[10px] text-[#a1a1aa]">等待数据...</span>
+                <span className="text-[10px] text-[#8a8a8a]">等待数据...</span>
               )}
               {/* 意图分布 */}
               {monitorStats?.intent_distribution && Object.keys(monitorStats.intent_distribution).length > 0 && (
                 <div className="mt-2">
-                  <div className="text-[8px] text-[#a1a1aa] mb-1">意图分布</div>
+                  <div className="text-[8px] text-[#8a8a8a] mb-1">意图分布</div>
                   <div className="flex flex-wrap gap-1">
                     {Object.entries(monitorStats.intent_distribution).map(([intent, count]) => {
                       const intentColors: Record<string, string> = {
@@ -3237,7 +3290,7 @@ export default function ChatPage() {
             <div className="flex items-center gap-2 mb-3">
               <button
                 onClick={() => { setSelectedReport(null); setRightPanelContent('analysis'); }}
-                className="text-[#a1a1aa] hover:text-[#e4e4e7] transition"
+                className="text-[#8a8a8a] hover:text-[#e0e0e0] transition"
               >
                 ←
               </button>
@@ -3245,7 +3298,7 @@ export default function ChatPage() {
             </div>
             {reportContentLoading ? (
               <div className="config-section text-center">
-                <span className="text-[#a1a1aa]">⏳ 加载中...</span>
+                <span className="text-[#8a8a8a]">⏳ 加载中...</span>
               </div>
             ) : selectedReport ? (
               <div className="report-content">
@@ -3259,9 +3312,9 @@ export default function ChatPage() {
                       >
                         {selectedReport.metadata.chain_phase}
                       </span>
-                      <span className="text-xs text-[#a1a1aa]">{selectedReport.metadata.title}</span>
+                      <span className="text-xs text-[#8a8a8a]">{selectedReport.metadata.title}</span>
                     </div>
-                    <div className="text-xs text-[#a1a1aa]">
+                    <div className="text-xs text-[#8a8a8a]">
                       {selectedReport.metadata.regime && <span>Regime: {selectedReport.metadata.regime} | </span>}
                       {selectedReport.metadata.confidence !== undefined && <span>置信度: {selectedReport.metadata.confidence}% | </span>}
                       {selectedReport.metadata.direction && <span>方向: {selectedReport.metadata.direction}</span>}
@@ -3274,7 +3327,7 @@ export default function ChatPage() {
                 </div>
               </div>
             ) : (
-              <div className="config-section text-center text-[#a1a1aa] text-xs">
+              <div className="config-section text-center text-[#8a8a8a] text-xs">
                 未选择研报
               </div>
             )}
@@ -3291,7 +3344,7 @@ export default function ChatPage() {
                 <div className="panel-subtitle">
                   📊 分析进度 
                   {analysisStartTime && (
-                    <span className="text-[10px] text-[#a1a1aa] ml-2">
+                    <span className="text-[10px] text-[#8a8a8a] ml-2">
                       {(() => {
                         const endTime = analysisEndTime || Date.now();
                         const elapsed = Math.floor((endTime - analysisStartTime) / 1000);
@@ -3313,10 +3366,10 @@ export default function ChatPage() {
                 {/* 总体进度条 */}
                 <div className="config-section mb-3">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] text-[#a1a1aa]">
+                    <span className="text-[10px] text-[#8a8a8a]">
                       {analysisChain.filter(s => s.status === 'completed').length}/{analysisChain.length} 步骤完成
                     </span>
-                    <span className="text-[10px] text-[#a1a1aa]">
+                    <span className="text-[10px] text-[#8a8a8a]">
                       {analysisChain.some(s => s.status === 'running') ? '执行中...' : 
                        analysisChain.every(s => s.status === 'completed') ? '✅ 全部完成' :
                        analysisChain.some(s => s.status === 'error') ? '❌ 执行异常' : '等待中'}
@@ -3341,7 +3394,7 @@ export default function ChatPage() {
                     <div 
                       key={step.id}
                       className={`flex items-center gap-2 py-1.5 px-2 rounded transition-all duration-300 ${
-                        step.status === 'running' ? 'bg-[#0f3460]/60 border border-[#3b82f6]/30' : 
+                        step.status === 'running' ? 'bg-[#0f3460]/60 border border-[#0066ff]/30' : 
                         step.status === 'error' ? 'bg-red-500/10 border border-red-500/20' :
                         step.status === 'completed' ? '' : 'opacity-50'
                       }`}
@@ -3349,9 +3402,9 @@ export default function ChatPage() {
                       {/* 步骤序号 + 状态图标 */}
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 ${
                         step.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-                        step.status === 'running' ? 'bg-[#3b82f6]/20 text-[#3b82f6]' :
+                        step.status === 'running' ? 'bg-[#0066ff]/20 text-[#3b82f6]' :
                         step.status === 'error' ? 'bg-red-500/20 text-red-400' :
-                        'bg-[#0f3460] text-[#a1a1aa]'
+                        'bg-[#0f3460] text-[#8a8a8a]'
                       }`}>
                         {step.status === 'completed' ? '✓' : 
                          step.status === 'running' ? (idx + 1) :
@@ -3362,9 +3415,9 @@ export default function ChatPage() {
                       {/* 步骤图标+名称 */}
                       <span className={`text-xs flex-1 ${
                         step.status === 'completed' ? 'text-green-400' :
-                        step.status === 'running' ? 'text-[#e4e4e7]' :
+                        step.status === 'running' ? 'text-[#e0e0e0]' :
                         step.status === 'error' ? 'text-red-400' :
-                        'text-[#a1a1aa]'
+                        'text-[#8a8a8a]'
                       }`}>
                         {step.icon} {step.label}
                       </span>
@@ -3380,7 +3433,7 @@ export default function ChatPage() {
                         <span className="text-[10px] text-red-400">❌ 失败</span>
                       )}
                       {step.status === 'idle' && (
-                        <span className="text-[10px] text-[#a1a1aa]">⏳ 等待</span>
+                        <span className="text-[10px] text-[#8a8a8a]">⏳ 等待</span>
                       )}
 
                       {/* 完成时间 */}
@@ -3397,7 +3450,7 @@ export default function ChatPage() {
                     <div key={step.id} className="flex items-center gap-1">
                       <div className={`w-2 h-2 rounded-full ${
                         step.status === 'completed' ? 'bg-green-500' :
-                        step.status === 'running' ? 'bg-[#3b82f6] animate-pulse' :
+                        step.status === 'running' ? 'bg-[#0066ff] animate-pulse' :
                         step.status === 'error' ? 'bg-red-500' :
                         'bg-[#0f3460]'
                       }`} />
@@ -3414,7 +3467,7 @@ export default function ChatPage() {
               /* 空闲状态 — 显示提示 */
               <div className="config-section text-center py-6">
                 <div className="text-2xl mb-2">🧠</div>
-                <div className="text-xs text-[#a1a1aa] mb-1">暂无进行中的分析</div>
+                <div className="text-xs text-[#8a8a8a] mb-1">暂无进行中的分析</div>
                 <div className="text-[10px] text-[#71717a]">发送消息后，分析进度将在此实时显示</div>
                 <div className="text-[10px] text-[#71717a] mt-1">
                   ⚡快速: A1→A2 | 🧠深度: A1→A2→A3→A4
@@ -3438,9 +3491,9 @@ export default function ChatPage() {
               </div>
             )}
             {reportLoading ? (
-              <div className="config-section text-xs text-[#a1a1aa]">⏳ 加载中...</div>
+              <div className="config-section text-xs text-[#8a8a8a]">⏳ 加载中...</div>
             ) : reportList.length === 0 ? (
-              <div className="config-section text-xs text-[#a1a1aa]">暂无研报</div>
+              <div className="config-section text-xs text-[#8a8a8a]">暂无研报</div>
             ) : (
               <div className="space-y-2">
                 {reportList.map((report, idx) => (
@@ -3457,7 +3510,7 @@ export default function ChatPage() {
                       >
                         {report.chain_phase}
                       </span>
-                      <span className="text-xs text-[#e4e4e7] truncate flex-1">{report.title}</span>
+                      <span className="text-xs text-[#e0e0e0] truncate flex-1">{report.title}</span>
                       {/* 新鲜度标签 */}
                       {report.isToday ? (
                         <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-500/20 text-green-400">🟢 当日</span>
@@ -3465,7 +3518,7 @@ export default function ChatPage() {
                         <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-yellow-500/20 text-yellow-400">🟡 非当日</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] text-[#a1a1aa]">
+                    <div className="flex items-center gap-2 text-[10px] text-[#8a8a8a]">
                       <span>{report.relativeTime || (report.date ? new Date(report.date).toLocaleDateString('zh-CN') : '')}</span>
                       {report.confidence !== undefined && report.confidence !== null && (
                         <span className={`px-1 py-0.5 rounded ${
@@ -3480,7 +3533,7 @@ export default function ChatPage() {
                         <span className={`${
                           report.direction === 'LONG' || report.direction === 'BUY' ? 'text-red-500' :
                           report.direction === 'SHORT' || report.direction === 'BEARISH' ? 'text-green-500' :
-                          'text-[#a1a1aa]'
+                          'text-[#8a8a8a]'
                         }`}>
                           {report.direction}
                         </span>
@@ -3515,44 +3568,44 @@ export default function ChatPage() {
 
   if (!mounted) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#1a1a2e]">
-        <div className="text-[#a1a1aa]">加载中...</div>
+      <div className="flex h-screen items-center justify-center bg-[#0d0d0d]">
+        <div className="text-[#8a8a8a]">加载中...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-[#1a1a2e] text-[#e4e4e7]">
+    <div className="flex h-screen bg-[#0d0d0d] text-[#e0e0e0]">
       {/* Left Sidebar */}
       <div
-        className={`${leftCollapsed ? "w-0" : "w-64"} flex-shrink-0 flex flex-col bg-[#16213e] border-r border-[#0f3460] transition-all duration-300 overflow-hidden`}
+        className={`${leftCollapsed ? "w-0" : "w-64"} flex-shrink-0 flex flex-col bg-[#1a1a1a] border-r border-[#1a1a1a] transition-all duration-300 overflow-hidden`}
       >
-        <div className="p-4 border-b border-[#0f3460] flex items-center justify-between">
-          <h1 className="text-lg font-bold text-[#e4e4e7]">🧠 Dream</h1>
+        <div className="p-4 border-b border-[#1a1a1a] flex items-center justify-between">
+          <h1 className="text-lg font-bold text-[#e0e0e0]">🧠 Dream</h1>
           {renderStatusDot(llmStatus)}
         </div>
         
         <div className="p-3">
           <button
             onClick={() => setLeftCollapsed(true)}
-            className="w-full text-left px-3 py-2 text-sm text-[#a1a1aa] hover:bg-[#0f3460] rounded-md transition"
+            className="w-full text-left px-3 py-2 text-sm text-[#8a8a8a] hover:bg-[#1f1f1f] rounded-md transition"
           >
             ← 收起
           </button>
         </div>
         
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
-          <div className="text-xs text-[#a1a1aa] px-3 py-1">今天</div>
+          <div className="text-xs text-[#8a8a8a] px-3 py-1">今天</div>
           <div className="px-3 py-2 text-sm bg-[#0f3460] rounded-md text-[#3b82f6] cursor-pointer">
             🔴 BTC 行情分析
           </div>
-          <div className="px-3 py-2 text-sm hover:bg-[#0f3460] rounded-md text-[#e4e4e7] cursor-pointer">
+          <div className="px-3 py-2 text-sm hover:bg-[#1f1f1f] rounded-md text-[#e0e0e0] cursor-pointer">
             📈 ETH 走势查看
           </div>
         </div>
         
         {/* Collapsible Modules */}
-        <div className="p-3 space-y-2 border-t border-[#0f3460]">
+        <div className="p-3 space-y-2 border-t border-[#1a1a1a]">
           <div className="collapsible-module">
             <div 
               className="collapsible-header"
@@ -3588,41 +3641,66 @@ export default function ChatPage() {
         </div>
         
         {/* User Info */}
-        <div className="p-3 border-t border-[#0f3460] bg-[#0f1729]">
+        <div className="p-3 border-t border-[#1a1a1a] bg-[#141414]">
           {mounted && session ? (
             <div className="flex items-center space-x-3 mb-2">
-              <div className="w-8 h-8 bg-[#3b82f6] rounded-full flex items-center justify-center text-sm">
+              <div className="w-8 h-8 bg-[#0066ff] rounded-full flex items-center justify-center text-sm">
                 {(session.user?.name?.[0] || 'U').toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-semibold truncate">{session.user?.name || '用户'}</div>
-                <div className="text-xs text-[#a1a1aa]">{session.user?.email || ''}</div>
+                <div className="text-xs text-[#8a8a8a]">{session.user?.email || ''}</div>
               </div>
             </div>
           ) : (
             <div className="flex items-center space-x-3 mb-2">
-              <div className="w-8 h-8 bg-[#3b82f6] rounded-full flex items-center justify-center text-sm">U</div>
+              <div className="w-8 h-8 bg-gradient-to-br from-[#0066ff] to-[#0052cc] rounded-full flex items-center justify-center text-sm font-medium">U</div>
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-semibold truncate">测试用户</div>
-                <div className="text-xs text-[#a1a1aa]">U3kR***xQ</div>
+                <div className="text-xs text-[#8a8a8a]">U3kR***xQ</div>
               </div>
             </div>
           )}
-          <div className="text-xs text-yellow-500 font-semibold mb-2">💎 1,250 积分</div>
+          <div className="flex items-center gap-2 mb-2 p-2 bg-[#1a1a1a] rounded-lg">
+            <span className="text-sm">💎</span>
+            <span className="text-xs text-[#8a8a8a]">积分</span>
+            <span className="text-sm font-semibold text-[#ffffff] flex-1">{creditsBalance.toLocaleString()}</span>
+            <button 
+              onClick={() => router.push('/recharge')}
+              className="px-2 py-1 text-xs bg-[#0066ff] text-white rounded hover:bg-[#0052cc] transition font-medium"
+            >
+              充值
+            </button>
+          </div>
           <div className="flex gap-2">
-            <button className="flex-1 px-2.5 py-1.5 text-xs bg-[#3b82f6] text-white rounded hover:bg-blue-600 transition">签到</button>
-            <button className="flex-1 px-2.5 py-1.5 text-xs bg-[#2a2a4e] text-[#e4e4e7] border border-[#3b82f6] rounded hover:bg-[#1a1a2e] transition">明细</button>
+            <button 
+              onClick={handleCheckin}
+              disabled={checkinLoading || signedInToday}
+              className={`flex-1 px-2.5 py-1.5 text-xs rounded transition ${
+                signedInToday 
+                  ? 'bg-[#333333] text-[#666666] cursor-not-allowed' 
+                  : 'bg-[#0066ff] text-white hover:bg-[#0052cc]'
+              }`}
+            >
+              {checkinLoading ? '签到中...' : signedInToday ? '已签到' : '签到+10'}
+            </button>
+            <button 
+              onClick={handleLogout}
+              className="flex-1 px-2.5 py-1.5 text-xs bg-[#1a1a1a] text-[#ff6b6b] border border-[#2a2a2a] rounded hover:bg-[#222222]"
+            >
+              退出登录
+            </button>
           </div>
         </div>
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-[600px] bg-[#0f3460]">
+      <div className="flex-1 flex flex-col min-w-[600px] bg-[#0d0d0d]">
         {/* Header */}
-        <div className="h-14 border-b border-[#0f3460] flex items-center justify-between px-4">
+        <div className="h-14 border-b border-[#1a1a1a] flex items-center justify-between px-4">
           <div className="flex items-center space-x-2">
             {leftCollapsed && (
-              <button onClick={() => setLeftCollapsed(false)} className="p-1 hover:bg-[#16213e] rounded transition">
+              <button onClick={() => setLeftCollapsed(false)} className="p-1 hover:bg-[#1a1a1a] rounded transition">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
@@ -3632,13 +3710,13 @@ export default function ChatPage() {
           </div>
           
           {/* 思考模式切换 */}
-          <div className="flex items-center space-x-1 bg-[#16213e] rounded-lg p-0.5">
+          <div className="flex items-center space-x-1 bg-[#1a1a1a] rounded-lg p-0.5">
             <button
               onClick={() => setThinkingMode('quick')}
               className={`px-3 py-1.5 text-xs rounded-md transition ${
                 thinkingMode === 'quick'
-                  ? 'bg-[#3b82f6] text-white shadow-lg shadow-blue-500/20'
-                  : 'text-[#a1a1aa] hover:text-[#e4e4e7]'
+                  ? 'bg-[#0066ff] text-white shadow-lg shadow-blue-500/20'
+                  : 'text-[#8a8a8a] hover:text-[#e0e0e0]'
               }`}
               title="快速思考：轻量级，直接调用SKILL"
             >
@@ -3649,7 +3727,7 @@ export default function ChatPage() {
               className={`px-3 py-1.5 text-xs rounded-md transition ${
                 thinkingMode === 'deep'
                   ? 'bg-[#8b5cf6] text-white shadow-lg shadow-purple-500/20'
-                  : 'text-[#a1a1aa] hover:text-[#e4e4e7]'
+                  : 'text-[#8a8a8a] hover:text-[#e0e0e0]'
               }`}
               title="深度思考：完整A1-A5闭环"
             >
@@ -3658,13 +3736,13 @@ export default function ChatPage() {
           </div>
           
           {/* WorkBuddy桥接模式切换 */}
-          <div className="flex items-center space-x-1 bg-[#16213e] rounded-lg p-0.5">
+          <div className="flex items-center space-x-1 bg-[#1a1a1a] rounded-lg p-0.5">
             <button
               onClick={() => setWorkbuddyMode(true)}
               className={`px-3 py-1.5 text-xs rounded-md transition ${
                 workbuddyMode
                   ? 'bg-[#22c55e] text-white shadow-lg shadow-green-500/20'
-                  : 'text-[#a1a1aa] hover:text-[#e4e4e7]'
+                  : 'text-[#8a8a8a] hover:text-[#e0e0e0]'
               }`}
               title="WorkBuddy桥接：中台即时执行，对话任务秒级响应，交易任务需确认"
             >
@@ -3674,8 +3752,8 @@ export default function ChatPage() {
               onClick={() => setWorkbuddyMode(false)}
               className={`px-3 py-1.5 text-xs rounded-md transition ${
                 !workbuddyMode
-                  ? 'bg-[#3b82f6] text-white shadow-lg shadow-blue-500/20'
-                  : 'text-[#a1a1aa] hover:text-[#e4e4e7]'
+                  ? 'bg-[#0066ff] text-white shadow-lg shadow-blue-500/20'
+                  : 'text-[#8a8a8a] hover:text-[#e0e0e0]'
               }`}
               title="直接模式：使用LLM/Mock即时响应"
             >
@@ -3685,7 +3763,7 @@ export default function ChatPage() {
           
           <button
             onClick={() => setRightCollapsed(!rightCollapsed)}
-            className="p-1 hover:bg-[#16213e] rounded text-[#a1a1aa] transition"
+            className="p-1 hover:bg-[#1a1a1a] rounded text-[#8a8a8a] transition"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -3700,8 +3778,8 @@ export default function ChatPage() {
               <div
                 className={`max-w-[80%] px-4 py-3 rounded-lg ${
                   msg.role === "user"
-                    ? "bg-[#3b82f6] text-white"
-                    : "bg-[#16213e] text-[#e4e4e7]"
+                    ? "bg-[#0066ff] text-white"
+                    : "bg-[#1a1a1a] text-[#e0e0e0]"
                 }`}
               >
                 {msg.role === "assistant" && (
@@ -3739,8 +3817,8 @@ export default function ChatPage() {
                 <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                 {/* 交易确认按钮 */}
                 {msg.trade_task_id && !msg.trade_confirmed && (
-                  <div className="mt-3 pt-3 border-t border-[#0f3460]">
-                    <div className="text-xs text-[#a1a1aa] mb-2">🔒 请确认交易操作：</div>
+                  <div className="mt-3 pt-3 border-t border-[#1a1a1a]">
+                    <div className="text-xs text-[#8a8a8a] mb-2">🔒 请确认交易操作：</div>
                     <div className="flex flex-wrap gap-2">
                       <button
                         onClick={() => handleTradeConfirm(msg.trade_task_id!, 'confirm')}
@@ -3753,7 +3831,7 @@ export default function ChatPage() {
                           type="time"
                           value={scheduleTime}
                           onChange={(e) => setScheduleTime(e.target.value)}
-                          className="px-2 py-1 text-xs bg-[#0f1729] border border-[#2a2a4e] rounded text-[#e4e4e7] focus:outline-none focus:border-[#3b82f6]"
+                          className="px-2 py-1 text-xs bg-[#141414] border border-[#2a2a2a] rounded text-[#e0e0e0] focus:outline-none focus:border-[#0066ff]"
                           style={{ width: '90px' }}
                         />
                         <button
@@ -3778,13 +3856,13 @@ export default function ChatPage() {
         </div>
         
         {/* Quick Commands */}
-        <div className="px-4 py-2 border-t border-[#0f3460]">
+        <div className="px-4 py-2 border-t border-[#1a1a1a]">
           <div className="flex flex-wrap gap-2 mb-2">
             {["/行情", "/分析", "/推演", "/验证", "/开仓"].map((cmd) => (
               <button
                 key={cmd}
                 onClick={() => setInput(cmd)}
-                className="px-3 py-1 text-xs bg-[#16213e] text-[#a1a1aa] rounded-full hover:bg-[#0f3460] transition"
+                className="px-3 py-1 text-xs bg-[#1a1a1a] text-[#8a8a8a] rounded-full hover:bg-[#1f1f1f] transition"
               >
                 {cmd}
               </button>
@@ -3793,8 +3871,8 @@ export default function ChatPage() {
         </div>
         
         {/* Input */}
-        <form onSubmit={handleSubmit} className="p-4 border-t border-[#0f3460]">
-          <div className="flex items-center space-x-2 bg-[#16213e] rounded-lg px-4 py-3">
+        <form onSubmit={handleSubmit} className="p-4 border-t border-[#1a1a1a]">
+          <div className="flex items-center space-x-2 bg-[#1a1a1a] rounded-lg px-4 py-3">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -3803,15 +3881,15 @@ export default function ChatPage() {
               } | ${
                 thinkingMode === 'quick' ? '⚡快速' : '🧠深度'
               } | 支持 /命令)`}
-              className="flex-1 bg-transparent text-sm text-[#e4e4e7] placeholder-[#a1a1aa] focus:outline-none"
+              className="flex-1 bg-transparent text-sm text-[#e0e0e0] placeholder-[#a1a1aa] focus:outline-none"
             />
-            <button type="submit" className="p-2 bg-[#3b82f6] rounded-md hover:bg-blue-600 transition">
+            <button type="submit" className="p-2 bg-[#0066ff] rounded-md hover:bg-blue-700 transition">
               <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </button>
           </div>
-          <div className="flex items-center justify-between mt-2 text-xs text-[#a1a1aa]">
+          <div className="flex items-center justify-between mt-2 text-xs text-[#8a8a8a]">
             <span className="flex items-center gap-2">
               模型: {llmModel}
               {renderStatusDot(llmStatus)}
@@ -3831,9 +3909,9 @@ export default function ChatPage() {
 
       {/* Right Panel */}
       <div
-        className={`${rightCollapsed ? "w-0" : "w-80"} flex-shrink-0 flex flex-col bg-[#16213e] border-l border-[#0f3460] transition-all duration-300 overflow-hidden`}
+        className={`${rightCollapsed ? "w-0" : "w-80"} flex-shrink-0 flex flex-col bg-[#1a1a1a] border-l border-[#1a1a1a] transition-all duration-300 overflow-hidden`}
       >
-        <div className="p-4 border-b border-[#0f3460] flex items-center justify-between">
+        <div className="p-4 border-b border-[#1a1a1a] flex items-center justify-between">
           <h2 className="text-sm font-semibold text-[#3b82f6]">
             {rightPanelContent === 'analysis' ? '📌 分析面板' : 
              rightPanelContent === 'market' ? '📈 行情卡片' :
@@ -3855,7 +3933,7 @@ export default function ChatPage() {
                 setRightCollapsed(true);
               }
             }}
-            className="p-1 hover:bg-[#0f3460] rounded transition text-[#a1a1aa]"
+            className="p-1 hover:bg-[#1f1f1f] rounded transition text-[#8a8a8a]"
             title={rightPanelContent !== 'analysis' ? '返回分析面板' : '关闭面板'}
           >
             {rightPanelContent !== 'analysis' ? '←' : '✕'}
