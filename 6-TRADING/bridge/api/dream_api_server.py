@@ -11,11 +11,11 @@ import logging
 from datetime import datetime
 
 # 导入各模块API
-from .api.market_data_api import market_bp
-from .api.trade_exec_api import trade_bp
-from .api.skill_router_api import skill_bp
-from .api.intent_router_api import intent_bp
-from .api.bridge_management_api import bridge_bp
+from .market_data_api import market_bp
+from .trade_exec_api import trade_bp
+from .skill_router_api import skill_bp
+from .intent_router_api import intent_bp
+from .bridge_management_api import bridge_bp
 
 # 配置日志
 logging.basicConfig(

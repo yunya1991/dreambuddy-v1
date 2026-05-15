@@ -1,5 +1,5 @@
-# Bridge API 客户端模块
-# 前端调用桥接层的统一接口
+// Bridge API Client Module
+// Frontend unified interface for calling bridge layer
 
 const BRIDGE_BASE_URL = process.env.NEXT_PUBLIC_BRIDGE_URL || 'http://127.0.0.1:3847';
 
