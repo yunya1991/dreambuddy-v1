@@ -35,28 +35,43 @@ const QWEN_MODELS = [
   { id: 'qwq-32b', name: 'QwQ 32B', desc: '推理增强' },
 ];
 
-type RightPanelType = 'analysis' | 'market' | 'signal' | 'position' | 'api' | 'trading' | 'strategy' | 'communication' | 'llm' | 'report' | 'monitor';
+type RightPanelType = 'analysis' | 'market' | 'signal' | 'position' | 'api' | 'trading' | 'strategy' | 'communication' | 'llm' | 'report' | 'monitor' | 'memory';
 
-// 链路步骤定义
-const CHAIN_STEP_MAP: Record<string, { label: string; icon: string }> = {
-  'A1_research':  { label: '市场侦察', icon: '🔍' },
-  'A2_analysis':  { label: '深度分析', icon: '🧠' },
-  'A3_simulation': { label: '情景推演', icon: '🎲' },
-  'A4_validation': { label: '方案验证', icon: '✅' },
-  'A5_execution':  { label: '决策执行', icon: '⚡' },
-  'A6_intel':     { label: '情报更新', icon: '📡' },
-  'A7_gate':      { label: '风控审查', icon: '🛡️' },
+// 链路步骤定义 (v2 三闭环架构)
+const CHAIN_STEP_MAP: Record<string, { label: string; icon: string; loop?: string }> = {
+  'A1_research':    { label: '市场侦察', icon: '🔍', loop: 'execution' },
+  'A2_analysis':    { label: '深度分析', icon: '🧠', loop: 'execution' },
+  'A3_simulation':  { label: '情景推演', icon: '🎲', loop: 'execution' },
+  'A4_validation':  { label: '方案验证', icon: '✅', loop: 'execution' },
+  'A5_execution':   { label: '决策执行', icon: '⚡', loop: 'execution' },
+  'A9_exit':        { label: '离场评估', icon: '🚪', loop: 'execution' },
+  'A6_intelligence':{ label: '情报监控', icon: '📡', loop: 'intelligence' },
+  'A6_alert':       { label: '情报告警', icon: '⚠️', loop: 'intelligence' },
+  'A7_practice':    { label: '实践记录', icon: '📝', loop: 'governance' },
+  'A8_verification':{ label: '知行验证', icon: '🔮', loop: 'governance' },
+  'market_data':    { label: '行情数据', icon: '📊', loop: 'intelligence' },
+  'knowledge_base': { label: '知识库', icon: '📚', loop: 'general' },
+  'tavily_search':  { label: '联网搜索', icon: '🌐', loop: 'general' },
+  'direct_answer':  { label: '直接回答', icon: '💬', loop: 'general' },
+  // 旧名兼容 (向后兼容)
+  'A6_intel':       { label: '情报更新', icon: '📡', loop: 'intelligence' },
+  'A7_gate':        { label: '风控审查', icon: '🛡️', loop: 'governance' },
 };
 
-// 意图→默认链路映射
+// 意图→默认链路映射 (v2 对齐智能路由)
 const INTENT_CHAIN_MAP: Record<string, string[]> = {
-  'market_query':    ['A1_research'],
+  'market_query':    ['A6_intelligence', 'market_data'],
   'deep_analysis':   ['A1_research', 'A2_analysis'],
-  'scenario_sim':    ['A1_research', 'A3_simulation'],
+  'scenario_sim':    ['A1_research', 'A2_analysis', 'A3_simulation'],
   'strategy_verify': ['A4_validation'],
-  'execute_trade':   ['A5_execution'],
-  // 深度思考完整链路
+  'execute_trade':   ['A4_validation', 'A5_execution', 'A9_exit'],
   'deep_full':       ['A1_research', 'A2_analysis', 'A3_simulation', 'A4_validation'],
+  'simple_qa':       ['direct_answer'],
+  'command':         ['market_data'],
+  'system_config':   ['direct_answer'],
+  'credits_query':   ['direct_answer'],
+  'artifact_query':  ['knowledge_base'],
+  'risk_alert_response': ['A6_intelligence', 'A6_alert'],
 };
 
 // API配置类型
@@ -153,6 +168,12 @@ export default function ChatPage() {
   } | null>(null);
   const [monitorSelectedTrace, setMonitorSelectedTrace] = useState<string | null>(null);
   const monitorSSERef = useRef<EventSource | null>(null);
+
+  // Memory Bank 状态
+  const [memoryRecords, setMemoryRecords] = useState<any[]>([]);
+  const [memoryStats, setMemoryStats] = useState<any>(null);
+  const [memoryCandidates, setMemoryCandidates] = useState<any[]>([]);
+  const [memoryAdjustments, setMemoryAdjustments] = useState<any[]>([]);
   
   // LLM 状态
   const [llmStatus, setLlmStatus] = useState<'online' | 'offline' | 'degraded'>('offline');
@@ -691,6 +712,69 @@ export default function ChatPage() {
       }
     };
   }, [rightPanelContent, monitorPaused]);
+
+  // 记忆库数据获取
+  const fetchMemoryData = useCallback(async () => {
+    try {
+      const [recordsRes, statsRes, candidatesRes, adjustmentsRes] = await Promise.all([
+        fetch('/api/intent/memory?limit=20'),
+        fetch('/api/intent/memory?action=stats'),
+        fetch('/api/intent/memory?action=candidates'),
+        fetch('/api/intent/memory?action=adjustments'),
+      ]);
+      const recordsData = await recordsRes.json();
+      const statsData = await statsRes.json();
+      const candidatesData = await candidatesRes.json();
+      const adjustmentsData = await adjustmentsRes.json();
+      if (recordsData.records) setMemoryRecords(recordsData.records);
+      if (statsData.total_records !== undefined) setMemoryStats(statsData);
+      if (candidatesData.candidates) setMemoryCandidates(candidatesData.candidates);
+      if (adjustmentsData.adjustments) setMemoryAdjustments(adjustmentsData.adjustments);
+    } catch {}
+  }, []);
+
+  // 当切换到记忆库面板时加载数据
+  useEffect(() => {
+    if (rightPanelContent === 'memory') {
+      fetchMemoryData();
+    }
+  }, [rightPanelContent, fetchMemoryData]);
+
+  // 提交反馈
+  const submitMemoryFeedback = async (recordId: string, feedback: 'correct' | 'incorrect') => {
+    try {
+      await fetch('/api/intent/memory?action=feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ record_id: recordId, feedback }),
+      });
+      // 刷新数据
+      fetchMemoryData();
+    } catch {}
+  };
+
+  // 触发进化
+  const triggerEvolve = async () => {
+    try {
+      const res = await fetch('/api/intent/memory?action=evolve', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        fetchMemoryData();
+      }
+    } catch {}
+  };
+
+  // 采纳候选模式
+  const adoptCandidate = async (c: any) => {
+    try {
+      await fetch('/api/intent/memory?action=adopt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(c),
+      });
+      fetchMemoryData();
+    } catch {}
+  };
 
   // 切换模型
   const switchModel = async (modelId: string) => {
@@ -3628,6 +3712,177 @@ export default function ChatPage() {
             )}
           </div>
         );
+
+      case 'memory':
+        const intentLabel: Record<string, string> = {
+          market_query: '行情', deep_analysis: '分析', scenario_sim: '推演',
+          strategy_verify: '验证', execute_trade: '交易', simple_qa: '问答',
+          command: '命令', system_config: '配置', credits_query: '积分',
+          artifact_query: '产物', risk_alert_response: '风险',
+        };
+        const methodColor: Record<string, string> = {
+          llm: '#3b82f6', rule: '#f59e0b', follow_up: '#22c55e', default: '#6b7280',
+        };
+        const methodLabel: Record<string, string> = {
+          llm: 'LLM', rule: '规则', follow_up: '追问', default: '兜底',
+        };
+
+        return (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="panel-title" style={{ marginBottom: 0 }}>🧠 意图记忆库</div>
+              <button
+                onClick={triggerEvolve}
+                className="text-[10px] px-2 py-1 rounded bg-[#8b5cf6]/20 text-[#8b5cf6] hover:bg-[#8b5cf6]/30 transition"
+              >
+                🔄 进化
+              </button>
+            </div>
+
+            {/* 统计概览 */}
+            <div className="config-section mb-3">
+              <div className="text-[10px] text-[#a1a1aa] mb-2 font-semibold">学习统计</div>
+              {memoryStats ? (
+                <div className="grid grid-cols-2 gap-2 text-[10px]">
+                  <div className="bg-[#0f3460] rounded p-1.5 text-center">
+                    <div className="text-[8px] text-[#a1a1aa]">总记录</div>
+                    <div className="font-bold text-[#e4e4e7]">{memoryStats.total_records}</div>
+                  </div>
+                  <div className="bg-[#0f3460] rounded p-1.5 text-center">
+                    <div className="text-[8px] text-[#a1a1aa]">准确率</div>
+                    <div className={`font-bold ${memoryStats.accuracy_rate >= 80 ? 'text-green-400' : memoryStats.accuracy_rate >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>
+                      {memoryStats.accuracy_rate}%
+                    </div>
+                  </div>
+                  <div className="bg-[#0f3460] rounded p-1.5 text-center">
+                    <div className="text-[8px] text-[#a1a1aa]">平均置信度</div>
+                    <div className="font-bold text-[#3b82f6]">{memoryStats.avg_confidence}</div>
+                  </div>
+                  <div className="bg-[#0f3460] rounded p-1.5 text-center">
+                    <div className="text-[8px] text-[#a1a1aa]">反馈</div>
+                    <div className="font-bold">
+                      <span className="text-green-400">{memoryStats.feedback_counts.correct}</span>
+                      /<span className="text-red-400">{memoryStats.feedback_counts.incorrect}</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-[10px] text-[#a1a1aa] text-center py-2">等待数据...</div>
+              )}
+            </div>
+
+            {/* 方法分布 */}
+            {memoryStats?.method_distribution && Object.keys(memoryStats.method_distribution).length > 0 && (
+              <div className="config-section mb-3">
+                <div className="text-[8px] text-[#a1a1aa] mb-1">识别方法分布</div>
+                <div className="flex flex-wrap gap-1">
+                  {Object.entries(memoryStats.method_distribution).map(([method, count]) => (
+                    <span key={method} className="text-[8px] px-1.5 py-0.5 rounded text-white"
+                      style={{ backgroundColor: methodColor[method] || '#666' }}>
+                      {methodLabel[method] || method}: {String(count)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 意图分布 */}
+            {memoryStats?.intent_distribution && Object.keys(memoryStats.intent_distribution).length > 0 && (
+              <div className="config-section mb-3">
+                <div className="text-[8px] text-[#a1a1aa] mb-1">意图分布</div>
+                <div className="flex flex-wrap gap-1">
+                  {Object.entries(memoryStats.intent_distribution).map(([intent, count]) => (
+                    <span key={intent} className="text-[8px] px-1.5 py-0.5 rounded text-white"
+                      style={{ backgroundColor: '#3b82f6' }}>
+                      {intentLabel[intent] || intent}: {String(count)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 置信度调整推荐 */}
+            {memoryAdjustments.length > 0 && (
+              <div className="config-section mb-3">
+                <div className="text-[10px] text-[#8b5cf6] mb-1 font-semibold">⚙️ 置信度调整推荐</div>
+                {memoryAdjustments.slice(0, 5).map((adj) => (
+                  <div key={adj.pattern_id} className="flex items-center justify-between py-0.5 text-[9px]">
+                    <span className="text-[#e4e4e7]">{adj.pattern_id}</span>
+                    <span className={adj.delta > 0 ? 'text-green-400' : 'text-red-400'}>
+                      {adj.current_confidence} → {adj.suggested_confidence} ({adj.delta > 0 ? '+' : ''}{adj.delta})
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 候选新模式 */}
+            {memoryCandidates.length > 0 && (
+              <div className="config-section mb-3">
+                <div className="text-[10px] text-[#22c55e] mb-1 font-semibold">💡 候选新模式</div>
+                {memoryCandidates.slice(0, 3).map((c, idx) => (
+                  <div key={idx} className="bg-[#0f3460] rounded p-1.5 mb-1">
+                    <div className="flex items-center justify-between text-[9px]">
+                      <span className="text-[#3b82f6]">{intentLabel[c.intent] || c.intent}</span>
+                      <span className="text-[#a1a1aa]">{c.occurrences}次</span>
+                    </div>
+                    <div className="text-[8px] text-[#e4e4e7] mt-0.5">关键词: {c.keywords.join(', ')}</div>
+                    <button
+                      onClick={() => adoptCandidate(c)}
+                      className="text-[8px] mt-1 px-1.5 py-0.5 rounded bg-[#22c55e]/20 text-[#22c55e] hover:bg-[#22c55e]/30 transition"
+                    >
+                      采纳
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 识别记录列表 */}
+            <div className="config-section" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              <div className="text-[10px] text-[#a1a1aa] mb-2 font-semibold">识别记录</div>
+              {memoryRecords.length === 0 ? (
+                <div className="text-[10px] text-[#a1a1aa] text-center py-3">暂无记录</div>
+              ) : (
+                <div className="space-y-1">
+                  {memoryRecords.map((r) => (
+                    <div key={r.id} className="py-1 px-1.5 rounded text-[9px] bg-[#0f3460]/50 hover:bg-[#0f3460] transition">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-[#e4e4e7] font-medium truncate">{r.input}</span>
+                        <span className="text-[#a1a1aa] flex-shrink-0 ml-1">{r.recognized_confidence.toFixed(2)}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="px-1 rounded text-[8px] text-white"
+                          style={{ backgroundColor: '#3b82f6' }}>
+                          {intentLabel[r.recognized_intent] || r.recognized_intent}
+                        </span>
+                        <span className="px-1 rounded text-[8px] text-white"
+                          style={{ backgroundColor: methodColor[r.recognized_method] || '#666' }}>
+                          {methodLabel[r.recognized_method] || r.recognized_method}
+                        </span>
+                        {r.user_feedback === 'correct' && <span className="text-green-400">✓</span>}
+                        {r.user_feedback === 'incorrect' && <span className="text-red-400">✗</span>}
+                        {r.user_feedback === null && (
+                          <div className="flex gap-1 ml-auto">
+                            <button
+                              onClick={() => submitMemoryFeedback(r.id, 'correct')}
+                              className="text-green-400 hover:text-green-300"
+                            >✓</button>
+                            <button
+                              onClick={() => submitMemoryFeedback(r.id, 'incorrect')}
+                              className="text-red-400 hover:text-red-300"
+                            >✗</button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
       default:
         return (
           <div>
@@ -3942,6 +4197,7 @@ export default function ChatPage() {
               <div className="collapsible-item" onClick={() => handleShowRightPanel('strategy')}>🎯 策略设置</div>
               <div className="collapsible-item" onClick={() => handleShowRightPanel('communication')}>📡 通信渠道</div>
               <div className="collapsible-item" onClick={() => handleShowRightPanel('monitor')}>📡 传递监控</div>
+              <div className="collapsible-item" onClick={() => handleShowRightPanel('memory')}>🧠 意图记忆库</div>
             </div>
           </div>
         </div>
@@ -4231,6 +4487,7 @@ export default function ChatPage() {
              rightPanelContent === 'communication' ? '📡 通信渠道' :
              rightPanelContent === 'llm' ? '🤖 大模型配置' :
              rightPanelContent === 'monitor' ? '📡 传递监控' :
+             rightPanelContent === 'memory' ? '🧠 意图记忆库' :
              rightPanelContent === 'report' ? '📄 研报详情' : '面板'}
           </h2>
           <button

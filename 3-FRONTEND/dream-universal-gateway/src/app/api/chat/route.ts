@@ -1,69 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { emitMonitorEvent } from "@/lib/monitor-bus";
+import {
+  recognizeIntent,
+  checkLLMStatus,
+  routeIntent,
+  CHAIN_STEPS,
+} from "@/lib/intent";
 
-/**
- * 意图识别类型
- */
-type IntentType = 
-  | 'market_query'      // 行情查询
-  | 'deep_analysis'     // 深度分析
-  | 'scenario_sim'      // 情景推演
-  | 'strategy_verify'   // 策略验证
-  | 'execute_trade'     // 执行交易
-  | 'simple_qa'        // 简单问答
-  | 'command';          // 命令（/开头）
+// ============ 会话上下文 ============
 
-/**
- * 思考模式
- */
-type ThinkingMode = 'quick' | 'deep';
-
-/**
- * 可选 Qwen 模型列表
- */
-const QWEN_MODELS = [
-  { id: 'qwen-turbo', name: 'Qwen Turbo', desc: '最快响应' },
-  { id: 'qwen-plus', name: 'Qwen Plus', desc: '质量与速度平衡' },
-  { id: 'qwen-max', name: 'Qwen Max', desc: '最强推理' },
-  { id: 'qwen3-30b-a3b', name: 'Qwen3 30B-A3B', desc: 'Qwen3 MoE轻量' },
-  { id: 'qwen3-235b-a22b', name: 'Qwen3 235B-A22B', desc: 'Qwen3 MoE旗舰' },
-  { id: 'qwq-32b', name: 'QwQ 32B', desc: '推理增强' },
-] as const;
-
-/**
- * 意图识别结果
- */
-interface IntentResult {
-  intent: IntentType;
-  confidence: number;
-  entities?: {
-    symbol?: string;
-    timeframe?: string;
-    strategy?: string;
-  };
-  routing: {
-    chain: string[];
-    priority: 'high' | 'medium' | 'low';
-    cacheable: boolean;
-  };
-  context_aware?: boolean;
-  thinking_mode?: ThinkingMode;
-}
-
-/**
- * 会话上下文
- */
 interface SessionContext {
   session_id: string;
-  last_intent?: IntentType;
+  user_role: "FREE" | "PRO" | "ADMIN";
+  last_intent?: string;
   last_symbol?: string;
-  last_analysis_result?: string;
+  last_complexity?: string;
   message_history: string[];
-  thinking_mode: ThinkingMode;
+  thinking_mode: "quick" | "deep";
   cached_responses: Map<string, { response: string; timestamp: number }>;
 }
 
-// 内存中的会话上下文存储
 const sessionContexts = new Map<string, SessionContext>();
 
 function getQwenApiKey(): string {
@@ -97,7 +53,7 @@ async function checkLLMStatus(): Promise<'online' | 'offline' | 'degraded'> {
   if (now - llmLastCheck < LLM_CHECK_INTERVAL && llmStatus !== 'offline') {
     return llmStatus;
   }
-  
+
   try {
     const response = await fetch(QWEN_CONFIG.endpoint, {
       method: 'POST',
@@ -111,7 +67,7 @@ async function checkLLMStatus(): Promise<'online' | 'offline' | 'degraded'> {
         max_tokens: 5,
       }),
     });
-    
+
     if (response.ok) {
       llmStatus = 'online';
     } else if (response.status === 403) {
@@ -122,7 +78,7 @@ async function checkLLMStatus(): Promise<'online' | 'offline' | 'degraded'> {
   } catch {
     llmStatus = 'offline';
   }
-  
+
   llmLastCheck = now;
   return llmStatus;
 }
@@ -174,14 +130,14 @@ let intentMethod: 'rule' | 'llm' = 'llm';
  */
 function recognizeIntentRule(message: string, context?: SessionContext): IntentResult {
   const msg = message.toLowerCase().trim();
-  
+
   console.log(`[IntentRule] 输入: "${msg}"`);
   if (context) {
     console.log(`[IntentRule] 上下文: last_intent=${context.last_intent}, last_symbol=${context.last_symbol}`);
   }
-  
+
   const mode = context?.thinking_mode || 'quick';
-  
+
   // 命令识别（最高优先级）
   if (msg.startsWith('/')) {
     const commandMap: Record<string, IntentType> = {
@@ -191,7 +147,7 @@ function recognizeIntentRule(message: string, context?: SessionContext): IntentR
       '/验证': 'strategy_verify',
       '/开仓': 'execute_trade',
     };
-    
+
     for (const [cmd, intent] of Object.entries(commandMap)) {
       if (msg.startsWith(cmd)) {
         console.log(`[IntentRule] 命令识别: ${cmd} → ${intent}`);
@@ -208,7 +164,7 @@ function recognizeIntentRule(message: string, context?: SessionContext): IntentR
       }
     }
   }
-  
+
   // 上下文感知：追问检测
   if (context?.last_intent === 'deep_analysis') {
     if (msg.includes('为什么') || msg.includes('原因') || msg.includes('详细') || msg.includes('如何')) {
@@ -227,7 +183,7 @@ function recognizeIntentRule(message: string, context?: SessionContext): IntentR
       };
     }
   }
-  
+
   // 快捷追问识别
   if (context?.last_symbol) {
     if (msg.match(/^(涨|跌|怎么样|如何|怎么看|还能)$/)) {
@@ -246,7 +202,7 @@ function recognizeIntentRule(message: string, context?: SessionContext): IntentR
       };
     }
   }
-  
+
   // 关键词识别
   if (msg.includes('行情') || msg.includes('价格') || msg.includes('涨') || msg.includes('跌')) {
     return {
@@ -255,7 +211,7 @@ function recognizeIntentRule(message: string, context?: SessionContext): IntentR
       routing: { chain: ['market_data'], priority: 'high', cacheable: true },
     };
   }
-  
+
   if (msg.includes('分析') || msg.includes('怎么看') || msg.includes('走势')) {
     return {
       intent: 'deep_analysis', confidence: 0.85,
@@ -263,7 +219,7 @@ function recognizeIntentRule(message: string, context?: SessionContext): IntentR
       routing: { chain: getChainForIntent('deep_analysis', mode), priority: 'high', cacheable: false },
     };
   }
-  
+
   if (msg.includes('推演') || msg.includes('情景') || msg.includes('如果')) {
     return {
       intent: 'scenario_sim', confidence: 0.8,
@@ -271,21 +227,21 @@ function recognizeIntentRule(message: string, context?: SessionContext): IntentR
       routing: { chain: ['A3_simulation'], priority: 'medium', cacheable: false },
     };
   }
-  
+
   if (msg.includes('验证') || msg.includes('回测')) {
     return {
       intent: 'strategy_verify', confidence: 0.8, thinking_mode: mode,
       routing: { chain: ['A4_validation'], priority: 'medium', cacheable: false },
     };
   }
-  
+
   if (msg.includes('开仓') || msg.includes('下单') || msg.includes('交易')) {
     return {
       intent: 'execute_trade', confidence: 0.75, thinking_mode: mode,
       routing: { chain: ['A5_execution'], priority: 'high', cacheable: false },
     };
   }
-  
+
   console.log(`[IntentRule] 未匹配关键词，使用简单问答模式`);
   return {
     intent: 'simple_qa', confidence: 0.6, thinking_mode: mode,
@@ -298,7 +254,7 @@ function recognizeIntentRule(message: string, context?: SessionContext): IntentR
  */
 async function recognizeIntentLLM(message: string, context?: SessionContext): Promise<IntentResult> {
   const thinkingMode = context?.thinking_mode || 'quick';
-  
+
   const systemPrompt = `你是交易助手的意图识别模块。根据用户消息输出JSON。
 
 意图: market_query|deep_analysis|scenario_sim|strategy_verify|execute_trade|simple_qa
@@ -322,7 +278,7 @@ ${context?.message_history && context.message_history.length > 0 ? `近3条:${co
 
     // 鲁棒JSON解析：尝试多种提取方式
     let parsed: any = null;
-    
+
     // 方式1: 直接匹配花括号
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
@@ -330,7 +286,7 @@ ${context?.message_history && context.message_history.length > 0 ? `近3条:${co
         parsed = JSON.parse(jsonMatch[0]);
       } catch {}
     }
-    
+
     // 方式2: 提取 ```json 代码块
     if (!parsed) {
       const codeBlockMatch = response.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -338,11 +294,11 @@ ${context?.message_history && context.message_history.length > 0 ? `近3条:${co
         try { parsed = JSON.parse(codeBlockMatch[1]); } catch {}
       }
     }
-    
+
     if (!parsed || !parsed.intent) {
       throw new Error('Failed to parse LLM response as intent JSON');
     }
-    
+
     // 验证intent合法性
     const validIntents: IntentType[] = ['market_query', 'deep_analysis', 'scenario_sim', 'strategy_verify', 'execute_trade', 'simple_qa'];
     if (!validIntents.includes(parsed.intent)) {
@@ -350,7 +306,7 @@ ${context?.message_history && context.message_history.length > 0 ? `近3条:${co
       parsed.intent = 'simple_qa';
       parsed.confidence = 0.4;
     }
-    
+
     return {
       intent: parsed.intent,
       confidence: parsed.confidence || 0.7,
@@ -384,7 +340,7 @@ function getChainForIntent(intent: IntentType, thinkingMode: ThinkingMode): stri
     };
     return quickChainMap[intent] || ['direct_answer'];
   }
-  
+
   // 深度思考：完整闭环
   const deepChainMap: Record<IntentType, string[]> = {
     'market_query': ['market_data'],
@@ -436,202 +392,261 @@ function generateCacheKey(intent: IntentResult, message: string): string {
 }
 
 /**
- * 模拟处理链路
+ * 模拟处理链响应
  */
-async function processWithChain(chain: string[], message: string, intent: IntentResult, context?: SessionContext): Promise<string> {
+function generateChainResponse(chain: string[], intent: string, entities: Record<string, string>): string {
+  const symbol = entities.symbol || "BTC";
   const responses: Record<string, string> = {
-    'market_data': `📊 行情数据（模拟）\nBTC-USDT-SWAP: $80,630\n24h涨跌: -0.23%\n资金费率: +0.003%`,
-    'A1_research': `🔍 A1 市场侦察完成\n- 宏观环境: CPI超预期，美联储降息预期归零\n- 链上数据: 交易所净流出\n- 情绪指标: 恐惧指数42`,
-    'A2_analysis': `🧠 A2 深度分析完成\n- Regime: RANGE_BOUND (置信度65%)\n- 主力矛盾: 宏观转鹰 vs 现货需求\n- 建议: 观望防守`,
-    'A3_simulation': `🎲 A3 情景推演完成\n- 看涨情景 (30%): 突破$82,100\n- 看跌情景 (50%): 跌破$79,700\n- 横盘情景 (20%): 维持震荡`,
-    'A4_validation': `✅ A4 策略验证完成\n- 推荐策略: 观望防守\n- 置信度: 65%\n- 风险评级: 中`,
-    'A5_execution': `⚡ A5 执行决策\n- 操作: 暂不开仓\n- 原因: 区间震荡，等待突破`,
-    'direct_answer': `💡 根据上一轮分析，我来补充说明：\n\n这是基于上下文的追问回答。`,
+    A1_research: `🔍 **A1 市场侦察**
+
+当前${symbol}市场状态:
+- 宏观环境: CPI超预期，美联储政策观望
+- 链上数据: 交易所净流出趋势
+- 情绪指标: 市场情绪中性偏谨慎`,
+    A2_analysis: `🧠 **A2 深度分析**
+
+- Regime: 区间震荡 (RANGE_BOUND)
+- 主要矛盾: 宏观偏鹰 vs 技术面支撑
+- 阻力最小方向: 横盘偏弱
+- 建议: 观望防守`,
+    A3_simulation: `🎲 **A3 情景推演**
+
+| 情景 | 概率 | 操作 |
+|------|------|------|
+| 区间延续 | 50% | 观望 |
+| 向下突破 | 20% | A4验证后SHORT |
+| 向上反弹 | 18% | 轻仓BUY |
+| 暴跌 | 8% | 紧急避险 |`,
+    A4_validation: `✅ **A4 策略验证**
+
+- 当前Regime与A3结论一致
+- Edge衰减在阈值内
+- 无P0风险事件
+- 结论: 维持观望`,
+    A5_execution: `⚡ **A5 执行决策**
+
+- 操作: 暂不开仓
+- 原因: 区间震荡，等待突破信号
+- 风控: 已就绪`,
+    A9_exit: `🚪 **A9 离场评估**
+
+- 当前持仓: 空仓
+- 离场条件: 未触发
+- 状态: 正常监控中`,
+    A6_intelligence: `📡 **A6 情报监控**
+
+- 市场Regime: RANGE_BOUND
+- 风险评分: 0.3 (低)
+- 无L0-L1级别告警
+- 持续监控中...`,
+    A6_alert: `⚠️ **A6 情报告警**
+
+- 检测到市场信号变化
+- 风险等级: 待评估
+- 建议: 关注关键位`,
+    market_data: `📊 **${symbol} 行情数据**
+
+- 价格: $80,630
+- 24h涨跌: -0.23%
+- 24h高/低: $81,500 / $79,700
+- 资金费率: +0.0034%
+- 恐惧指数: 42 (Fear)`,
+    knowledge_base: `📚 **知识库检索**
+
+根据历史数据，${symbol}当前处于区间震荡阶段。
+- 关键支撑: $79,700
+- 关键阻力: $81,500
+- 建议操作: 观望等待突破`,
+    tavily_search: `🌐 **联网搜索**
+
+最新市场资讯已获取，${symbol}市场情绪偏谨慎。`,
+    direct_answer: `💬 收到你的问题，正在为你处理...`,
   };
-    
-  let result = '';
-  if (intent.context_aware) {
-    result = `💡 根据上一轮分析，我来补充说明：\n\n`;
-  }
-    
+
+  let result = "";
   for (const step of chain) {
     if (responses[step]) {
-      result += responses[step] + '\n\n';
+      result += responses[step] + "\n\n";
     }
   }
-    
-  return result || '正在处理你的请求...';
+  return result || "处理完成。";
 }
 
-/**
- * POST /api/chat
- */
+// ============ POST /api/chat ============
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { message, session_id, thinking_mode } = body;
-      
-    if (!message) {
-      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
-    }
-      
-    console.log(`[Chat API] Received: "${message}" (session: ${session_id || 'none'}, mode: ${thinking_mode || 'quick'})`);
+    const { message, session_id, thinking_mode, user_role } = body;
 
-    // 📡 监控埋点: 用户请求进入 (Chat模式)
+    if (!message) {
+      return NextResponse.json({ error: "Message is required" }, { status: 400 });
+    }
+
     const chatTraceId = `chat_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+
+    // 📡 监控埋点: 用户请求
     emitMonitorEvent({
       trace_id: chatTraceId,
-      uid: session_id || 'anonymous',
-      layer: 'frontend',
-      phase: 'user_input',
-      status: 'received',
-      thinking_mode: thinking_mode || 'quick',
+      uid: session_id || "anonymous",
+      layer: "frontend",
+      phase: "user_input",
+      status: "received",
+      thinking_mode: thinking_mode || "quick",
       message_preview: message.slice(0, 50),
     });
 
     // 获取或创建会话上下文
-    let context = session_id ? sessionContexts.get(session_id) : undefined;
-    if (session_id && !context) {
+    const ctxSessionId = session_id || "anonymous";
+    let context = sessionContexts.get(ctxSessionId);
+    if (!context) {
       context = {
-        session_id,
+        session_id: ctxSessionId,
+        user_role: user_role || "FREE",
         message_history: [],
-        thinking_mode: thinking_mode || 'quick',
+        thinking_mode: thinking_mode || "quick",
         cached_responses: new Map(),
       };
-      sessionContexts.set(session_id, context);
+      sessionContexts.set(ctxSessionId, context);
     }
-      
-    // 更新思考模式
-    if (thinking_mode && context) {
-      context.thinking_mode = thinking_mode;
-    }
-      
-    // 1. 意图识别
-    const intentResult = await recognizeIntent(message, context);
-    console.log(`[Chat API] Intent: ${intentResult.intent} (confidence: ${intentResult.confidence}, context_aware: ${intentResult.context_aware || false}, mode: ${intentResult.thinking_mode})`);
+
+    // 更新思考模式和角色
+    if (thinking_mode) context.thinking_mode = thinking_mode;
+    if (user_role) context.user_role = user_role;
+
+    // 1. 意图识别 (统一入口: LLM → rule → fallback)
+    const intentResult = await recognizeIntent(message, {
+      session_id: context.session_id,
+      user_role: context.user_role,
+      last_intent: context.last_intent as any,
+      last_symbol: context.last_symbol,
+      last_complexity: context.last_complexity as any,
+      message_history: context.message_history,
+      thinking_mode: context.thinking_mode,
+    });
 
     // 📡 监控埋点: 意图识别完成
     emitMonitorEvent({
       trace_id: chatTraceId,
-      uid: session_id || 'anonymous',
-      layer: 'frontend',
-      phase: 'intent_recognized',
-      status: 'completed',
+      uid: context.session_id,
+      layer: "frontend",
+      phase: "intent_recognized",
+      status: "completed",
       intent: intentResult.intent,
-      thinking_mode: intentResult.thinking_mode || 'quick',
-      chain: intentResult.routing.chain,
-    });console.log(`[Chat API] Routing chain: ${intentResult.routing.chain.join(' → ')}`);
-      
-    // 2. 缓存检查
-    let response: string;
-    if (intentResult.routing.cacheable && context) {
-      const cacheKey = generateCacheKey(intentResult, message);
-      const cached = context.cached_responses.get(cacheKey);
-        
-      if (cached && (Date.now() - cached.timestamp < 5 * 60 * 1000)) {
-        console.log(`[Chat API] Cache hit: ${cacheKey}`);
-        response = cached.response;
-      } else {
-        response = await processWithChain(intentResult.routing.chain, message, intentResult, context);
-        if (context) {
-          context.cached_responses.set(cacheKey, { response, timestamp: Date.now() });
-        }
-      }
-    } else {
-      response = await processWithChain(intentResult.routing.chain, message, intentResult, context);
+      thinking_mode: context.thinking_mode,
+      chain: [],
+    });
+
+    // 2. 智能路由 (基于三闭环 + 角色 + 复杂度)
+    const routing = routeIntent(intentResult.intent, intentResult.complexity, {
+      session_id: context.session_id,
+      user_role: context.user_role,
+      last_intent: context.last_intent as any,
+      last_symbol: context.last_symbol,
+      last_complexity: context.last_complexity as any,
+      message_history: context.message_history,
+      thinking_mode: context.thinking_mode,
+    });
+
+    console.log(`[Chat API] Intent: ${intentResult.intent} (method: ${intentResult.method}, confidence: ${intentResult.confidence})`);
+    console.log(`[Chat API] Route: ${routing.loop_type} → ${routing.chain.join(" → ")}`);
+
+    // 3. 检查权限
+    if (routing.role_check === "upgrade_required") {
+      const upgradeMsg = routing.chain.length === 0
+        ? `⚠️ 该功能需要 PRO 角色。当前为 FREE 角色，已降级到知识库查询。\n\n如需完整功能，请升级到 PRO。`
+        : `ℹ️ 部分功能需要 PRO 角色。当前已为你执行了简化路径: ${routing.chain.join(" → ")}`;
+
+      const content = upgradeMsg + "\n\n" + generateChainResponse(routing.chain, intentResult.intent, intentResult.entities);
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          content,
+          intent: intentResult.intent,
+          confidence: intentResult.confidence,
+          routing,
+          complexity: intentResult.complexity,
+          method: intentResult.method,
+          llm_status: await checkLLMStatus(),
+          llm_model: process.env.QWEN_MODEL || "qwen-plus",
+          timestamp: new Date().toISOString(),
+        },
+      });
     }
-      
-    // 3. 更新会话上下文
-    if (context) {
-      context.last_intent = intentResult.intent;
-      context.last_symbol = intentResult.entities?.symbol || context.last_symbol;
-      context.message_history.push(message);
-      if (context.message_history.length > 20) {
-        context.message_history = context.message_history.slice(-20);
-      }
+
+    if (routing.role_check === "denied") {
+      return NextResponse.json({
+        success: false,
+        error: "Access denied for this operation",
+      }, { status: 403 });
     }
-      
-    // 4. 返回结果
+
+    // 4. 执行路由 (生成响应)
+    const chain = routing.chain.length > 0 ? routing.chain : ["direct_answer"];
+    const response = generateChainResponse(chain, intentResult.intent, intentResult.entities);
+
+    // 5. 更新会话上下文
+    context.last_intent = intentResult.intent;
+    context.last_symbol = intentResult.entities.symbol || context.last_symbol;
+    context.last_complexity = intentResult.complexity;
+    context.message_history.push(message);
+    if (context.message_history.length > 20) {
+      context.message_history = context.message_history.slice(-20);
+    }
+
+    // 6. 返回结果
     return NextResponse.json({
       success: true,
       data: {
         content: response,
         intent: intentResult.intent,
         confidence: intentResult.confidence,
-        chain: intentResult.routing.chain,
-        context_aware: intentResult.context_aware || false,
-        thinking_mode: intentResult.thinking_mode || 'quick',
-        llm_status: llmStatus,
-        llm_model: QWEN_CONFIG.model,
-        intent_method: intentMethod,
+        routing,
+        complexity: intentResult.complexity,
+        method: intentResult.method,
+        llm_status: await checkLLMStatus(),
+        llm_model: process.env.QWEN_MODEL || "qwen-plus",
         timestamp: new Date().toISOString(),
       },
     });
-      
+
   } catch (error) {
-    console.error('[Chat API] Error:', error);
+    console.error("[Chat API] Error:", error);
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
+      { success: false, error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }
 }
 
-/**
- * GET /api/chat
- * 状态查询 + 聊天历史（预留）
- */
+// ============ GET /api/chat ============
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const action = searchParams.get('action');
-  
-  // 状态查询
-  if (action === 'status') {
-    const status = await checkLLMStatus();
+  const action = searchParams.get("action");
+
+  if (action === "status") {
     return NextResponse.json({
       success: true,
       data: {
-        llm_status: status,
-        llm_model: QWEN_CONFIG.model,
-        intent_method: intentMethod,
-        available_models: QWEN_MODELS,
+        llm_status: await checkLLMStatus(),
+        llm_model: process.env.QWEN_MODEL || "qwen-plus",
         timestamp: new Date().toISOString(),
       },
     });
   }
-  
-  // 切换模型
-  if (action === 'set_model') {
-    const model = searchParams.get('model');
-    if (model) {
-      QWEN_CONFIG.model = model;
-      llmStatus = 'offline'; // 重置状态，下次请求时重新检查
-      llmLastCheck = 0;
-      return NextResponse.json({
-        success: true,
-        data: { message: `Model switched to ${model}`, llm_model: QWEN_CONFIG.model },
-      });
-    }
-    return NextResponse.json({ success: false, error: 'model parameter required' }, { status: 400 });
-  }
-  
-  // 切换识别方法
-  if (action === 'set_method') {
-    const method = searchParams.get('method');
-    if (method === 'rule' || method === 'llm') {
-      intentMethod = method;
-      return NextResponse.json({
-        success: true,
-        data: { message: `Intent method switched to ${method}`, intent_method: intentMethod },
-      });
-    }
-    return NextResponse.json({ success: false, error: 'method must be rule or llm' }, { status: 400 });
-  }
-  
-  // 默认：返回聊天历史（预留）
-  const sessionId = searchParams.get('session_id');
+
+  const sessionId = searchParams.get("session_id");
+  const session = sessionId ? sessionContexts.get(sessionId) : null;
+
   return NextResponse.json({
     success: true,
-    data: { messages: [], session_id: sessionId },
+    data: {
+      messages: session?.message_history || [],
+      session_id: sessionId,
+      last_intent: session?.last_intent,
+      last_symbol: session?.last_symbol,
+    },
   });
 }
