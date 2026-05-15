@@ -394,7 +394,7 @@ export default {
 ### 开发环境
 
 ```bash
-cd /dream-universal-gateway
+cd 3-FRONTEND/dream-universal-gateway
 pnpm install
 pnpm dev
 # http://localhost:3456

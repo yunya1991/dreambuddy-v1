@@ -660,7 +660,7 @@ IntentRouter决定策略后，ChainExecutor负责内部A系列的按需执行：
 ## 12. 文件结构总览
 
 ```
-dream-universal-gateway/
+3-FRONTEND/dream-universal-gateway/
 ├── docs/
 │   ├── ARCHITECTURE.md          ← 本文档 (v2.5)
 │   ├── INTENT_ROUTER.md         ← 意图识别与路由引擎 (v2.0新增, 核心)
@@ -682,4 +682,4 @@ dream-universal-gateway/
 
 > **注意**: Gateway是独立的Next.js项目，不共享产物中台的代码库。
 > Gateway通过REST API与产物中台交互(产物检索/刷新等)，
-> `dream-universal-gateway/` 同时作为规划文档仓库和独立项目代码目录。
+> `3-FRONTEND/dream-universal-gateway/` 同时作为规划文档仓库和独立项目代码目录。

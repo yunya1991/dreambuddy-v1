@@ -28,6 +28,27 @@ logs/
 *.log
 npm-debug.log*
 
+# Local runtime artifacts
+/artifacts/
+
+# Local agent state
+.superpowers/
+.workbuddy/
+
+# Python cache
+**/__pycache__/
+*.pyc
+
+# Artifact Hub runtime state (repo-local)
+dreambuddy/meta/*.sqlite*
+dreambuddy/artifacts/tasks/*.json
+dreambuddy/artifacts/results/*.json
+
+# Trading runtime data / generated logs
+6-TRADING/data/
+**/.codebuddy/
+6-TRADING/skills/**/intelligence_input/
+
 # Cache
 .cache/
 .eslintcache
