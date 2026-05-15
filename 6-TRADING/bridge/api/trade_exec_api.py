@@ -31,7 +31,7 @@ def place_order():
     data = request.get_json() or {}
     
     # 验证必填参数
-    required = ['inst_id', 'side', 'pos_side', 'sz', 'px']
+    required = ['inst_id', 'side', 'pos_side', 'sz']
     missing = [f for f in required if f not in data]
     if missing:
         return jsonify({
@@ -39,15 +39,34 @@ def place_order():
             "error": f"Missing required fields: {missing}"
         }), 400
     
-    # 模拟订单
+    # 如果有 OKX CLI，执行真实下单
+    if OKX_AVAILABLE:
+        try:
+            okx = OKXCLI(profile='paper')
+            result = okx.place_order(
+                inst_id=data['inst_id'],
+                side=data['side'],
+                pos_side=data['pos_side'],
+                sz=int(data['sz']),
+                ord_type=data.get('ord_type', 'market'),
+                price=float(data['px']) if 'px' in data else None
+            )
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({
+                "success": False,
+                "error": str(e)
+            }), 500
+    
+    # 模拟订单（OKX CLI 不可用时）
     order_id = f"demo_{uuid.uuid4().hex[:12]}"
     order = {
         "ord_id": order_id,
         "inst_id": data['inst_id'],
-        "side": data['side'],  # buy/sell
-        "pos_side": data['pos_side'],  # long/short/net
+        "side": data['side'],
+        "pos_side": data['pos_side'],
         "sz": data['sz'],
-        "px": data['px'],
+        "px": data.get('px', 'market'),
         "ord_type": data.get('ord_type', 'limit'),
         "state": "live",
         "timestamp": datetime.now().isoformat()
