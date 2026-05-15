@@ -39,15 +39,22 @@ class OKXCLI:
     
     def get_ticker(self, inst_id: str = "BTC-USDT-SWAP") -> Dict:
         """获取行情"""
-        result = self._run(["market", "ticker", inst_id])
+        result = self._run(["market", "ticker", inst_id, "--json"])
         if result["success"]:
-            data = {}
-            for line in result["data"]:
-                if '\t' in line:
-                    parts = line.split('\t')
-                    if len(parts) == 2:
-                        data[parts[0].strip()] = parts[1].strip()
-            return {"success": True, "data": data}
+            try:
+                # 尝试解析JSON输出
+                import json
+                data = json.loads(result["raw"])
+                return {"success": True, "data": data}
+            except:
+                # 降级: 解析文本输出
+                data = {}
+                for line in result["data"]:
+                    if ':' in line:
+                        parts = line.split(':', 1)
+                        if len(parts) == 2:
+                            data[parts[0].strip()] = parts[1].strip()
+                return {"success": True, "data": data}
         return result
     
     def get_candles(self, inst_id: str, bar: str = "1H", limit: int = 100) -> Dict:
