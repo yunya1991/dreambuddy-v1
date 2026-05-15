@@ -224,7 +224,7 @@ SKILL结构:
 
 **开发环境**:
 ```bash
-cd /dream-universal-gateway
+cd 3-FRONTEND/dream-universal-gateway
 pnpm install
 pnpm dev
 # 访问 http://localhost:3456

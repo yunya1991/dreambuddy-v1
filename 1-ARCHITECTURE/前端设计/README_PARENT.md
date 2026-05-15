@@ -66,7 +66,7 @@ Layer 3: 产物源 (~/.workbuddy/)    ← 现有文件系统
 ## 目录结构
 
 ```
-dream-universal-gateway/
+3-FRONTEND/dream-universal-gateway/
 ├── docs/               # 设计文档
 ├── frontend/           # 前端组件（开发时集成到 web/ 目录）
 ├── backend/            # 后端逻辑（开发时集成到 web/app/api/ 目录）

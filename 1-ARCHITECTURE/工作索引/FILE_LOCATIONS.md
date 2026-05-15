@@ -8,7 +8,7 @@
 ## 📂 用户前端 (Dream Universal Gateway)
 
 ```
-/Users/zhangjiangtao/WorkBuddy/20260415144304/dream-universal-gateway/
+/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/3-FRONTEND/dream-universal-gateway/
 ├── src/
 │   ├── app/
 │   │   ├── api/auth/[...nextauth]/

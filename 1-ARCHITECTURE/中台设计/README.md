@@ -85,7 +85,7 @@
 - 积分系统
 
 **核心文件**:
-- `/dream-universal-gateway/` - Next.js项目
+- `/3-FRONTEND/dream-universal-gateway/` - Next.js项目
 - `src/stores/` - 状态管理
 - `src/lib/` - 核心库
 

@@ -399,7 +399,7 @@ Task and result files register in `index.json`:
 ## 11. File Structure After Implementation
 
 ```
-dream-universal-gateway/
+3-FRONTEND/dream-universal-gateway/
   src/
     app/
       api/
@@ -412,7 +412,7 @@ dream-universal-gateway/
   docs/
     FRONTEND_WB_INTEGRATION.md  # THIS FILE
 
-artifacts/
+dreambuddy/artifacts/
   trading/                  # existing
   tasks/                    # NEW
     task_20260514_100600_a3f2.json
