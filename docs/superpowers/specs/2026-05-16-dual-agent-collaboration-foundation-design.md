@@ -557,3 +557,14 @@ Claude Code 作为页面与模块实现主力，主责包括：
 这套协作底座的核心不是“让两个 AI 一起写代码”，而是：
 
 > 先冻结边界，再让双代理在清晰主责域内自治推进，最后通过里程碑分支统一集成，让用户只在关键节点介入。
+
+## 16. 实施产物索引
+
+当前协作底座的实施产物包括：
+
+- `docs/superpowers/plans/2026-05-16-dual-agent-foundation-implementation-plan.md` — M1 实施计划（任务清单）
+- `docs/superpowers/checklists/2026-05-16-m1-dual-agent-foundation-checklist.md` — K1-K4 里程碑 checklist
+- `docs/superpowers/plans/2026-05-16-m1-dual-agent-foundation-task-board.md` — 首批任务看板（SOLO + Claude Code）
+- `docs/superpowers/templates/agent-task-card.md` — 任务卡模板
+- `docs/superpowers/contracts/7-artifact-hub-v2-foundation/` — L1 冻结契约包（4 个接口）
+- `AGENT协作工具/SKILLS/dual-agent-conflict-gate/` — 冲突前置门禁 SKILL
