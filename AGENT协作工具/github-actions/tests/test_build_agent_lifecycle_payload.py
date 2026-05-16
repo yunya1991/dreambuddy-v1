@@ -1,0 +1,113 @@
+import importlib.util
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+MODULE_PATH = ROOT / "build_agent_lifecycle_payload.py"
+SPEC = importlib.util.spec_from_file_location("build_agent_lifecycle_payload", MODULE_PATH)
+MODULE = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(MODULE)
+
+
+class BuildLifecyclePayloadTests(unittest.TestCase):
+    def test_started_comment_extracts_owner_and_shared_file_declaration(self):
+        raw = {
+            "branch": "agent/solo/lifecycle-docs",
+            "pr_body": "## Owner Agent\nOwner Agent: <UNKNOWN>\n",
+            "comments": [
+                "[协作开工声明 / STARTED]\n\n"
+                "Agent: SOLO\n"
+                "任务: 修正文档\n"
+                "分支: agent/solo/lifecycle-docs\n"
+                "计划修改:\n"
+                "- docs/a.md\n\n"
+                "预期产出:\n"
+                "- docs\n\n"
+                "占用范围:\n"
+                "- docs/shared.md\n\n"
+                "冲突门禁结果:\n"
+                "- decision: SAFE\n"
+                "- reason_codes: []\n\n"
+                "状态: STARTED\n"
+            ]
+        }
+
+        payload = MODULE.build_payload(raw)
+
+        self.assertEqual(payload["owner_agent"], "SOLO")
+        self.assertTrue(payload["shared_files_declared"])
+        self.assertIn("STARTED", payload["comments"])
+
+    def test_free_form_comment_does_not_count_as_structured_status(self):
+        raw = {
+            "branch": "agent/solo/lifecycle-docs",
+            "pr_body": "",
+            "comments": [
+                "我们后面记得补 STARTED、UPDATED、BLOCKED、DONE 这些评论。"
+            ],
+        }
+
+        payload = MODULE.build_payload(raw)
+
+        self.assertEqual(payload["comments"], [])
+        self.assertEqual(payload["owner_agent"], "UNKNOWN")
+        self.assertFalse(payload["scope_changed"])
+        self.assertFalse(payload["execution_blocked"])
+
+    def test_updated_and_blocked_comments_drive_scope_and_execution_flags(self):
+        raw = {
+            "branch": "agent/solo/lifecycle-docs",
+            "pr_body": "",
+            "comments": [
+                "[协作状态更新 / UPDATED]\n\n"
+                "Agent: SOLO\n"
+                "任务: 调整规则\n"
+                "变更说明:\n"
+                "- 扩大到 .github/workflows\n\n"
+                "当前占用范围:\n"
+                "- .github/workflows/agent-lifecycle-guard.yml\n\n"
+                "阶段:\n"
+                "- Phase 6\n\n"
+                "状态: UPDATED\n",
+                "[协作阻塞通知 / BLOCKED]\n\n"
+                "Agent: SOLO\n"
+                "任务: 调整规则\n"
+                "阻塞原因:\n"
+                "- 需要补充 payload builder\n\n"
+                "需要对方配合:\n"
+                "- 无\n\n"
+                "状态: BLOCKED\n",
+            ],
+        }
+
+        payload = MODULE.build_payload(raw)
+
+        self.assertTrue(payload["scope_changed"])
+        self.assertTrue(payload["execution_blocked"])
+        self.assertIn("UPDATED", payload["comments"])
+        self.assertIn("BLOCKED", payload["comments"])
+
+    def test_pr_template_fallback_extracts_owner_and_task_card(self):
+        raw = {
+            "branch": "agent/claude/ui-shell",
+            "pr_body": (
+                "## Task Card\n"
+                "Task Card: docs/superpowers/templates/agent-task-card.md\n\n"
+                "## Owner Agent\n"
+                "Owner Agent: Claude Code\n\n"
+                "## Shared Files Declaration\n"
+                "Shared Files Declared: yes\n"
+            ),
+            "comments": [],
+        }
+
+        payload = MODULE.build_payload(raw)
+
+        self.assertEqual(payload["owner_agent"], "Claude Code")
+        self.assertTrue(payload["task_card_present"])
+        self.assertTrue(payload["shared_files_declared"])
+
+
+if __name__ == "__main__":
+    unittest.main()
