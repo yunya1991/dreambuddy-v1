@@ -1,44 +1,69 @@
-import { toHealthViewModel } from "../healthAdapter";
-import { toTraceViewModel } from "../traceAdapter";
-import { toWorkflowViewModel } from "../workflowAdapter";
-import { mockHealth } from "./health.mock";
-import { mockTrace } from "./trace.mock";
-import { mockWorkflow } from "./workflow.mock";
+import assert from "node:assert/strict";
+import test from "node:test";
 
-// --- health ---
+import {
+  toHealthViewModel,
+  toTraceViewModel,
+  toWorkflowViewModel,
+} from "../index.js";
+import type { ChainPhase } from "../index.js";
+import { mockHealth } from "./health.mock.js";
+import { mockTrace } from "./trace.mock.js";
+import { mockWorkflow } from "./workflow.mock.js";
 
-const health = toHealthViewModel(mockHealth);
-console.assert(health.service === "artifact-hub-v2", "health.service");
-console.assert(health.status === "ok", "health.status");
-console.assert(health.dependencyList.length === 3, "health.dependencyList.length");
-console.assert(
-  health.dependencyList.find((d) => d.name === "gateway")?.status === "unknown",
-  "health.gateway=unknown"
-);
+test("health adapter maps contract fields to view model", () => {
+  const health = toHealthViewModel(mockHealth);
 
-// --- trace: completed with duration ---
+  assert.equal(health.service, "artifact-hub-v2");
+  assert.equal(health.status, "ok");
+  assert.equal(health.dependencyList.length, 3);
+  assert.equal(
+    health.dependencyList.find((d) => d.name === "gateway")?.status,
+    "unknown"
+  );
+});
 
-const trace = toTraceViewModel(mockTrace);
-console.assert(trace.traceId === "trace_demo_001", "trace.traceId");
-console.assert(trace.status === "completed", "trace.status");
-console.assert(trace.durationMs === 150000, "trace.durationMs=150000ms");
+test("trace adapter computes duration for completed traces", () => {
+  const trace = toTraceViewModel(mockTrace);
 
-// --- trace: running (finished_at = null) ---
+  assert.equal(trace.traceId, "trace_demo_001");
+  assert.equal(trace.status, "completed");
+  assert.equal(trace.durationMs, 150000);
+});
 
-const running = toTraceViewModel({ ...mockTrace, status: "running", finished_at: null });
-console.assert(running.durationMs === null, "running trace durationMs=null");
-console.assert(running.finishedAt === null, "running trace finishedAt=null");
+test("trace adapter keeps null duration for running traces", () => {
+  const running = toTraceViewModel({
+    ...mockTrace,
+    status: "running",
+    finished_at: null,
+  });
 
-// --- workflow: running ---
+  assert.equal(running.durationMs, null);
+  assert.equal(running.finishedAt, null);
+});
 
-const wf = toWorkflowViewModel(mockWorkflow);
-console.assert(wf.workflowId === "wf_demo_001", "wf.workflowId");
-console.assert(wf.chainPhase === "A3", "wf.chainPhase=A3");
-console.assert(wf.latestTraceId === "trace_demo_001", "wf.latestTraceId");
+test("workflow adapter maps trace linkage and phase", () => {
+  const wf = toWorkflowViewModel(mockWorkflow);
+  const phase: ChainPhase = "A3";
 
-// --- workflow: no trace yet ---
+  assert.equal(phase, wf.chainPhase);
+  assert.equal(wf.workflowId, "wf_demo_001");
+  assert.equal(wf.latestTraceId, "trace_demo_001");
+});
 
-const wfNoTrace = toWorkflowViewModel({ ...mockWorkflow, status: "pending", latest_trace_id: null });
-console.assert(wfNoTrace.latestTraceId === null, "wf.latestTraceId=null");
+test("workflow adapter preserves null latest trace id", () => {
+  const wfNoTrace = toWorkflowViewModel({
+    ...mockWorkflow,
+    status: "pending",
+    latest_trace_id: null,
+  });
 
-console.log("All adapter tests passed.");
+  assert.equal(wfNoTrace.latestTraceId, null);
+});
+
+test("assertions fail the test process when expectations are wrong", () => {
+  assert.notEqual(
+    toHealthViewModel(mockHealth).service,
+    "definitely-not-the-real-service"
+  );
+});

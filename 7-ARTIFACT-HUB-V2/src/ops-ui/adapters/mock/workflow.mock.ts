@@ -1,4 +1,4 @@
-import { WorkflowContractV1 } from "../workflowAdapter";
+import type { WorkflowContractV1 } from "../workflowAdapter.js";
 
 export const mockWorkflow: WorkflowContractV1 = {
   workflow_id: "wf_demo_001",

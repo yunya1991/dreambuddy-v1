@@ -1,4 +1,4 @@
-import { HealthContractV1 } from "../healthAdapter";
+import type { HealthContractV1 } from "../healthAdapter.js";
 
 export const mockHealth: HealthContractV1 = {
   service: "artifact-hub-v2",

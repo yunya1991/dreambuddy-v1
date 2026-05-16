@@ -1,4 +1,4 @@
-import { TraceContractV1 } from "../traceAdapter";
+import type { TraceContractV1 } from "../traceAdapter.js";
 
 export const mockTrace: TraceContractV1 = {
   trace_id: "trace_demo_001",
