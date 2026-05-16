@@ -28,6 +28,43 @@
     "docs/superpowers/plans/"
   ],
 
+  "shared_boundaries": [
+    "7-ARTIFACT-HUB-V2/src/types.ts",
+    "7-ARTIFACT-HUB-V2/src/index.ts",
+    "3-FRONTEND/dream-universal-gateway/src/types/index.ts",
+    "README.md",
+    "7-ARTIFACT-HUB-V2/README.md",
+    "docs/superpowers/plans/"
+  ],
+
+  "collaboration_policy": {
+    "_comment": "默认并行 + 白名单接管 + 关键节点强同步。新增字段供模板、门禁与后续 checker 共用，保留旧字段兼容存量脚本。",
+    "default_execution_mode": "PHASE_BROADCAST",
+    "default_parallel_within_owner": true,
+    "status_broadcast_strategy": "PHASE_SUMMARY",
+    "direct_takeover": {
+      "enabled": true,
+      "requires_user_authorization": true,
+      "allowlist": [
+        "wrong_export_or_symbol",
+        "pseudo_test_or_invalid_assertion",
+        "relative_import_fix",
+        "nodenext_or_esm_extension_fix",
+        "local_type_fix",
+        "build_dependency_fix",
+        "small_scope_lint_or_build_fix"
+      ]
+    },
+    "sync_required_when": [
+      "shared_boundary_changed",
+      "frozen_contract_changed",
+      "ownership_changed",
+      "branch_policy_changed",
+      "milestone_or_main_merge",
+      "scope_escalates_to_architecture"
+    ]
+  },
+
   "branch_rules": {
     "claude_pattern": "agent/claude/",
     "solo_pattern": "agent/solo/",

@@ -126,6 +126,8 @@ Replace the existing template content in `docs/superpowers/templates/agent-task-
 - Reviewer:
 - Milestone:
 - Priority:
+- Execution Mode: STANDARD | PHASE_BROADCAST | STRONG_SYNC
+- Direct Takeover: no | allowed | active
 
 ## Goal
 - What this task must achieve:
@@ -141,9 +143,12 @@ Replace the existing template content in `docs/superpowers/templates/agent-task-
 - Evidence to attach:
 
 ## Protected Boundaries
+- Owner directories:
 - Files not to modify:
 - Contracts not to change:
 - Shared files requiring approval:
+- Sync required when:
+- Next sync checkpoint:
 
 ## Lifecycle Evidence
 - Design review record:
@@ -154,6 +159,8 @@ Replace the existing template content in `docs/superpowers/templates/agent-task-
 ## Conflict Check Record
 - Gate result (SAFE / WARNING / BLOCK):
 - reason_codes:
+- Shared boundary touched: yes | no
+- Takeover allowlist item:
 - Checked at:
 
 ## Definition of Done
@@ -162,6 +169,7 @@ Replace the existing template content in `docs/superpowers/templates/agent-task-
 - [ ] Local change complete
 - [ ] Tests attached
 - [ ] Non-owner review attached
+- [ ] Shared boundary declaration attached when needed
 - [ ] Supervision passed
 - [ ] Ready for milestone merge
 ```
@@ -211,6 +219,8 @@ Create `pr-comment-started.md`:
 Agent: <owner_agent>
 任务: <task_name>
 分支: <agent/* branch>
+Execution Mode: <STANDARD | PHASE_BROADCAST | STRONG_SYNC>
+Direct Takeover: <no | allowed | active>
 计划修改:
 - <path 1>
 - <path 2>
@@ -222,12 +232,20 @@ Agent: <owner_agent>
 占用范围:
 - <shared path 1>
 
+同步触发条件:
+- <shared boundary / frozen contract / milestone closeout>
+
+下一同步点:
+- <design package / implementation package / closeout>
+
 冲突门禁结果:
 - decision: SAFE | WARNING
 - reason_codes: <[] or codes>
 
 状态: STARTED
-说明: 在我发 DONE 评论前，请不要并行修改上述范围。
+说明:
+- owner 目录内默认并行推进
+- 仅在范围变化、真实阻塞或阶段收口时补充评论
 ```
 
 Create `pr-comment-updated.md`:
@@ -237,6 +255,8 @@ Create `pr-comment-updated.md`:
 
 Agent: <owner_agent>
 任务: <task_name>
+Execution Mode: <STANDARD | PHASE_BROADCAST | STRONG_SYNC>
+Direct Takeover: <no | allowed | active>
 变更说明:
 - <expanded scope or reduced scope>
 
@@ -245,6 +265,9 @@ Agent: <owner_agent>
 
 阶段:
 - <Phase N>
+
+下一同步点:
+- <shared boundary review / test package / merge closeout>
 
 状态: UPDATED
 ```
@@ -258,11 +281,16 @@ Create `pr-comment-blocked.md`:
 
 Agent: <owner_agent>
 任务: <task_name>
+Execution Mode: <STANDARD | PHASE_BROADCAST | STRONG_SYNC>
+Direct Takeover Requested: <yes | no>
 阻塞原因:
 - <blocking condition>
 
 需要对方配合:
 - <requested action>
+
+建议下一模式:
+- <direct takeover / strong sync / wait owner>
 
 状态: BLOCKED
 ```
@@ -274,10 +302,15 @@ Create `pr-comment-done.md`:
 
 Agent: <owner_agent>
 任务: <task_name>
+Execution Mode: <STANDARD | PHASE_BROADCAST | STRONG_SYNC>
+Direct Takeover: <no | allowed | active>
 提交: <commit sha>
 已完成:
 - <completed item 1>
 - <completed item 2>
+
+下一步建议:
+- <next reviewer / next owner / closeout action>
 
 状态: DONE
 说明: 另一代理可以基于最新 PR head 继续。
@@ -882,6 +915,7 @@ Create `.github/pull_request_template.md`:
 - [ ] 范围变化时已发 `UPDATED`
 - [ ] 阻塞时已发 `BLOCKED`
 - [ ] 完成后将发 `DONE`
+- [ ] 仅在关键节点广播，不为每个微小提交重复评论
 
 ## Owner Agent
 - [ ] 已填写主责 AGENT

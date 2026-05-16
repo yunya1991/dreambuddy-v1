@@ -1,6 +1,7 @@
 [测试报告 / TEST_REPORT]
 
 Tester: <owner_agent or tester_agent>
+Execution Mode: <STANDARD | PHASE_BROADCAST | STRONG_SYNC>
 Unit:
 - PASS | FAIL
 
@@ -17,5 +18,6 @@ Stress:
 - PASS | FAIL | WAIVED
 
 Decision: TEST_PASS | TEST_FAIL | RISK_ACCEPTED
+Sync Recommendation: <continue parallel | direct takeover okay | strong sync required>
 Evidence:
 - <command output or artifact path>

@@ -99,6 +99,13 @@ def opponent(agent_id: str) -> str:
     return "solo" if agent_id == "claude" else "claude"
 
 
+def shared_boundaries(cfg: dict) -> list[str]:
+    boundaries = cfg.get("shared_boundaries")
+    if boundaries:
+        return boundaries
+    return cfg.get("shared_requires_approval", [])
+
+
 # ── core checks ──────────────────────────────────────────────────────────────
 
 def check_branch(agent_id: str, branch: str, cfg: dict) -> list[dict]:
@@ -138,7 +145,7 @@ def check_file_boundaries(
     issues = []
     other = opponent(agent_id)
     other_domain = cfg["ownership"].get(other, [])
-    shared_approval = cfg["shared_requires_approval"]
+    shared_approval = shared_boundaries(cfg)
 
     all_dirty = set(git_snap["modified_files"] + git_snap["staged_files"])
 
@@ -156,13 +163,13 @@ def check_file_boundaries(
                 issues.append({
                     "code": "SHARED_FILE_CONFLICT",
                     "level": "BLOCK",
-                    "detail": f"共享文件 '{f}' 当前有未提交修改，存在占用冲突。"
+                    "detail": f"共享边界 '{f}' 当前有未提交修改，必须先完成强同步收口后再继续。"
                 })
             else:
                 issues.append({
                     "code": "SHARED_FILE_CONFLICT",
                     "level": "WARNING",
-                    "detail": f"文件 '{f}' 属于需申请的共享文件，请确认已在任务板中登记占用。"
+                    "detail": f"文件 '{f}' 属于共享边界，请确认已在任务卡或 PR 评论中声明，并转入强同步收口模式。"
                 })
 
     # git dirty 文件中是否有对方主责域文件（对方正在修改）
@@ -264,14 +271,14 @@ def aggregate(issues: list[dict]) -> dict[str, Any]:
         if any(i["code"] == "WRONG_BRANCH" for i in block_items):
             action_parts.append("切换到正确的 agent/* 分支后重新检查。")
         if any(i["code"] == "BOUNDARY_VIOLATION" for i in block_items):
-            action_parts.append("联系 SOLO 重新划定文件边界或等待对方完成修改。")
+            action_parts.append("联系对应 owner 重新划定文件边界，或等待对方完成修改后再推进。")
         if any(i["code"] in ("CONTRACT_NOT_FROZEN", "PARALLEL_CONDITION_FAILED") for i in block_items):
             action_parts.append("等待契约冻结至 L1 后再并行，或改为接力推进。")
         if any(i["code"] == "SHARED_FILE_CONFLICT" for i in block_items):
-            action_parts.append("在任务板中登记共享文件占用，由 SOLO 统一收口后再修改。")
+            action_parts.append("先在任务卡或 PR 评论中声明共享边界，并切换到强同步收口模式后再修改。")
         recommended = "停止任务。" + " ".join(action_parts)
     else:
-        recommended = "可继续任务，但请在任务卡中记录 WARNING 项并保持关注。"
+        recommended = "可继续任务，但请在任务卡中记录 WARNING 项、执行模式与下一同步点。"
 
     return {
         "decision": decision,
