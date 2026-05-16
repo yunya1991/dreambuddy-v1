@@ -3,6 +3,8 @@
 Agent: <owner_agent>
 任务: <task_name>
 分支: <agent/* branch>
+Execution Mode: <STANDARD | PHASE_BROADCAST | STRONG_SYNC>
+Direct Takeover: <no | allowed | active>
 计划修改:
 - <path 1>
 - <path 2>
@@ -14,9 +16,17 @@ Agent: <owner_agent>
 占用范围:
 - <shared path 1>
 
+同步触发条件:
+- <shared boundary / frozen contract / milestone closeout>
+
+下一同步点:
+- <design package / implementation package / closeout>
+
 冲突门禁结果:
 - decision: SAFE | WARNING
 - reason_codes: <[] or codes>
 
 状态: STARTED
-说明: 在我发 DONE 评论前，请不要并行修改上述范围。
+说明:
+- owner 目录内默认并行推进
+- 仅在范围变化、真实阻塞或阶段收口时补充评论

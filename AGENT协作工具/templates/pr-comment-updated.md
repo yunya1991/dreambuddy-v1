@@ -2,6 +2,8 @@
 
 Agent: <owner_agent>
 任务: <task_name>
+Execution Mode: <STANDARD | PHASE_BROADCAST | STRONG_SYNC>
+Direct Takeover: <no | allowed | active>
 变更说明:
 - <expanded scope or reduced scope>
 
@@ -10,5 +12,8 @@ Agent: <owner_agent>
 
 阶段:
 - <Phase N>
+
+下一同步点:
+- <shared boundary review / test package / merge closeout>
 
 状态: UPDATED
