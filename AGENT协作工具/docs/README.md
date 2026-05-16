@@ -7,6 +7,7 @@
 - `dual-agent-collaboration-foundation-design.md`：双代理协作底座设计
 - `agent-standard-dev-lifecycle-design.md`：全局 AGENT 标准开发生命周期设计
 - `agent-standard-dev-lifecycle-implementation-plan.md`：标准开发生命周期实施计划
+- `agent-efficient-collaboration-mode.md`：高效协作模式与默认执行策略
 
 ## 迁移说明
 
