@@ -13,6 +13,31 @@ AGENT协作工具/
         └── conflict_gate.py        ← Python 实现（CLI 可直接调用）
 ```
 
+## 生命周期工具栈
+
+标准研发协作体系采用“1 个主流程 SKILL + 4 个子 SKILL + 1 个开工前门禁”的结构：
+
+- `agent-standard-dev-lifecycle`：总控主流程，编排阶段流转
+- `agent-design-review`：方案评审
+- `agent-dev-execution`：开发执行
+- `agent-quality-test`：测试验证
+- `agent-collab-supervisor`：流程监督与 GitHub 规则映射
+- `dual-agent-conflict-gate`：开工前技术门禁
+
+## 强制阶段
+
+所有 AGENT 任务必须依次经过以下阶段：
+
+1. `Phase 0` 任务登记
+2. `Phase 1` 方案评审
+3. `Phase 2` 实施计划
+4. `Phase 3` 开工门禁
+5. `Phase 4` 开发执行
+6. `Phase 5` 测试验证
+7. `Phase 6` PR 评审
+8. `Phase 7` 合入监督
+9. `Phase 8` 完成归档
+
 ## 使用规则
 
 1. **每次任务开始前**，两个 agent 都必须运行冲突门禁检查
