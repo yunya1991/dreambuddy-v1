@@ -1,14 +1,14 @@
 ## Task Card
-- [ ] 已附任务卡链接或正文
+Task Card: <link or inline summary>
 
 ## Design Review
-- [ ] 已附 `DESIGN_REVIEW` 评论链接
+Design Review Comment: <comment url>
 
 ## Implementation Plan
-- [ ] 已附 implementation plan 链接
+Implementation Plan: <plan link>
 
 ## Test Report
-- [ ] 已附 `TEST_REPORT` 评论链接或测试证据
+Test Report: <comment url or artifact path>
 
 ## Collaboration Protocol
 - [ ] 已发 `STARTED`
@@ -17,4 +17,7 @@
 - [ ] 完成后将发 `DONE`
 
 ## Owner Agent
-- [ ] 已填写主责 AGENT
+Owner Agent: <SOLO | Claude Code | other>
+
+## Shared Files Declaration
+Shared Files Declared: <yes | no>

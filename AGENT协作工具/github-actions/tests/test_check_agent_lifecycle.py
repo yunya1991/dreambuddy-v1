@@ -11,6 +11,10 @@ SPEC.loader.exec_module(MODULE)
 
 
 class LifecycleCheckerTests(unittest.TestCase):
+    def test_rule_catalog_and_checker_mapping_stay_in_sync(self):
+        rule_ids = {rule["id"] for rule in MODULE.load_rules()}
+        self.assertEqual(rule_ids, set(MODULE.RULE_CHECKERS))
+
     def test_pass_when_all_required_evidence_exists(self):
         payload = {
             "branch": "agent/solo/lifecycle-docs",
