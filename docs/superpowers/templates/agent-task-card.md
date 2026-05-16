@@ -3,6 +3,7 @@
 ## Basic Info
 - Task Name:
 - Owner:
+- Reviewer:
 - Milestone:
 - Priority:
 
@@ -24,14 +25,22 @@
 - Contracts not to change:
 - Shared files requiring approval:
 
+## Lifecycle Evidence
+- Design review record:
+- Implementation plan:
+- Test report:
+- Supervision result:
+
 ## Conflict Check Record
 - Gate result (SAFE / WARNING / BLOCK):
 - reason_codes:
 - Checked at:
 
 ## Definition of Done
+- [ ] Design reviewed
+- [ ] Plan written
 - [ ] Local change complete
-- [ ] Contract still matches
-- [ ] No shared-file conflict introduced
-- [ ] Conflict gate passed (SAFE or WARNING)
+- [ ] Tests attached
+- [ ] Non-owner review attached
+- [ ] Supervision passed
 - [ ] Ready for milestone merge
