@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-CONFIG_PATH = Path(__file__).parent.parent / "gatekeeper_config.json"
+CONFIG_PATH = Path(__file__).parent / "gatekeeper_config.json"
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
