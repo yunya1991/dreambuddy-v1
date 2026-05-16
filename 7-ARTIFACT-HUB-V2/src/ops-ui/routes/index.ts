@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
-import { renderDashboard } from "../views/dashboard";
-import { renderHealthCheck } from "../views/health";
+import { renderDashboard } from "../views/dashboard.js";
+import { renderHealthCheck } from "../views/health.js";
 
 const router = Router();
 
