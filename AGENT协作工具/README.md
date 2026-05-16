@@ -38,6 +38,17 @@ AGENT协作工具/
 8. `Phase 7` 合入监督
 9. `Phase 8` 完成归档
 
+## 主干文档
+
+以下文档已作为全局 `AGENT` 协作主干迁入 `AGENT协作工具/docs/`：
+
+- `AGENT协作工具/docs/README.md`：协作文档总入口
+- `AGENT协作工具/docs/dual-agent-collaboration-foundation-design.md`：双代理协作底座设计
+- `AGENT协作工具/docs/agent-standard-dev-lifecycle-design.md`：标准开发生命周期与协作监督体系设计
+- `AGENT协作工具/docs/agent-standard-dev-lifecycle-implementation-plan.md`：标准开发生命周期实施计划
+
+原 `docs/superpowers/` 下的对应文档当前保留兼容壳，用于承接历史链接与旧 PR 讨论。
+
 ## 使用规则
 
 1. **每次任务开始前**，两个 agent 都必须运行冲突门禁检查
