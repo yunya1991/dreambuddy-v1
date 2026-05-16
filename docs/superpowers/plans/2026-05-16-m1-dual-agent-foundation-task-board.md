@@ -12,7 +12,7 @@
 | A3 | 冻结 `trace-summary.v1.json` | ✅ Done |
 | A4 | 冻结 `route-decision-summary.v1.json` | ✅ Done |
 | A5 | 冻结 `workflow-summary.v1.json` | ✅ Done |
-| A6 | 建立里程碑分支并准备收口 | ⏳ Pending |
+| A6 | 建立里程碑分支并准备收口 | ✅ Done |
 
 ## Claude Code First Batch
 | ID | Task | Status |
@@ -31,7 +31,8 @@
 - 顶层 spec 索引
 
 ## Do Not Touch Without Re-Assignment
-- `7-ARTIFACT-HUB-V2/src/**`（SOLO 主责）
+- `7-ARTIFACT-HUB-V2/src/**`（SOLO 主责，`7-ARTIFACT-HUB-V2/src/ops-ui/**` 页面层目录除外）
+- `7-ARTIFACT-HUB-V2/src/ops-ui/**`（Claude Code 主责，用于 C1/C2/C3 页面层任务）
 - `dreambuddy/meta/**`（SOLO 主责）
 - `dreambuddy/config/**`（SOLO 主责）
 - `docs/superpowers/contracts/**`（SOLO 主责）
@@ -49,5 +50,5 @@ python3 AGENT协作工具/SKILLS/dual-agent-conflict-gate/conflict_gate.py \
 ## Exit Criteria
 - [ ] SOLO 与 Claude Code 首批任务均已完成
 - [ ] 共享冻结项无冲突
-- [ ] `milestone/dual-agent-foundation` 已建立并可收口
-- [ ] 下一里程碑可直接进入 `ops-ui` 骨架阶段
+- [x] `milestone/dual-agent-foundation` 已建立并可收口
+- [x] 下一里程碑进入 `ops-ui` 骨架阶段，Claude Code 可在 `7-ARTIFACT-HUB-V2/src/ops-ui/**` 内推进页面层任务

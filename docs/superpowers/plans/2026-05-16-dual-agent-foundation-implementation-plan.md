@@ -323,14 +323,16 @@ git commit -m "docs(collaboration): add foundation contract pack"
 - 顶层 spec 索引
 
 ## Do Not Touch Without Re-Assignment
-- `7-ARTIFACT-HUB-V2/src/**`
+- `7-ARTIFACT-HUB-V2/src/**`（SOLO 主责，`7-ARTIFACT-HUB-V2/src/ops-ui/**` 页面层目录除外）
+- `7-ARTIFACT-HUB-V2/src/ops-ui/**`（Claude Code 主责，用于 C1/C2/C3 页面层任务）
 - `dreambuddy/meta/**`
 - `dreambuddy/config/**`
 
 ## Exit Criteria
 - SOLO 与 Claude Code 的首批任务均已明确
 - 共享冻结项已列出
-- 下一里程碑可直接进入 `ops-ui` 骨架阶段
+- `milestone/dual-agent-foundation` 已建立并可收口
+- 下一里程碑进入 `ops-ui` 骨架阶段，Claude Code 可在 `7-ARTIFACT-HUB-V2/src/ops-ui/**` 内推进页面层任务
 ```
 
 - [ ] **Step 2: Verify the board includes SOLO and Claude Code sections**
