@@ -20,6 +20,12 @@ def branch_policy_valid(branch):
     return branch.startswith("agent/") or branch.startswith("milestone/")
 
 
+def payload_flag(payload, new_key, legacy_key):
+    if new_key in payload:
+        return bool(payload.get(new_key))
+    return bool(payload.get(legacy_key))
+
+
 def check_task_card_present(payload):
     return bool(payload.get("task_card_present"))
 
@@ -33,12 +39,14 @@ def check_started_comment_present(payload):
 
 
 def check_scope_change_announcement(payload):
-    return (not payload.get("scope_changed")) or "UPDATED" in payload.get("comments", [])
+    return (not payload_flag(payload, "scope_change_declared", "scope_changed")) or (
+        "UPDATED" in payload.get("comments", [])
+    )
 
 
 def check_block_announcement(payload):
-    return (not payload.get("execution_blocked")) or "BLOCKED" in payload.get(
-        "comments", []
+    return (not payload_flag(payload, "block_declared", "execution_blocked")) or (
+        "BLOCKED" in payload.get("comments", [])
     )
 
 
