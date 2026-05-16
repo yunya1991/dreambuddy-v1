@@ -119,6 +119,40 @@ class LifecycleCheckerTests(unittest.TestCase):
         self.assertEqual(result["decision"], "BLOCK")
         self.assertIn("RULE_010_SHARED_FILE_DECLARATION", result["reason_codes"])
 
+    def test_block_when_scope_change_declared_without_updated_comment(self):
+        payload = {
+            "branch": "agent/solo/lifecycle-docs",
+            "owner_agent": "SOLO",
+            "shared_files_declared": True,
+            "task_card_present": True,
+            "design_review_present": True,
+            "test_report_present": True,
+            "non_owner_review_present": True,
+            "scope_change_declared": True,
+            "block_declared": False,
+            "comments": ["STARTED", "DONE"],
+        }
+        result = MODULE.evaluate_payload(payload)
+        self.assertEqual(result["decision"], "BLOCK")
+        self.assertIn("RULE_004_SCOPE_CHANGE_MUST_UPDATE", result["reason_codes"])
+
+    def test_block_when_block_declared_without_blocked_comment(self):
+        payload = {
+            "branch": "agent/solo/lifecycle-docs",
+            "owner_agent": "SOLO",
+            "shared_files_declared": True,
+            "task_card_present": True,
+            "design_review_present": True,
+            "test_report_present": True,
+            "non_owner_review_present": True,
+            "scope_change_declared": False,
+            "block_declared": True,
+            "comments": ["STARTED", "DONE"],
+        }
+        result = MODULE.evaluate_payload(payload)
+        self.assertEqual(result["decision"], "BLOCK")
+        self.assertIn("RULE_005_BLOCK_MUST_ANNOUNCE", result["reason_codes"])
+
     def test_rule_checker_mapping_is_built_from_current_rules_file(self):
         payload = {
             "branch": "agent/solo/lifecycle-docs",
