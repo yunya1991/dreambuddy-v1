@@ -14,12 +14,12 @@
 
 详细设计见：
 
-- [治理中枢化设计](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/docs/superpowers/specs/2026-05-16-artifact-hub-v2-governance-central-design.md)
-- [公司中枢设计](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/1-ARCHITECTURE/中台设计/COMPANY_CENTRAL_HUB.md)
-- [Ops Console 设计](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/docs/superpowers/specs/2026-05-15-artifact-hub-v2-ops-console-design.md)
-- [Ops UI 说明](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/7-ARTIFACT-HUB-V2/OPS_UI_README.md)
-- [市场化中台设计](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/7-ARTIFACT-HUB-V2/MARKET_CONSOLE_DESIGN.md)
-- [董事会总览台设计](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/7-ARTIFACT-HUB-V2/BOARD_CONSOLE_DESIGN.md)
+- [治理中枢化设计](../docs/superpowers/specs/2026-05-16-artifact-hub-v2-governance-central-design.md)
+- [公司中枢设计](../1-ARCHITECTURE/中台设计/COMPANY_CENTRAL_HUB.md)
+- [Ops Console 设计](../docs/superpowers/specs/2026-05-15-artifact-hub-v2-ops-console-design.md)
+- [Ops UI 说明](./OPS_UI_README.md)
+- [市场化中台设计](./MARKET_CONSOLE_DESIGN.md)
+- [董事会总览台设计](./BOARD_CONSOLE_DESIGN.md)
 
 ## 0. 当前实现状态
 
@@ -185,12 +185,12 @@ Path: `dreambuddy/artifacts/results/result_<taskId>.json`
 
 当前已补齐：
 
-- [GOVERNANCE_SPEC.md](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/7-ARTIFACT-HUB-V2/GOVERNANCE_SPEC.md)
-- [OBJECT_MODEL.md](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/7-ARTIFACT-HUB-V2/OBJECT_MODEL.md)
-- [CHAIN_WORKFLOWS.md](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/7-ARTIFACT-HUB-V2/CHAIN_WORKFLOWS.md)
-- [OPS_UI_README.md](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/7-ARTIFACT-HUB-V2/OPS_UI_README.md)
-- [MARKET_CONSOLE_DESIGN.md](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/7-ARTIFACT-HUB-V2/MARKET_CONSOLE_DESIGN.md)
-- [BOARD_CONSOLE_DESIGN.md](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/7-ARTIFACT-HUB-V2/BOARD_CONSOLE_DESIGN.md)
+- [GOVERNANCE_SPEC.md](./GOVERNANCE_SPEC.md)
+- [OBJECT_MODEL.md](./OBJECT_MODEL.md)
+- [CHAIN_WORKFLOWS.md](./CHAIN_WORKFLOWS.md)
+- [OPS_UI_README.md](./OPS_UI_README.md)
+- [MARKET_CONSOLE_DESIGN.md](./MARKET_CONSOLE_DESIGN.md)
+- [BOARD_CONSOLE_DESIGN.md](./BOARD_CONSOLE_DESIGN.md)
 
 建议继续补齐：
 
