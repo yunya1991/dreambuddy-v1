@@ -10,6 +10,27 @@
 
 ---
 
+## Execution Protocol
+
+Before any task work begins, the assigned agent must:
+
+1. Run `AGENT协作工具/SKILLS/dual-agent-conflict-gate/conflict_gate.py`
+2. If the result is `SAFE` or `WARNING`, post a `STARTED` PR comment before editing files
+3. If scope changes, post an `UPDATED` comment
+4. If the task is blocked, post a `BLOCKED` comment
+5. After commit/push, post a `DONE` comment with commit SHA
+
+Required status tags:
+
+- `STARTED`
+- `UPDATED`
+- `BLOCKED`
+- `DONE`
+
+This protocol is mandatory for both SOLO and Claude Code whenever they touch shared contracts, shared docs, shared entry files, or milestone-scoped work.
+
+---
+
 ## Repository Layout Changes
 
 **Create**
@@ -434,3 +455,75 @@ git commit -m "docs(collaboration): record active milestone branch"
 - 只在 `K1-K4` 四个关键里程碑介入
 - 不参与日常裁决
 - 在是否进入下一功能里程碑时拍板
+
+## PR Comment Templates
+
+### STARTED
+
+```md
+[协作开工声明 / STARTED]
+
+Agent: SOLO | Claude Code
+任务: <任务名称>
+分支: <agent/* 分支>
+计划修改:
+- <文件或目录 1>
+- <文件或目录 2>
+
+预期产出:
+- <产出 1>
+- <产出 2>
+
+占用范围:
+- <当前请勿并行修改的文件或目录>
+
+冲突门禁结果:
+- decision: SAFE | WARNING
+- reason_codes: <如无可写 []>
+
+状态: STARTED
+说明: 在我发 DONE 评论前，请不要并行修改上述范围。
+```
+
+### UPDATED
+
+```md
+[协作状态更新 / UPDATED]
+
+Agent: <SOLO | Claude Code>
+任务: <任务名称>
+变更说明:
+- <新增范围或缩减范围>
+当前占用范围:
+- <更新后的文件或目录>
+状态: UPDATED
+```
+
+### BLOCKED
+
+```md
+[协作阻塞通知 / BLOCKED]
+
+Agent: <SOLO | Claude Code>
+任务: <任务名称>
+阻塞原因:
+- <门禁 BLOCK 或中途发现的冲突>
+需要对方配合:
+- <需要谁先完成什么>
+状态: BLOCKED
+```
+
+### DONE
+
+```md
+[协作完成回报 / DONE]
+
+Agent: <SOLO | Claude Code>
+任务: <任务名称>
+提交: <commit sha>
+已完成:
+- <完成项 1>
+- <完成项 2>
+状态: DONE
+说明: 另一代理可以基于最新 PR head 继续。
+```
