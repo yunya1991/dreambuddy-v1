@@ -108,6 +108,44 @@ class BuildLifecyclePayloadTests(unittest.TestCase):
         self.assertTrue(payload["task_card_present"])
         self.assertTrue(payload["shared_files_declared"])
 
+    def test_design_review_from_different_reviewer_counts_as_non_owner_review(self):
+        raw = {
+            "branch": "agent/solo/lifecycle-docs",
+            "pr_body": "## Owner Agent\nOwner Agent: SOLO\n",
+            "comments": [
+                "[方案评审记录 / DESIGN_REVIEW]\n\n"
+                "Reviewer: Claude Code\n"
+                "Scope:\n"
+                "- review lifecycle docs\n\n"
+                "Decision: APPROVED\n"
+            ],
+            "review_count": 0,
+        }
+
+        payload = MODULE.build_payload(raw)
+
+        self.assertTrue(payload["design_review_present"])
+        self.assertTrue(payload["non_owner_review_present"])
+
+    def test_design_review_from_owner_does_not_count_as_non_owner_review(self):
+        raw = {
+            "branch": "agent/solo/lifecycle-docs",
+            "pr_body": "## Owner Agent\nOwner Agent: SOLO\n",
+            "comments": [
+                "[方案评审记录 / DESIGN_REVIEW]\n\n"
+                "Reviewer: SOLO\n"
+                "Scope:\n"
+                "- self review lifecycle docs\n\n"
+                "Decision: APPROVED\n"
+            ],
+            "review_count": 0,
+        }
+
+        payload = MODULE.build_payload(raw)
+
+        self.assertTrue(payload["design_review_present"])
+        self.assertFalse(payload["non_owner_review_present"])
+
 
 if __name__ == "__main__":
     unittest.main()

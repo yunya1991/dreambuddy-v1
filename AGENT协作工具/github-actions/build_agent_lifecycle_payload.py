@@ -49,6 +49,7 @@ def parse_structured_comment(text):
             return {
                 "status": status,
                 "agent": extract_field(text, "Agent"),
+                "reviewer": extract_field(text, "Reviewer"),
                 "occupied_paths": extract_bullets_after_label(text, "占用范围")
                 or extract_bullets_after_label(text, "当前占用范围"),
             }
@@ -83,6 +84,13 @@ def build_payload(raw):
         or parse_pr_template_field(raw.get("pr_body", ""), "Owner Agent")
         or "UNKNOWN"
     )
+    owner_agent_key = owner_agent.strip().casefold()
+    non_owner_review_present = any(
+        comment["status"] == "DESIGN_REVIEW"
+        and comment.get("reviewer")
+        and comment["reviewer"].strip().casefold() != owner_agent_key
+        for comment in structured_comments
+    )
     shared_files_declared = any(comment["occupied_paths"] for comment in structured_comments)
     if not shared_files_declared:
         shared_declared = parse_pr_template_field(
@@ -101,7 +109,7 @@ def build_payload(raw):
         "task_card_present": task_card_present,
         "design_review_present": "DESIGN_REVIEW" in comments,
         "test_report_present": "TEST_REPORT" in comments,
-        "non_owner_review_present": raw.get("review_count", 0) > 0,
+        "non_owner_review_present": non_owner_review_present,
         "scope_changed": "UPDATED" in comments,
         "execution_blocked": "BLOCKED" in comments,
         "comments": comments,
