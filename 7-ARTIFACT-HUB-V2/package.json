@@ -9,10 +9,12 @@
     "test": "node --test dist/**/*.test.js"
   },
   "dependencies": {
-    "better-sqlite3": "^11.6.0"
+    "better-sqlite3": "^11.6.0",
+    "express": "^4.21.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
+    "@types/express": "^4.17.21",
     "@types/node": "^20.0.0",
     "typescript": "^5.7.0"
   }
