@@ -20,31 +20,70 @@ def branch_policy_valid(branch):
     return branch.startswith("agent/") or branch.startswith("milestone/")
 
 
+def check_task_card_present(payload):
+    return bool(payload.get("task_card_present"))
+
+
+def check_design_review_present(payload):
+    return bool(payload.get("design_review_present"))
+
+
+def check_started_comment_present(payload):
+    return "STARTED" in payload.get("comments", [])
+
+
+def check_scope_change_announcement(payload):
+    return (not payload.get("scope_changed")) or "UPDATED" in payload.get("comments", [])
+
+
+def check_block_announcement(payload):
+    return (not payload.get("execution_blocked")) or "BLOCKED" in payload.get(
+        "comments", []
+    )
+
+
+def check_test_report_present(payload):
+    return bool(payload.get("test_report_present"))
+
+
+def check_non_owner_review_present(payload):
+    return bool(payload.get("non_owner_review_present"))
+
+
+def check_done_comment_present(payload):
+    return "DONE" in payload.get("comments", [])
+
+
+def check_branch_policy_valid(payload):
+    return branch_policy_valid(payload.get("branch", ""))
+
+
+def check_shared_files_declared(payload):
+    return bool(payload.get("shared_files_declared"))
+
+
+CHECKERS = {
+    "check_task_card_present": check_task_card_present,
+    "check_design_review_present": check_design_review_present,
+    "check_started_comment_present": check_started_comment_present,
+    "check_scope_change_announcement": check_scope_change_announcement,
+    "check_block_announcement": check_block_announcement,
+    "check_test_report_present": check_test_report_present,
+    "check_non_owner_review_present": check_non_owner_review_present,
+    "check_done_comment_present": check_done_comment_present,
+    "check_branch_policy_valid": check_branch_policy_valid,
+    "check_shared_files_declared": check_shared_files_declared,
+}
+
+RULE_CHECKERS = {rule["id"]: CHECKERS[rule["checker"]] for rule in load_rules()}
+
+
 def evaluate_payload(payload):
     rules = load_rules()
     reason_codes = []
-
-    comments = payload.get("comments", [])
-    if not payload.get("task_card_present"):
-        reason_codes.append("RULE_001_TASK_CARD_REQUIRED")
-    if not payload.get("design_review_present"):
-        reason_codes.append("RULE_002_DESIGN_REVIEW_REQUIRED")
-    if "STARTED" not in comments:
-        reason_codes.append("RULE_003_STARTED_REQUIRED")
-    if payload.get("scope_changed") and "UPDATED" not in comments:
-        reason_codes.append("RULE_004_SCOPE_CHANGE_MUST_UPDATE")
-    if payload.get("execution_blocked") and "BLOCKED" not in comments:
-        reason_codes.append("RULE_005_BLOCK_MUST_ANNOUNCE")
-    if not payload.get("test_report_present"):
-        reason_codes.append("RULE_006_TEST_EVIDENCE_REQUIRED")
-    if not payload.get("non_owner_review_present"):
-        reason_codes.append("RULE_007_REVIEW_BY_NON_OWNER")
-    if "DONE" not in comments:
-        reason_codes.append("RULE_008_DONE_REQUIRED")
-    if not branch_policy_valid(payload.get("branch", "")):
-        reason_codes.append("RULE_009_BRANCH_POLICY_ENFORCED")
-    if not payload.get("shared_files_declared"):
-        reason_codes.append("RULE_010_SHARED_FILE_DECLARATION")
+    for rule in rules:
+        if not RULE_CHECKERS[rule["id"]](payload):
+            reason_codes.append(rule["id"])
 
     return {
         "decision": "PASS" if not reason_codes else "BLOCK",

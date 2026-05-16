@@ -51,12 +51,7 @@ jobs:
                 }
               );
               for (const comment of issueComments) {
-                if (comment.body.includes("STARTED")) comments.push("STARTED");
-                if (comment.body.includes("UPDATED")) comments.push("UPDATED");
-                if (comment.body.includes("BLOCKED")) comments.push("BLOCKED");
-                if (comment.body.includes("DONE")) comments.push("DONE");
-                if (comment.body.includes("DESIGN_REVIEW")) comments.push("DESIGN_REVIEW");
-                if (comment.body.includes("TEST_REPORT")) comments.push("TEST_REPORT");
+                comments.push(comment.body);
               }
             }
 
@@ -73,20 +68,16 @@ jobs:
               reviewCount = reviews.length;
             }
 
-            const prBody = pr?.body || "";
             const result = {
               branch: String(pr?.head?.ref || ""),
-              owner_agent: "UNKNOWN",
-              shared_files_declared: true,
-              task_card_present: prBody.includes("Task Card"),
-              design_review_present: comments.includes("DESIGN_REVIEW"),
-              test_report_present: comments.includes("TEST_REPORT"),
-              non_owner_review_present: reviewCount > 0,
-              scope_changed: false,
-              execution_blocked: false,
+              pr_body: pr?.body || "",
+              review_count: reviewCount,
               comments
             };
-            fs.writeFileSync("agent_lifecycle_payload.json", JSON.stringify(result, null, 2));
+            fs.writeFileSync("agent_lifecycle_raw.json", JSON.stringify(result, null, 2));
+
+      - name: Normalize lifecycle payload
+        run: python3 "AGENT协作工具/github-actions/build_agent_lifecycle_payload.py" agent_lifecycle_raw.json agent_lifecycle_payload.json
 
       - name: Run lifecycle checker
         run: python3 "AGENT协作工具/github-actions/check_agent_lifecycle.py" agent_lifecycle_payload.json
