@@ -33,6 +33,9 @@
 
 **Modify**
 - `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/README.md`
+- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/docs/README.md`
+- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/docs/agent-standard-dev-lifecycle-design.md`
+- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/docs/agent-standard-dev-lifecycle-implementation-plan.md`
 - `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/docs/superpowers/templates/agent-task-card.md`
 
 ---
@@ -55,6 +58,21 @@ Required status tags:
 - `DONE`
 
 This protocol is mandatory for every task in this implementation plan because the work touches shared collaboration docs, shared templates, GitHub workflow files, and cross-agent standards.
+
+## Execution Mode Update
+
+The lifecycle remains fail-closed, but the default execution strategy should move from serialized handoff to controlled parallelism.
+
+Recommended defaults:
+
+- owner directories run in parallel after a valid `STARTED`
+- small, deterministic fixes may use direct takeover with a follow-up broadcast
+- sync points are reserved for shared files, frozen contracts, boundary changes, and milestone or `main` merges
+- review happens per stage package instead of every micro-commit
+
+Reference document:
+
+- `AGENT协作工具/docs/agent-efficient-collaboration-mode.md`
 
 ---
 

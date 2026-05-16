@@ -46,17 +46,30 @@ AGENT协作工具/
 - `AGENT协作工具/docs/dual-agent-collaboration-foundation-design.md`：双代理协作底座设计
 - `AGENT协作工具/docs/agent-standard-dev-lifecycle-design.md`：标准开发生命周期与协作监督体系设计
 - `AGENT协作工具/docs/agent-standard-dev-lifecycle-implementation-plan.md`：标准开发生命周期实施计划
+- `AGENT协作工具/docs/agent-efficient-collaboration-mode.md`：高效协作模式与默认执行策略
 
 原 `docs/superpowers/` 下的对应文档当前保留兼容壳，用于承接历史链接与旧 PR 讨论。
+
+## 高效协作模式
+
+当前协作体系采用“生命周期强门禁 + 默认并行执行”的组合策略：
+
+- 生命周期阶段仍然保留，用于方案评审、测试验证、PR 评审与合入监督
+- 默认执行策略切换为“owner 目录内并行开发”，不再要求为每个微小动作逐步等待
+- 对错误导出、伪测试、导入路径、局部类型与构建依赖这类确定性问题，允许白名单直接接管
+- 只有在共享文件、冻结契约、边界变更、主分支合并等关键节点才强制同步
+
+详细规则见：`AGENT协作工具/docs/agent-efficient-collaboration-mode.md`
 
 ## 使用规则
 
 1. **每次任务开始前**，两个 agent 都必须运行冲突门禁检查
 2. 输出 `BLOCK` 时任务**必须暂停**，不得绕过
 3. 门禁结果为 `SAFE` 或 `WARNING` 后，必须先在当前协作 PR 发 `STARTED` 评论，再开始修改文件
-4. 任务范围变化必须发 `UPDATED` 评论；任务阻塞必须发 `BLOCKED` 评论；任务完成后必须发 `DONE` 评论
+4. `STARTED / UPDATED / BLOCKED / DONE` 仍为强制广播层，但默认按阶段广播，不要求为每个微小动作单独评论
 5. `gatekeeper_config.json` 是双方共同维护的边界协议，变更需经双方确认
-6. Solo 拉取本目录后与 Claude Code 共同遵守
+6. owner 目录内默认并行开发；白名单直接接管项允许修复方直接接手，修后广播结果
+7. Solo 拉取本目录后与 Claude Code 共同遵守
 
 ## 快速使用
 
