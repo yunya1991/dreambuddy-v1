@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   readTask,
   readResult,
-  getChainForIntent,
   isTradeIntent,
   TASKS_DIR,
   RESULTS_DIR,
   type TaskFile,
   type ResultFile,
 } from '@/lib/task-manager';
+import { routeIntent } from '@/lib/intent';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -84,7 +84,12 @@ export async function POST(request: NextRequest) {
       fs.writeFileSync(taskPath, JSON.stringify(task, null, 2), 'utf-8');
 
       // 更新结果文件
-      const chain = getChainForIntent(task.intent.type, task.thinking_mode);
+      const chain = routeIntent(task.intent.type, 'moderate', {
+    session_id: task.session_id,
+    user_role: 'FREE',
+    thinking_mode: task.thinking_mode,
+    message_history: [task.message],
+  }).chain;
       const entities = task.intent.entities || {};
       const symbol = entities.symbol || 'BTC';
 
@@ -170,7 +175,12 @@ export async function POST(request: NextRequest) {
       fs.writeFileSync(taskPath, JSON.stringify(scheduledTask, null, 2), 'utf-8');
 
       // 更新结果
-      const chain = getChainForIntent(task.intent.type, task.thinking_mode);
+      const chain = routeIntent(task.intent.type, 'moderate', {
+    session_id: task.session_id,
+    user_role: 'FREE',
+    thinking_mode: task.thinking_mode,
+    message_history: [task.message],
+  }).chain;
       const result: ResultFile = {
         task_id: task.task_id,
         status: 'completed',
