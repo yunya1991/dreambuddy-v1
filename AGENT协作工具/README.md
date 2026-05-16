@@ -17,8 +17,10 @@ AGENT协作工具/
 
 1. **每次任务开始前**，两个 agent 都必须运行冲突门禁检查
 2. 输出 `BLOCK` 时任务**必须暂停**，不得绕过
-3. `gatekeeper_config.json` 是双方共同维护的边界协议，变更需经双方确认
-4. Solo 拉取本目录后与 Claude Code 共同遵守
+3. 门禁结果为 `SAFE` 或 `WARNING` 后，必须先在当前协作 PR 发 `STARTED` 评论，再开始修改文件
+4. 任务范围变化必须发 `UPDATED` 评论；任务阻塞必须发 `BLOCKED` 评论；任务完成后必须发 `DONE` 评论
+5. `gatekeeper_config.json` 是双方共同维护的边界协议，变更需经双方确认
+6. Solo 拉取本目录后与 Claude Code 共同遵守
 
 ## 快速使用
 
@@ -28,4 +30,48 @@ python3 AGENT协作工具/SKILLS/dual-agent-conflict-gate/conflict_gate.py \
   --task "你的任务名称" \
   --files "计划修改的文件,逗号分隔" \
   --contracts "依赖的契约名"
+```
+
+## PR 评论协作模板
+
+### STARTED
+
+```md
+[协作开工声明 / STARTED]
+
+Agent: SOLO | Claude Code
+任务: <任务名称>
+分支: <agent/* 分支>
+计划修改:
+- <文件或目录 1>
+- <文件或目录 2>
+
+预期产出:
+- <产出 1>
+- <产出 2>
+
+占用范围:
+- <当前请勿并行修改的文件或目录>
+
+冲突门禁结果:
+- decision: SAFE | WARNING
+- reason_codes: <如无可写 []>
+
+状态: STARTED
+说明: 在我发 DONE 评论前，请不要并行修改上述范围。
+```
+
+### DONE
+
+```md
+[协作完成回报 / DONE]
+
+Agent: <SOLO | Claude Code>
+任务: <任务名称>
+提交: <commit sha>
+已完成:
+- <完成项 1>
+- <完成项 2>
+状态: DONE
+说明: 另一代理可以基于最新 PR head 继续。
 ```
