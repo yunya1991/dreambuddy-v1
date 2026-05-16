@@ -1,9 +1,9 @@
-import { HealthViewModel, toHealthViewModel } from "../adapters/healthAdapter";
-import { TraceViewModel, toTraceViewModel } from "../adapters/traceAdapter";
-import { WorkflowViewModel, toWorkflowViewModel } from "../adapters/workflowAdapter";
-import { mockHealth } from "../adapters/mock/health.mock";
-import { mockTrace } from "../adapters/mock/trace.mock";
-import { mockWorkflow } from "../adapters/mock/workflow.mock";
+import { HealthViewModel, toHealthViewModel } from "../adapters/healthAdapter.js";
+import { TraceViewModel, toTraceViewModel } from "../adapters/traceAdapter.js";
+import { WorkflowViewModel, toWorkflowViewModel } from "../adapters/workflowAdapter.js";
+import { mockHealth } from "../adapters/mock/health.mock.js";
+import { mockTrace } from "../adapters/mock/trace.mock.js";
+import { mockWorkflow } from "../adapters/mock/workflow.mock.js";
 
 function statusBadge(status: string): string {
   const colors: Record<string, string> = {
