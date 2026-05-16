@@ -3,7 +3,7 @@
 > 仓库：`/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1`  
 > 版本：v1（Governance Central Design）  
 > 日期：2026-05-16  
-> 状态：草案  
+> 状态：v1 定稿  
 > 目标：把 `7-ARTIFACT-HUB-V2` 从“产物中台 + 路由服务”升级为“公司治理架构驱动的 AI 中枢”。
 
 ## 0. 设计背景
