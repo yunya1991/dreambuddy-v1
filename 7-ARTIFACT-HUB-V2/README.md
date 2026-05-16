@@ -16,7 +16,6 @@
 
 - [治理中枢化设计](../docs/superpowers/specs/2026-05-16-artifact-hub-v2-governance-central-design.md)
 - [公司中枢设计](../1-ARCHITECTURE/中台设计/COMPANY_CENTRAL_HUB.md)
-- [Ops Console 设计](../docs/superpowers/specs/2026-05-15-artifact-hub-v2-ops-console-design.md)
 - [Ops UI 说明](./OPS_UI_README.md)
 - [市场化中台设计](./MARKET_CONSOLE_DESIGN.md)
 - [董事会总览台设计](./BOARD_CONSOLE_DESIGN.md)
