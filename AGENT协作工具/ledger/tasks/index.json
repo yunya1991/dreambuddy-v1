@@ -2,5 +2,47 @@
   "version": 1,
   "generated_at": "1970-01-01T00:00:00Z",
   "open_tasks": [],
-  "tasks": []
+  "tasks": [
+    {
+      "goal_id": "goal-pr9-artifact-hub-v2",
+      "task_id": "task-pr9-artifact-hub-v2-build-1",
+      "parent_task_id": "",
+      "title": "PR9: 7-ARTIFACT-HUB-V2 build and test green",
+      "source_type": "assigned",
+      "task_type": "serial",
+      "mode": "PHASE_BROADCAST",
+      "status": "accepted",
+      "depends_on": [],
+      "dependency_gate": "none",
+      "shared_boundary": [],
+      "sync_checkpoint": [],
+      "current_sync_state": "none",
+      "owner_agent": "Claude Code",
+      "validator_agent": "Validator AGENT",
+      "governance_agent": "Governance AGENT",
+      "exclusive_owner_agent": "",
+      "exclusive_until": "",
+      "branch": "agent/claude/pr9-artifact-hub-v2",
+      "workspace_path": "7-ARTIFACT-HUB-V2",
+      "claim_pointer": "",
+      "delivery_pointer": "",
+      "validation_pointer": "",
+      "score": null,
+      "reward": null,
+      "final_credit_agent": "",
+      "archived_at": "",
+      "knowledge_synced_at": "",
+      "next_required_action": "developer: make npm run build && npm test pass in 7-ARTIFACT-HUB-V2",
+      "governance_closure": {
+        "archive_summary": "",
+        "index_updates": [],
+        "faq_decision": "",
+        "faq_entries": [],
+        "rollup_effect": "",
+        "followup_tasks": [],
+        "closure_agent": "",
+        "closure_completed_at": ""
+      }
+    }
+  ]
 }
