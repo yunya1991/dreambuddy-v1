@@ -29,5 +29,18 @@ class RewardCalculationTests(unittest.TestCase):
         self.assertEqual(reward["final_reward"], 10)
 
 
+class DocsEntrypointTests(unittest.TestCase):
+    def test_root_readme_surfaces_v1_docs_directly(self):
+        text = (ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertIn("docs/agent-collaboration-system-v1-design.md", text)
+        self.assertIn("docs/agent-collaboration-system-v1-implementation-plan.md", text)
+
+    def test_docs_readme_keeps_migration_guidance(self):
+        text = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+        self.assertIn("docs/superpowers/specs/", text)
+        self.assertIn("docs/superpowers/plans/", text)
+        self.assertIn("兼容壳", text)
+
+
 if __name__ == "__main__":
     unittest.main()
