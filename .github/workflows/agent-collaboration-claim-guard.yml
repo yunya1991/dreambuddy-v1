@@ -14,13 +14,21 @@ jobs:
     if: |
       github.event.issue.pull_request &&
       (
-        startsWith(github.event.comment.body, '[验证结论 / VALIDATION_RESULT]') ||
+        (
+          startsWith(github.event.comment.body, '[验证结论 / VALIDATION_RESULT]') &&
+          (
+            contains(github.event.comment.body, 'Governance Handoff: ledgered') ||
+            contains(github.event.comment.body, 'Governance Handoff: archived') ||
+            contains(github.event.comment.body, 'Governance Handoff: knowledge_synced')
+          )
+        ) ||
         startsWith(github.event.comment.body, '[账本记账 / LEDGER_ENTRY]')
       ) &&
       (
         github.event.comment.author_association == 'OWNER' ||
         github.event.comment.author_association == 'MEMBER' ||
-        github.event.comment.author_association == 'COLLABORATOR'
+        github.event.comment.author_association == 'COLLABORATOR' ||
+        github.event.comment.user.login == 'github-actions[bot]'
       )
     runs-on: ubuntu-latest
     steps:
