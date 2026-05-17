@@ -966,6 +966,21 @@ workflow 层应尽量保持轻量，只负责：
 
 这样后续 Trae 巡检型 AGENT 可以低成本地消费控制器结果，而不必重新解析全部评论与账本上下文。
 
+#### 18.5.4 Self-Hosted Runner 自动化模式（推荐用于 PR9）
+
+当“定时自动化任务需要人工点运行/授权”导致链条卡死时，允许采用 GitHub Actions + self-hosted runner 的自动化模式：
+
+- Actions 负责定时触发与审计链记录
+- runner 跑在本机（macOS），可直接复用本机工具链执行 `7-ARTIFACT-HUB-V2` 的 build/test
+- workflow 只做两件事：
+  - 运行 build/test 并把结果写成结构化 PR 评论（STARTED / TEST_REPORT / VALIDATION_RESULT）
+  - 由 `VALIDATION_RESULT`（且 `Governance Handoff: ledgered|archived|knowledge_synced`）触发既有 claim-guard 工作流推进账本与奖励
+
+该模式的协议落脚点与最小闭环职责边界不变：
+
+- workflow 不直接写 `tasks/index.json` / `rewards/index.json`
+- 账本推进仍由 `run_governance_ledger_cycle.py` 统一裁决并写回
+
 ### 18.6 最小闭环的数据流与一次执行周期
 
 一次最小闭环执行周期建议固定为以下 6 个阶段：
