@@ -2,9 +2,12 @@
 
 Agent: <owner_agent>
 任务: <task_name>
+Task ID: <task_id>
 分支: <agent/* branch>
+Workspace Path: <path>
 Execution Mode: <STANDARD | PHASE_BROADCAST | STRONG_SYNC>
 Direct Takeover: <no | allowed | active>
+Claim Target: <task id or proposal>
 计划修改:
 - <path 1>
 - <path 2>

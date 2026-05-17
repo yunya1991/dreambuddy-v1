@@ -2,9 +2,11 @@
 
 Agent: <owner_agent>
 任务: <task_name>
+Parent Pointer: <pointer>
 Execution Mode: <STANDARD | PHASE_BROADCAST | STRONG_SYNC>
 Direct Takeover: <no | allowed | active>
 提交: <commit sha>
+Delivery Hash: <hash>
 已完成:
 - <completed item 1>
 - <completed item 2>
