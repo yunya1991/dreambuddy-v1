@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "1970-01-01T00:00:00Z",
+  "generated_at": "2026-05-17T17:46:23Z",
   "open_tasks": [],
   "tasks": [
     {
@@ -60,7 +60,7 @@
       "source_type": "assigned",
       "task_type": "serial",
       "mode": "PHASE_BROADCAST",
-      "status": "accepted",
+      "status": "ledgered",
       "depends_on": [],
       "dependency_gate": "none",
       "shared_boundary": [],
@@ -80,7 +80,7 @@
       "delivery_pointer": "",
       "validation_pointer": "",
       "score": null,
-      "reward": null,
+      "reward": 12,
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
@@ -105,10 +105,14 @@
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
       "status": "planned",
-      "depends_on": ["task-pr9-artifact-hub-v2-build-1"],
+      "depends_on": [
+        "task-pr9-artifact-hub-v2-build-1"
+      ],
       "dependency_gate": "ledgered",
       "shared_boundary": [],
-      "sync_checkpoint": ["7-ARTIFACT-HUB-V2/OBJECT_MODEL.md"],
+      "sync_checkpoint": [
+        "7-ARTIFACT-HUB-V2/OBJECT_MODEL.md"
+      ],
       "current_sync_state": "none",
       "owner_agent": "",
       "validator_agent": "Validator AGENT",
@@ -146,10 +150,14 @@
       "task_type": "shared-sync",
       "mode": "PHASE_BROADCAST",
       "status": "planned",
-      "depends_on": ["task-pr9-ahv2-object-model-align-1"],
+      "depends_on": [
+        "task-pr9-ahv2-object-model-align-1"
+      ],
       "dependency_gate": "accepted",
       "shared_boundary": [],
-      "sync_checkpoint": ["7-ARTIFACT-HUB-V2/CHAIN_WORKFLOWS.md"],
+      "sync_checkpoint": [
+        "7-ARTIFACT-HUB-V2/CHAIN_WORKFLOWS.md"
+      ],
       "current_sync_state": "none",
       "owner_agent": "",
       "validator_agent": "Validator AGENT",
@@ -187,10 +195,14 @@
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
       "status": "planned",
-      "depends_on": ["task-pr9-artifact-hub-v2-build-1"],
+      "depends_on": [
+        "task-pr9-artifact-hub-v2-build-1"
+      ],
       "dependency_gate": "ledgered",
       "shared_boundary": [],
-      "sync_checkpoint": ["7-ARTIFACT-HUB-V2/OPS_UI_README.md"],
+      "sync_checkpoint": [
+        "7-ARTIFACT-HUB-V2/OPS_UI_README.md"
+      ],
       "current_sync_state": "none",
       "owner_agent": "",
       "validator_agent": "Validator AGENT",
