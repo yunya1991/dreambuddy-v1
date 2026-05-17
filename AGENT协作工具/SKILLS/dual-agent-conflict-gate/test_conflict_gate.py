@@ -14,6 +14,62 @@ def empty_git_snapshot():
 
 
 class ConflictGateTests(unittest.TestCase):
+    def test_nested_ownership_prefers_more_specific_domain(self):
+        cfg = {
+            "ownership": {
+                "solo": ["7-ARTIFACT-HUB-V2/src/"],
+                "claude": ["7-ARTIFACT-HUB-V2/src/ops-ui/"],
+            },
+            "shared_requires_approval": [],
+        }
+
+        issues = MODULE.check_file_boundaries(
+            "claude",
+            ["7-ARTIFACT-HUB-V2/src/ops-ui/server.ts"],
+            empty_git_snapshot(),
+            cfg,
+        )
+
+        self.assertEqual(issues, [])
+
+    def test_parallel_conditions_allow_more_specific_nested_domain(self):
+        cfg = {
+            "ownership": {
+                "solo": ["7-ARTIFACT-HUB-V2/src/"],
+                "claude": ["7-ARTIFACT-HUB-V2/src/ops-ui/"],
+            },
+            "contracts": {},
+        }
+
+        issues = MODULE.check_parallel_conditions(
+            "claude",
+            ["7-ARTIFACT-HUB-V2/src/ops-ui/routes/index.ts"],
+            [],
+            empty_git_snapshot(),
+            cfg,
+        )
+
+        self.assertEqual(issues, [])
+
+    def test_nested_ownership_still_blocks_other_owner_root_file(self):
+        cfg = {
+            "ownership": {
+                "solo": ["7-ARTIFACT-HUB-V2/src/"],
+                "claude": ["7-ARTIFACT-HUB-V2/src/ops-ui/"],
+            },
+            "shared_requires_approval": [],
+        }
+
+        issues = MODULE.check_file_boundaries(
+            "claude",
+            ["7-ARTIFACT-HUB-V2/src/router-engine.ts"],
+            empty_git_snapshot(),
+            cfg,
+        )
+
+        self.assertEqual(len(issues), 1)
+        self.assertEqual(issues[0]["code"], "BOUNDARY_VIOLATION")
+
     def test_shared_boundaries_field_triggers_strong_sync_warning(self):
         cfg = {
             "ownership": {"solo": ["docs/"], "claude": ["src/"]},

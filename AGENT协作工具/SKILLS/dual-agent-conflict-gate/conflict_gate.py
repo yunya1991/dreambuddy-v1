@@ -106,6 +106,19 @@ def shared_boundaries(cfg: dict) -> list[str]:
     return cfg.get("shared_requires_approval", [])
 
 
+def resolve_owner(file_path: str, cfg: dict) -> str | None:
+    matched_owner = None
+    matched_length = -1
+
+    for owner, domains in cfg.get("ownership", {}).items():
+        for domain in domains:
+            if file_path.startswith(domain) and len(domain) > matched_length:
+                matched_owner = owner
+                matched_length = len(domain)
+
+    return matched_owner
+
+
 # ── core checks ──────────────────────────────────────────────────────────────
 
 def check_branch(agent_id: str, branch: str, cfg: dict) -> list[dict]:
@@ -144,14 +157,13 @@ def check_file_boundaries(
 ) -> list[dict]:
     issues = []
     other = opponent(agent_id)
-    other_domain = cfg["ownership"].get(other, [])
     shared_approval = shared_boundaries(cfg)
 
     all_dirty = set(git_snap["modified_files"] + git_snap["staged_files"])
 
     for f in files_to_modify:
         # 对方主责域
-        if path_in_domain(f, other_domain):
+        if resolve_owner(f, cfg) == other:
             issues.append({
                 "code": "BOUNDARY_VIOLATION",
                 "level": "BLOCK",
@@ -174,7 +186,7 @@ def check_file_boundaries(
 
     # git dirty 文件中是否有对方主责域文件（对方正在修改）
     for dirty_file in all_dirty:
-        if path_in_domain(dirty_file, other_domain) and dirty_file in files_to_modify:
+        if resolve_owner(dirty_file, cfg) == other and dirty_file in files_to_modify:
             issues.append({
                 "code": "BOUNDARY_VIOLATION",
                 "level": "BLOCK",
@@ -217,12 +229,11 @@ def check_parallel_conditions(
     """三条并行条件综合判断（仅在前面无 BLOCK 时补充）。"""
     issues = []
     other = opponent(agent_id)
-    other_domain = cfg["ownership"].get(other, [])
     all_dirty = set(git_snap["modified_files"] + git_snap["staged_files"])
     registry = cfg.get("contracts", {})
 
     # 条件1: 文件边界
-    boundary_ok = not any(path_in_domain(f, other_domain) for f in files_to_modify)
+    boundary_ok = not any(resolve_owner(f, cfg) == other for f in files_to_modify)
 
     # 条件2: 契约达到 L1
     contracts_ok = all(
@@ -232,7 +243,7 @@ def check_parallel_conditions(
 
     # 条件3: 无同文件依赖（本次要改的文件未被对方 dirty）
     no_same_file = not any(
-        f in all_dirty and path_in_domain(f, other_domain)
+        f in all_dirty and resolve_owner(f, cfg) == other
         for f in files_to_modify
     )
 
