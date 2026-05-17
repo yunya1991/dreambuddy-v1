@@ -8,6 +8,7 @@
 - `agent-standard-dev-lifecycle-design.md`：全局 AGENT 标准开发生命周期设计
 - `agent-standard-dev-lifecycle-implementation-plan.md`：标准开发生命周期实施计划
 - `agent-efficient-collaboration-mode.md`：高效协作模式与默认执行策略
+- `agent-collaboration-system-v1-design.md`：AGENT协作系统 v1 正式设计草案
 
 ## 迁移说明
 
