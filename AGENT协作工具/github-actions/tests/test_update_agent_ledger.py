@@ -29,6 +29,31 @@ class RewardCalculationTests(unittest.TestCase):
         self.assertEqual(reward["final_reward"], 10)
 
 
+class GovernanceTaskTemplateTests(unittest.TestCase):
+    def test_task_template_exposes_governance_fields(self):
+        data = json.loads(
+            (ROOT / "ledger" / "templates" / "task-record.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        required = [
+            "goal_id",
+            "parent_task_id",
+            "depends_on",
+            "dependency_gate",
+            "shared_boundary",
+            "sync_checkpoint",
+            "current_sync_state",
+            "validation_pointer",
+            "archived_at",
+            "knowledge_synced_at",
+            "next_required_action",
+            "governance_closure",
+        ]
+        for key in required:
+            self.assertIn(key, data)
+
+
 class DocsEntrypointTests(unittest.TestCase):
     def test_root_readme_surfaces_v1_docs_directly(self):
         text = (ROOT / "README.md").read_text(encoding="utf-8")
