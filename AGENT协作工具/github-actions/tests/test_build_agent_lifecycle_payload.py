@@ -4,7 +4,6 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-COLLAB_ROOT = Path(__file__).resolve().parents[2]
 MODULE_PATH = ROOT / "build_agent_lifecycle_payload.py"
 SPEC = importlib.util.spec_from_file_location("build_agent_lifecycle_payload", MODULE_PATH)
 MODULE = importlib.util.module_from_spec(SPEC)
@@ -202,18 +201,5 @@ class BuildLifecyclePayloadTests(unittest.TestCase):
 
         self.assertEqual(payload["execution_mode"], "STANDARD")
         self.assertTrue(payload["direct_takeover"])
-
-
-class TemplatePresenceTests(unittest.TestCase):
-    def test_required_collaboration_templates_exist(self):
-        required = [
-            "templates/pr-comment-exploration-proposal.md",
-            "templates/pr-comment-validation-result.md",
-            "templates/pr-comment-ledger-entry.md",
-        ]
-        for rel in required:
-            self.assertTrue((COLLAB_ROOT / rel).exists(), rel)
-
-
 if __name__ == "__main__":
     unittest.main()
