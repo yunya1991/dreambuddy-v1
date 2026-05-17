@@ -3,10 +3,21 @@ import unittest
 from pathlib import Path
 
 
+ROOT = Path(__file__).resolve().parents[3]
 MODULE_PATH = Path(__file__).resolve().parents[1] / "check_agent_collaboration.py"
 SPEC = importlib.util.spec_from_file_location("check_agent_collaboration", MODULE_PATH)
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
+
+
+class WorkflowPresenceTests(unittest.TestCase):
+    def test_collaboration_workflows_exist(self):
+        required = [
+            ROOT / ".github" / "workflows" / "agent-collaboration-claim-guard.yml",
+            ROOT / ".github" / "workflows" / "agent-ledger-maintenance.yml",
+        ]
+        for path in required:
+            self.assertTrue(path.exists(), str(path))
 
 
 class CollaborationCheckerTests(unittest.TestCase):
