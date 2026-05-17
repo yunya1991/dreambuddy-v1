@@ -858,6 +858,241 @@ in_progress
 
 Action 负责执行规则，不负责定义规则本身。规则真源仍是仓库文档与账本协议。
 
+### 18.4 最小闭环的目标与边界
+
+在 `治理 AGENT` 已具备字段、模板与状态机约束的前提下，`v1` 下一阶段的核心不是继续增加协议字段，而是建立“治理协议的首个可运行执行闭环”。
+
+该最小闭环的目标是：
+
+- 自动从 PR body 与结构化评论提取治理信号
+- 自动判断当前状态推进是否合法
+- 自动把任务状态写回 `tasks/index.json`
+- 自动把奖励记录写回 `rewards/index.json`
+- 自动推进 `accepted -> ledgered -> archived -> knowledge_synced`
+- 在治理收口数据不完整时阻断 `knowledge_synced`
+
+该最小闭环明确不做：
+
+- 自动任务拆解
+- 自动排程
+- 自动释放下游任务
+- 自动探索提案转正式任务
+- 自动专属授权与超时回收
+- 自动 FAQ 正文生成
+- 仓库级主动扫描
+
+因此，`v1` 最小闭环的本质不是“完整治理 AGENT 自动化”，而是“从验证通过到账本、奖励与治理收口完成为止的自动执行链”。
+
+本轮采用的输入边界是 **GitHub 事件上下文模式**：
+
+- workflow 将当前 PR body、结构化评论、账本路径与触发上下文输入给总控脚本
+- 总控脚本只处理本次触发对应的单个任务上下文
+- 总控脚本不主动扫描全仓，不承担调度职责
+
+### 18.5 单脚本控制器与组件设计
+
+为避免治理执行逻辑继续散落在多个 workflow 和小脚本中，`v1` 最小闭环采用“**单控制器 + 现有脚本做纯函数依赖**”的结构。
+
+建议新增统一控制入口：
+
+- `AGENT协作工具/github-actions/run_governance_ledger_cycle.py`
+
+该脚本是最小闭环的唯一业务入口，负责一次完整治理执行周期的编排，但不负责承载全部细节规则。
+
+#### 18.5.1 控制器职责
+
+`run_governance_ledger_cycle.py` 负责：
+
+- 读取 workflow 注入的事件上下文
+- 加载当前任务账本与奖励账本
+- 调用 payload builder 生成标准 payload
+- 调用 checker 执行规则判定
+- 在判定通过时调用 updater 执行状态推进与账本写回
+- 输出结构化执行结果给 workflow 与后续巡检任务使用
+
+`run_governance_ledger_cycle.py` 不负责：
+
+- 自动任务拆解
+- 自动排程
+- 仓库级任务扫描
+- 在脚本内部重复实现 builder/checker/updater 的细节逻辑
+
+#### 18.5.2 纯函数依赖模块
+
+现有脚本继续保留，但职责明确收敛：
+
+- `build_agent_collaboration_payload.py`
+  - 负责解析 PR body、评论与上下文字段，输出标准 payload
+  - 不执行规则判断
+  - 不写账本
+
+- `check_agent_collaboration.py`
+  - 负责对 payload 做合法性判断
+  - 输出 `decision / reason_codes / recommended_next_action`
+  - 不写账本
+
+- `update_agent_ledger.py`
+  - 负责执行状态推进、任务账本写回、奖励账本写回与 `governance_closure` 校验
+  - 成为唯一账本写入口
+
+workflow 层应尽量保持轻量，只负责：
+
+- 准备 GitHub 事件上下文
+- 触发 `run_governance_ledger_cycle.py`
+- 根据返回结果决定成功、失败与日志保留
+
+#### 18.5.3 面向 Trae 巡检型 AGENT 的预留接口
+
+`v1` 后续允许通过 Trae 自动化任务配置“治理 AGENT / 验证者 AGENT”的**巡检型**角色，用于：
+
+- 定时检查账本滞留状态
+- 检查评论缺失或协议漂移
+- 检查主干文档、手册与规则的同步性
+- 检查 `accepted` 未记账、`archived` 未完成收口等异常
+- 必要时补治理评论或给出建议
+
+巡检型 AGENT **不直接写账本**。因此本轮最小闭环需要显式预留只读接口，控制器输出必须包含至少以下字段：
+
+- `task_id`
+- `decision`
+- `reason_codes`
+- `previous_status`
+- `new_status`
+- `reward_written`
+- `knowledge_sync_written`
+- `next_required_action`
+- `updated_task_index`
+- `updated_reward_index`
+
+这样后续 Trae 巡检型 AGENT 可以低成本地消费控制器结果，而不必重新解析全部评论与账本上下文。
+
+### 18.6 最小闭环的数据流与一次执行周期
+
+一次最小闭环执行周期建议固定为以下 6 个阶段：
+
+1. 收集上下文
+2. 构造标准 payload
+3. 执行规则判定
+4. 读取当前账本状态
+5. 执行合法状态推进与账本写回
+6. 输出结构化执行结果
+
+整体调用链如下：
+
+```text
+GitHub Event Context
+-> run_governance_ledger_cycle.py
+-> build_agent_collaboration_payload.py
+-> check_agent_collaboration.py
+-> update_agent_ledger.py
+-> tasks/index.json + rewards/index.json
+-> structured execution result
+```
+
+#### 18.6.1 推荐输入结构
+
+builder 产出的标准 payload 至少应包含：
+
+- `task_id`
+- `branch`
+- `governance_agent`
+- `task_type`
+- `dependency_gate`
+- `current_sync_state`
+- `validation_decision`
+- `validation_score`
+- `governance_handoff`
+- `current_status`
+- `requested_status`
+- `delivery_present`
+- `validation_present`
+- `ledger_entry_present`
+- `closure_ready`
+- `dependency_satisfied`
+- `sync_review_present`
+- `next_required_action`
+
+其中部分字段来自评论与 PR body，部分字段由控制器在读取当前账本状态后补齐。
+
+#### 18.6.2 执行顺序
+
+`run_governance_ledger_cycle.py` 的推荐执行顺序如下：
+
+1. 读取 workflow 注入的原始事件上下文
+2. 调用 `build_agent_collaboration_payload.py` 生成标准 payload
+3. 调用 `check_agent_collaboration.py` 判断当前推进是否合法
+4. 若 checker 返回 `BLOCK`，直接结束，不写账本
+5. 若 checker 返回 `PASS`，调用 `update_agent_ledger.py` 读取账本并执行状态推进
+6. 输出统一的 `cycle_result`
+
+#### 18.6.3 最小自动推进范围
+
+本轮控制器只自动处理以下三段推进：
+
+- `accepted -> ledgered`
+- `ledgered -> archived`
+- `archived -> knowledge_synced`
+
+其中：
+
+- `accepted -> ledgered`
+  - 需要合法 `VALIDATION_RESULT`
+  - 需要 `Decision = ACCEPTED`
+  - 需要满足奖励门槛
+  - 允许写入奖励记录
+
+- `ledgered -> archived`
+  - 需要当前任务已正式记账
+  - 需要具备最小归档基础数据
+
+- `archived -> knowledge_synced`
+  - 需要 `governance_closure` 至少具备：
+    - `archive_summary`
+    - `index_updates`
+    - `faq_decision`
+    - `closure_agent`
+
+不在本轮自动化范围内的阶段包括：
+
+- `goal_received -> decomposing`
+- `decomposing -> planned`
+- `planned -> ready`
+- `ready -> claimed`
+- `claimed -> in_progress`
+- `in_progress -> delivered`
+- `delivered -> validating`
+
+这些阶段仍由人工协作与协议驱动。
+
+#### 18.6.4 失败与阻断路径
+
+一次执行周期中，出现以下任一情况都必须立刻停止，并返回明确 reason code：
+
+- payload 解析失败
+- 缺少 `task_id`
+- checker 返回 `BLOCK`
+- 当前任务在账本中不存在
+- 状态跳转非法
+- 奖励写回失败
+- `knowledge_synced` 所需 closure 字段不完整
+
+失败时不允许进行部分写回，也不允许 silent failure。推荐统一输出如下结构：
+
+```json
+{
+  "task_id": "task-123",
+  "decision": "BLOCK",
+  "reason_codes": ["RULE_SYNC_REVIEW_REQUIRED"],
+  "previous_status": "archived",
+  "new_status": "archived",
+  "reward_written": false,
+  "knowledge_sync_written": false,
+  "next_required_action": "governance: add sync review evidence"
+}
+```
+
+该结构既是 workflow 的执行结果，也是未来 Trae 巡检型 `治理 AGENT / 验证者 AGENT` 的主要读取接口。
+
 ## 19. 与现有 AGENT协作工具 的映射关系
 
 当前对象到新系统的映射如下：
