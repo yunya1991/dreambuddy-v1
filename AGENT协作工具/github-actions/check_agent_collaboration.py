@@ -23,21 +23,26 @@ def evaluate_payload(payload):
 
     current_status = payload.get("current_status")
     requested_status = payload.get("requested_status")
-    if current_status and requested_status:
+    is_noop = bool(current_status) and bool(requested_status) and current_status == requested_status
+    if current_status and requested_status and not is_noop:
         allowed = ALLOWED_TRANSITIONS.get(current_status, set())
         if requested_status not in allowed:
             reason_codes.append("RULE_INVALID_STATUS_TRANSITION")
             if not recommended_next_action:
                 recommended_next_action = "governance: adjust requested status"
 
-    if payload.get("task_type") == "serial" and not payload.get(
-        "dependency_satisfied", True
+    if (
+        not is_noop
+        and payload.get("task_type") == "serial"
+        and not payload.get("dependency_satisfied", True)
     ):
         reason_codes.append("RULE_DEPENDENCY_NOT_SATISFIED")
         if not recommended_next_action:
             recommended_next_action = "developer: satisfy dependency gate"
 
     if (
+        not is_noop
+        and
         payload.get("task_type") == "shared-sync"
         and payload.get("current_sync_state") == "pending"
         and not payload.get("sync_review_present", False)

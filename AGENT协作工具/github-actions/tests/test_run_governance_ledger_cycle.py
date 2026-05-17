@@ -83,6 +83,17 @@ class GovernanceCycleControllerTests(unittest.TestCase):
             self.assertEqual(result["new_status"], "ledgered")
             self.assertTrue(result["reward_written"])
 
+            tasks_after_first = task_index.read_text(encoding="utf-8")
+            rewards_after_first = reward_index.read_text(encoding="utf-8")
+
+            result2 = MODULE.run_cycle(raw, task_index, reward_index)
+
+            self.assertEqual(result2["decision"], "PASS")
+            self.assertFalse(result2["state_changed"])
+            self.assertFalse(result2["reward_written"])
+            self.assertEqual(task_index.read_text(encoding="utf-8"), tasks_after_first)
+            self.assertEqual(reward_index.read_text(encoding="utf-8"), rewards_after_first)
+
     def test_blocks_without_touching_indexes(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)

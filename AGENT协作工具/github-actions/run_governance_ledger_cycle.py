@@ -38,6 +38,21 @@ def run_cycle(raw, task_index_path, reward_index_path):
             "repair_hint": "publish STARTED comment with Task ID",
         }
 
+    requested_status = payload.get("requested_status", "")
+    if not requested_status:
+        return {
+            "task_id": task_id,
+            "decision": "BLOCK",
+            "reason_codes": ["RULE_REQUESTED_STATUS_REQUIRED"],
+            "previous_status": "",
+            "new_status": "",
+            "state_changed": False,
+            "reward_written": False,
+            "knowledge_sync_written": False,
+            "next_required_action": "governance: provide Governance Handoff",
+            "repair_hint": "publish VALIDATION_RESULT with Governance Handoff",
+        }
+
     task_index = json.loads(Path(task_index_path).read_text(encoding="utf-8"))
     reward_index = json.loads(Path(reward_index_path).read_text(encoding="utf-8"))
     task = next(
@@ -69,6 +84,7 @@ def run_cycle(raw, task_index_path, reward_index_path):
             "reason_codes": checker_result.get("reason_codes", []),
             "previous_status": task.get("status", ""),
             "new_status": task.get("status", ""),
+            "state_changed": False,
             "reward_written": False,
             "knowledge_sync_written": False,
             "next_required_action": checker_result.get("recommended_next_action", ""),
@@ -76,13 +92,18 @@ def run_cycle(raw, task_index_path, reward_index_path):
         }
 
     updated_task, transition = UPDATER.apply_status_transition(
-        task, payload.get("requested_status", "")
+        task, requested_status
     )
 
     reward_written = False
-    if payload.get("requested_status") == "ledgered" and payload.get(
+    if (
+        transition.get("state_changed")
+        and transition.get("new_status") == "ledgered"
+        and payload.get(
         "validation_score"
-    ) is not None:
+    )
+        is not None
+    ):
         reward = UPDATER.calculate_reward(
             base_reward=10, score=int(payload["validation_score"])
         )
@@ -99,15 +120,19 @@ def run_cycle(raw, task_index_path, reward_index_path):
         updated_task["reward"] = reward["final_reward"]
         reward_written = True
 
-    task_index["generated_at"] = UPDATER.utc_now()
-    Path(task_index_path).write_text(
-        json.dumps(task_index, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    Path(reward_index_path).write_text(
-        json.dumps(reward_index, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    knowledge_sync_written = transition.get("knowledge_sync_written", False)
+    state_changed = transition.get("state_changed", False)
+    wrote_anything = state_changed or reward_written or knowledge_sync_written
+    if wrote_anything:
+        task_index["generated_at"] = UPDATER.utc_now()
+        Path(task_index_path).write_text(
+            json.dumps(task_index, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        Path(reward_index_path).write_text(
+            json.dumps(reward_index, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
 
     return {
         "task_id": task_id,
@@ -115,8 +140,9 @@ def run_cycle(raw, task_index_path, reward_index_path):
         "reason_codes": [],
         "previous_status": transition.get("previous_status", ""),
         "new_status": transition.get("new_status", ""),
+        "state_changed": transition.get("state_changed", False),
         "reward_written": reward_written,
-        "knowledge_sync_written": transition.get("knowledge_sync_written", False),
+        "knowledge_sync_written": knowledge_sync_written,
         "next_required_action": payload.get("recommended_next_action", ""),
         "repair_hint": "",
     }
