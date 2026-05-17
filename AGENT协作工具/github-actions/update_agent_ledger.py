@@ -30,3 +30,55 @@ def append_reward_record(reward_index, record):
     reward_index["generated_at"] = utc_now()
     reward_index["reward_records"].append(record)
     return reward_index
+
+
+GOVERNANCE_ALLOWED_TRANSITIONS = {
+    "accepted": {"ledgered"},
+    "ledgered": {"archived"},
+    "archived": {"knowledge_synced"},
+}
+
+
+def build_governance_closure(
+    archive_summary,
+    index_updates,
+    faq_decision,
+    faq_entries,
+    closure_agent,
+):
+    return {
+        "archive_summary": archive_summary,
+        "index_updates": list(index_updates),
+        "faq_decision": faq_decision,
+        "faq_entries": list(faq_entries),
+        "closure_agent": closure_agent,
+        "closure_completed_at": utc_now(),
+    }
+
+
+def apply_status_transition(task, requested_status):
+    current_status = task.get("status")
+    allowed_statuses = GOVERNANCE_ALLOWED_TRANSITIONS.get(current_status)
+    if allowed_statuses is not None and requested_status not in allowed_statuses:
+        raise ValueError(
+            f"invalid governance transition: {current_status} -> {requested_status}"
+        )
+
+    if requested_status == "knowledge_synced":
+        closure = task.get("governance_closure", {})
+        required_fields = {
+            "archive_summary": "archive_summary required",
+            "index_updates": "index_updates required",
+            "faq_decision": "faq_decision required",
+            "closure_agent": "closure_agent required",
+        }
+        for field, error_message in required_fields.items():
+            if not closure.get(field):
+                raise ValueError(error_message)
+        task["knowledge_synced_at"] = utc_now()
+
+    if requested_status == "archived":
+        task["archived_at"] = utc_now()
+
+    task["status"] = requested_status
+    return task

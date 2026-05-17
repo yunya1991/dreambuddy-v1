@@ -54,6 +54,35 @@ class GovernanceTaskTemplateTests(unittest.TestCase):
             self.assertIn(key, data)
 
 
+class GovernanceClosureTests(unittest.TestCase):
+    def test_builds_governance_closure_record(self):
+        closure = MODULE.build_governance_closure(
+            archive_summary="closed with sync notes",
+            index_updates=["AGENT协作工具/docs/README.md"],
+            faq_decision="written",
+            faq_entries=["shared-sync closeout"],
+            closure_agent="SOLO-GOV",
+        )
+        self.assertEqual(closure["closure_agent"], "SOLO-GOV")
+        self.assertEqual(closure["faq_decision"], "written")
+        self.assertTrue(closure["closure_completed_at"].endswith("Z"))
+
+    def test_rejects_knowledge_sync_without_closure_data(self):
+        task = {
+            "status": "archived",
+            "governance_closure": {
+                "archive_summary": "",
+                "index_updates": [],
+                "faq_decision": "",
+                "faq_entries": [],
+                "closure_agent": "",
+                "closure_completed_at": "",
+            },
+        }
+        with self.assertRaises(ValueError):
+            MODULE.apply_status_transition(task, "knowledge_synced")
+
+
 class DocsEntrypointTests(unittest.TestCase):
     def test_root_readme_surfaces_v1_docs_directly(self):
         text = (ROOT / "README.md").read_text(encoding="utf-8")
