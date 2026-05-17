@@ -89,11 +89,30 @@ class DocsEntrypointTests(unittest.TestCase):
         self.assertIn("docs/agent-collaboration-system-v1-design.md", text)
         self.assertIn("docs/agent-collaboration-system-v1-implementation-plan.md", text)
 
+    def test_docs_readmes_link_governance_increment_plan(self):
+        rel = "agent-collaboration-system-v1-governance-agent-implementation-plan.md"
+        root_text = (ROOT / "README.md").read_text(encoding="utf-8")
+        docs_text = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+        self.assertIn(rel, root_text)
+        self.assertIn(rel, docs_text)
+
     def test_docs_readme_keeps_migration_guidance(self):
         text = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
         self.assertIn("docs/superpowers/specs/", text)
         self.assertIn("docs/superpowers/plans/", text)
         self.assertIn("兼容壳", text)
+
+
+class WorkflowEntrypointTests(unittest.TestCase):
+    def test_ledger_maintenance_workflow_surfaces_governance_suite(self):
+        text = (
+            ROOT.parent / ".github" / "workflows" / "agent-ledger-maintenance.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("Validate collaboration and governance assets", text)
+        self.assertIn(
+            'python3 -m unittest discover -s "AGENT协作工具/github-actions/tests" -p "test_*.py"',
+            text,
+        )
 
 
 if __name__ == "__main__":

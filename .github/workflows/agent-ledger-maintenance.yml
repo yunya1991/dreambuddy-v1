@@ -20,5 +20,5 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Validate collaboration action assets
+      - name: Validate collaboration and governance assets
         run: python3 -m unittest discover -s "AGENT协作工具/github-actions/tests" -p "test_*.py"
