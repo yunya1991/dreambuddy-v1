@@ -53,6 +53,37 @@ class CollaborationPayloadTests(unittest.TestCase):
         self.assertEqual(payload["validation_decision"], "ACCEPTED")
         self.assertEqual(payload["validation_score"], 88)
 
+    def test_extracts_governance_and_state_machine_fields(self):
+        raw = {
+            "branch": "agent/solo/governance-v1",
+            "pr_body": "## Owner Agent\nOwner Agent: SOLO\n",
+            "comments": [
+                "[协作开工声明 / STARTED]\n\n"
+                "Agent: SOLO\n"
+                "Task ID: task-governance-1\n"
+                "Governance Agent: SOLO-GOV\n"
+                "Task Type: shared-sync\n"
+                "Dependency Gate: accepted\n"
+                "Current Sync State: pending\n"
+                "Next Required Action: validator sync review\n"
+                "状态: STARTED\n",
+                "[验证结论 / VALIDATION_RESULT]\n\n"
+                "Validator: Claude Code\n"
+                "Score: 91\n"
+                "Decision: ACCEPTED\n"
+                "Governance Handoff: ledgered\n",
+            ],
+        }
+
+        payload = MODULE.build_payload(raw)
+
+        self.assertEqual(payload["governance_agent"], "SOLO-GOV")
+        self.assertEqual(payload["task_type"], "shared-sync")
+        self.assertEqual(payload["dependency_gate"], "accepted")
+        self.assertEqual(payload["current_sync_state"], "pending")
+        self.assertEqual(payload["next_required_action"], "validator sync review")
+        self.assertEqual(payload["governance_handoff"], "ledgered")
+
 
 class GovernanceTemplateFieldTests(unittest.TestCase):
     def test_templates_and_task_entrypoints_surface_governance_fields(self):
