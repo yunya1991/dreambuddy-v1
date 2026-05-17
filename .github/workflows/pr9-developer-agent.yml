@@ -50,47 +50,48 @@ jobs:
             exit 0
           fi
 
-          cat > pr_started.md <<EOF
-[协作开工声明 / STARTED]
-
-Agent: pr9-developer-agent
-任务: PR9 / 7-ARTIFACT-HUB-V2 build+test
-Task ID: ${TASK_ID}
-分支: ${{ steps.pr.outputs.head_ref }}
-Workspace Path: self-hosted-runner(workbuddy)
-Execution Mode: STANDARD
-Direct Takeover: no
-Governance Agent: pr9-governance-agent
-Task Type: parallel
-Dependency Gate: accepted
-Current Sync State: none
-Next Required Action: validator: post VALIDATION_RESULT with Governance Handoff: ledgered if PASS
-Claim Target: ${TASK_ID}
-计划修改:
-- 7-ARTIFACT-HUB-V2/*
-
-预期产出:
-- TEST_REPORT
-- VALIDATION_RESULT (by validator)
-
-占用范围:
-- 7-ARTIFACT-HUB-V2/*
-
-同步触发条件:
-- build/test status changes or protocol anchor missing
-
-下一同步点:
-- PR9 validation -> ledgered
-
-冲突门禁结果:
-- decision: SAFE
-- reason_codes: []
-
-状态: STARTED
-说明:
-- owner 目录内默认并行推进
-- 仅在范围变化、真实阻塞或阶段收口时补充评论
-EOF
+          {
+            printf '%s\n' \
+              '[协作开工声明 / STARTED]' \
+              '' \
+              'Agent: pr9-developer-agent' \
+              '任务: PR9 / 7-ARTIFACT-HUB-V2 build+test' \
+              "Task ID: ${TASK_ID}" \
+              "分支: ${{ steps.pr.outputs.head_ref }}" \
+              'Workspace Path: self-hosted-runner(workbuddy)' \
+              'Execution Mode: STANDARD' \
+              'Direct Takeover: no' \
+              'Governance Agent: pr9-governance-agent' \
+              'Task Type: parallel' \
+              'Dependency Gate: accepted' \
+              'Current Sync State: none' \
+              'Next Required Action: validator: post VALIDATION_RESULT with Governance Handoff: ledgered if PASS' \
+              "Claim Target: ${TASK_ID}" \
+              '计划修改:' \
+              '- 7-ARTIFACT-HUB-V2/*' \
+              '' \
+              '预期产出:' \
+              '- TEST_REPORT' \
+              '- VALIDATION_RESULT (by validator)' \
+              '' \
+              '占用范围:' \
+              '- 7-ARTIFACT-HUB-V2/*' \
+              '' \
+              '同步触发条件:' \
+              '- build/test status changes or protocol anchor missing' \
+              '' \
+              '下一同步点:' \
+              '- PR9 validation -> ledgered' \
+              '' \
+              '冲突门禁结果:' \
+              '- decision: SAFE' \
+              '- reason_codes: []' \
+              '' \
+              '状态: STARTED' \
+              '说明:' \
+              '- owner 目录内默认并行推进' \
+              '- 仅在范围变化、真实阻塞或阶段收口时补充评论'
+          } > pr_started.md
           gh pr comment ${PR_NUMBER} --body-file pr_started.md
 
       - name: Build and test
@@ -131,38 +132,39 @@ EOF
 
           run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-          cat > pr_test_report.md <<EOF
-[测试报告 / TEST_REPORT]
-
-Tester: pr9-developer-agent
-Task ID: ${TASK_ID}
-Execution Mode: STANDARD
-Unit:
-- ${unit}
-
-Integration:
-- ${integration}
-
-Scenario Simulation:
-- normal path
-- edge input
-- invalid input
-- upstream failure
-
-Stress:
-- ${stress}
-
-Decision: ${decision}
-Sync Recommendation: continue parallel
-Scenario Evidence:
-- head_ref=${{ steps.pr.outputs.head_ref }}
-- head_sha=${{ steps.pr.outputs.head_sha }}
-- actions_run=${run_url}
-Evidence:
-- npm_ci_exit=${{ steps.run.outputs.npm_ci_exit }}
-- build_exit=${{ steps.run.outputs.build_exit }}
-- test_exit=${{ steps.run.outputs.test_exit }}
-EOF
+          {
+            printf '%s\n' \
+              '[测试报告 / TEST_REPORT]' \
+              '' \
+              'Tester: pr9-developer-agent' \
+              "Task ID: ${TASK_ID}" \
+              'Execution Mode: STANDARD' \
+              'Unit:' \
+              "- ${unit}" \
+              '' \
+              'Integration:' \
+              "- ${integration}" \
+              '' \
+              'Scenario Simulation:' \
+              '- normal path' \
+              '- edge input' \
+              '- invalid input' \
+              '- upstream failure' \
+              '' \
+              'Stress:' \
+              "- ${stress}" \
+              '' \
+              "Decision: ${decision}" \
+              'Sync Recommendation: continue parallel' \
+              'Scenario Evidence:' \
+              "- head_ref=${{ steps.pr.outputs.head_ref }}" \
+              "- head_sha=${{ steps.pr.outputs.head_sha }}" \
+              "- actions_run=${run_url}" \
+              'Evidence:' \
+              "- npm_ci_exit=${{ steps.run.outputs.npm_ci_exit }}" \
+              "- build_exit=${{ steps.run.outputs.build_exit }}" \
+              "- test_exit=${{ steps.run.outputs.test_exit }}"
+          } > pr_test_report.md
           gh pr comment ${PR_NUMBER} --body-file pr_test_report.md
 
       - name: Fail job on test failure

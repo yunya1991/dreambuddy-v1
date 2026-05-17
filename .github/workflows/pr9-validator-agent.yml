@@ -86,27 +86,28 @@ jobs:
 
           run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-          cat > pr_validation_result.md <<EOF
-[验证结论 / VALIDATION_RESULT]
-
-Validator: pr9-validator-agent
-Hard Gate Result: ${hard_gate}
-Score: ${score}
-Decision: ${decision}
-Reason Codes:
-- ${reason_code}
-Reward Multiplier: ${reward_multiplier}
-Ledger Update: ${TASK_ID}
-Governance Handoff: ${handoff}
-EOF
-
-          printf "\nEvidence:\n- head_ref=%s\n- head_sha=%s\n- actions_run=%s\n- npm_ci_exit=%s\n- build_exit=%s\n- test_exit=%s\n" \
-            "${{ steps.pr.outputs.head_ref }}" \
-            "${{ steps.pr.outputs.head_sha }}" \
-            "${run_url}" \
-            "${{ steps.run.outputs.npm_ci_exit }}" \
-            "${{ steps.run.outputs.build_exit }}" \
-            "${{ steps.run.outputs.test_exit }}" >> pr_validation_result.md
+          {
+            printf '%s\n' \
+              '[验证结论 / VALIDATION_RESULT]' \
+              '' \
+              'Validator: pr9-validator-agent' \
+              "Hard Gate Result: ${hard_gate}" \
+              "Score: ${score}" \
+              "Decision: ${decision}" \
+              'Reason Codes:' \
+              "- ${reason_code}" \
+              "Reward Multiplier: ${reward_multiplier}" \
+              "Ledger Update: ${TASK_ID}" \
+              "Governance Handoff: ${handoff}" \
+              '' \
+              'Evidence:' \
+              "- head_ref=${{ steps.pr.outputs.head_ref }}" \
+              "- head_sha=${{ steps.pr.outputs.head_sha }}" \
+              "- actions_run=${run_url}" \
+              "- npm_ci_exit=${{ steps.run.outputs.npm_ci_exit }}" \
+              "- build_exit=${{ steps.run.outputs.build_exit }}" \
+              "- test_exit=${{ steps.run.outputs.test_exit }}"
+          } > pr_validation_result.md
 
           gh pr comment ${PR_NUMBER} --body-file pr_validation_result.md
 

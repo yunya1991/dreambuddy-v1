@@ -50,47 +50,48 @@ jobs:
             exit 0
           fi
 
-          cat > pr_started.md <<EOF
-[协作开工声明 / STARTED]
-
-Agent: pr9-governance-agent
-任务: PR9 / 7-ARTIFACT-HUB-V2 build+test governance bootstrap
-Task ID: ${TASK_ID}
-分支: ${{ steps.pr.outputs.head_ref }}
-Workspace Path: self-hosted-runner(workbuddy)
-Execution Mode: STANDARD
-Direct Takeover: no
-Governance Agent: pr9-governance-agent
-Task Type: shared-sync
-Dependency Gate: accepted
-Current Sync State: pending
-Next Required Action: developer: post TEST_REPORT; validator: post VALIDATION_RESULT with Governance Handoff: ledgered if PASS
-Claim Target: ${TASK_ID}
-计划修改:
-- 7-ARTIFACT-HUB-V2/*
-
-预期产出:
-- TEST_REPORT
-- VALIDATION_RESULT (handoff ledgered)
-
-占用范围:
-- 7-ARTIFACT-HUB-V2/*
-
-同步触发条件:
-- validation pass -> ledgered
-
-下一同步点:
-- shared-sync review via VALIDATION_RESULT
-
-冲突门禁结果:
-- decision: SAFE
-- reason_codes: []
-
-状态: STARTED
-说明:
-- owner 目录内默认并行推进
-- 仅在范围变化、真实阻塞或阶段收口时补充评论
-EOF
+          {
+            printf '%s\n' \
+              '[协作开工声明 / STARTED]' \
+              '' \
+              'Agent: pr9-governance-agent' \
+              '任务: PR9 / 7-ARTIFACT-HUB-V2 build+test governance bootstrap' \
+              "Task ID: ${TASK_ID}" \
+              "分支: ${{ steps.pr.outputs.head_ref }}" \
+              'Workspace Path: self-hosted-runner(workbuddy)' \
+              'Execution Mode: STANDARD' \
+              'Direct Takeover: no' \
+              'Governance Agent: pr9-governance-agent' \
+              'Task Type: shared-sync' \
+              'Dependency Gate: accepted' \
+              'Current Sync State: pending' \
+              'Next Required Action: developer: post TEST_REPORT; validator: post VALIDATION_RESULT with Governance Handoff: ledgered if PASS' \
+              "Claim Target: ${TASK_ID}" \
+              '计划修改:' \
+              '- 7-ARTIFACT-HUB-V2/*' \
+              '' \
+              '预期产出:' \
+              '- TEST_REPORT' \
+              '- VALIDATION_RESULT (handoff ledgered)' \
+              '' \
+              '占用范围:' \
+              '- 7-ARTIFACT-HUB-V2/*' \
+              '' \
+              '同步触发条件:' \
+              '- validation pass -> ledgered' \
+              '' \
+              '下一同步点:' \
+              '- shared-sync review via VALIDATION_RESULT' \
+              '' \
+              '冲突门禁结果:' \
+              '- decision: SAFE' \
+              '- reason_codes: []' \
+              '' \
+              '状态: STARTED' \
+              '说明:' \
+              '- owner 目录内默认并行推进' \
+              '- 仅在范围变化、真实阻塞或阶段收口时补充评论'
+          } > pr_started.md
           gh pr comment ${PR_NUMBER} --body-file pr_started.md
 
       - name: Protocol completeness check
@@ -122,29 +123,30 @@ EOF
             next_action="validator: re-run build/test and post VALIDATION_RESULT"
           fi
 
-          cat > pr_updated.md <<EOF
-[协作状态更新 / UPDATED]
-
-Agent: pr9-governance-agent
-任务: PR9 / 7-ARTIFACT-HUB-V2 build+test protocol check
-Execution Mode: STANDARD
-Direct Takeover: no
-Governance Agent: pr9-governance-agent
-Task Type: shared-sync
-Current Sync State: pending
-Next Required Action: ${next_action}
-变更说明:
-- protocol anchor missing
-
-当前占用范围:
-- 7-ARTIFACT-HUB-V2/*
-
-阶段:
-- Phase 0
-
-下一同步点:
-- validation -> ledgered
-
-状态: UPDATED
-EOF
+          {
+            printf '%s\n' \
+              '[协作状态更新 / UPDATED]' \
+              '' \
+              'Agent: pr9-governance-agent' \
+              '任务: PR9 / 7-ARTIFACT-HUB-V2 build+test protocol check' \
+              'Execution Mode: STANDARD' \
+              'Direct Takeover: no' \
+              'Governance Agent: pr9-governance-agent' \
+              'Task Type: shared-sync' \
+              'Current Sync State: pending' \
+              "Next Required Action: ${next_action}" \
+              '变更说明:' \
+              '- protocol anchor missing' \
+              '' \
+              '当前占用范围:' \
+              '- 7-ARTIFACT-HUB-V2/*' \
+              '' \
+              '阶段:' \
+              '- Phase 0' \
+              '' \
+              '下一同步点:' \
+              '- validation -> ledgered' \
+              '' \
+              '状态: UPDATED'
+          } > pr_updated.md
           gh pr comment ${PR_NUMBER} --body-file pr_updated.md
