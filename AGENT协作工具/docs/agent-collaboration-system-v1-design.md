@@ -1093,6 +1093,134 @@ builder 产出的标准 payload 至少应包含：
 
 该结构既是 workflow 的执行结果，也是未来 Trae 巡检型 `治理 AGENT / 验证者 AGENT` 的主要读取接口。
 
+### 18.7 最小闭环的测试策略与失败恢复设计
+
+最小闭环的测试目标不是验证“系统能否完成所有治理任务”，而是验证以下四点：
+
+- 控制器能否稳定编排一次完整执行周期
+- 账本写回是否确定、可重复、可审计
+- 失败时系统是否能安全停住，而不是写出半残状态
+- 输出结果是否足够结构化，便于未来 Trae 巡检型 AGENT 低成本消费
+
+#### 18.7.1 测试分层
+
+建议最小闭环至少采用以下四层测试：
+
+- 纯函数单元测试
+  - 验证 `build_agent_collaboration_payload.py`
+  - 验证 `check_agent_collaboration.py`
+  - 验证 `update_agent_ledger.py`
+
+- 控制器集成测试
+  - 验证 `run_governance_ledger_cycle.py` 能正确串联 builder、checker、updater
+  - 验证一次输入上下文能得到完整的 `cycle_result`
+
+- 文件写回测试
+  - 在临时目录中验证 `tasks/index.json` 与 `rewards/index.json` 的写回行为
+  - 确保只更新目标任务，不污染其他任务
+  - 确保奖励记录采用追加而非覆盖
+
+- workflow 级冒烟测试
+  - 验证 GitHub workflow 调用的是总控脚本
+  - 验证 workflow 不再在 YAML 中散落业务逻辑
+
+#### 18.7.2 最小测试矩阵
+
+最小闭环至少应覆盖以下测试用例：
+
+- 成功记账
+  - 输入：合法 `VALIDATION_RESULT`，当前任务状态为 `accepted`
+  - 预期：推进到 `ledgered`，写入奖励记录
+
+- 非法跳跃推进
+  - 输入：`accepted` 任务直接请求 `knowledge_synced`
+  - 预期：`BLOCK`，不写账本
+
+- 归档成功
+  - 输入：当前任务状态为 `ledgered`，且归档基础数据完整
+  - 预期：推进到 `archived`，写入 `archived_at`
+
+- 知识沉淀成功
+  - 输入：当前任务状态为 `archived`，且 `governance_closure` 完整
+  - 预期：推进到 `knowledge_synced`，写入 `knowledge_synced_at`
+
+- 知识沉淀被阻断
+  - 输入：当前任务状态为 `archived`，但缺少 `archive_summary` 或 `faq_decision`
+  - 预期：`BLOCK`，不写账本，并输出明确 `next_required_action`
+
+- checker 阻断时零副作用
+  - 输入：shared-sync 任务缺少 `sync_review_present`
+  - 预期：控制器返回 `BLOCK`，任务账本与奖励账本均保持不变
+
+#### 18.7.3 幂等性要求
+
+由于 GitHub workflow 可能重复触发，最小闭环必须具备幂等性：
+
+- 对同一输入重复执行时，不应重复追加奖励
+- 已经处于目标状态的任务，不应再次推进
+- 已经写过 `knowledge_synced_at` 的任务，不应重复生成不同结果
+- 重复执行应返回显式结果，而不是生成重复副作用
+
+推荐策略是：
+
+- 允许重复运行
+- 但在检测到目标状态已达成时，返回 `PASS` 且 `state_changed = false`
+
+#### 18.7.4 失败恢复设计
+
+最小闭环必须遵守“失败时可重试，且不需要人工修账本”的原则。
+
+失败类型建议分为两类：
+
+- 写前失败
+  - payload 解析失败
+  - 缺少 `task_id`
+  - checker 返回 `BLOCK`
+  - 当前任务不存在
+  - `knowledge_synced` 所需 closure 字段缺失
+  - 处理方式：直接退出，不写账本，允许补齐输入后重跑
+
+- 写中失败
+  - 任务账本已更新但奖励账本未成功写入
+  - 或奖励账本已更新但任务账本未成功写入
+  - 处理目标：尽量避免出现该类半写状态
+
+为降低半写失败风险，控制器应采用如下写回策略：
+
+- 先读取原文件
+- 在内存中构造完整的新任务账本与新奖励账本
+- 完成全部校验后，再进入写盘阶段
+- 优先使用临时文件 + 原子替换
+- 任一校验失败时，不触碰磁盘
+
+#### 18.7.5 面向巡检型 AGENT 的失败接口
+
+失败结果必须对未来 Trae 巡检型 `治理 AGENT / 验证者 AGENT` 友好。控制器在失败时至少应输出：
+
+- `decision`
+- `reason_codes`
+- `task_id`
+- `previous_status`
+- `new_status`
+- `next_required_action`
+- `repair_hint`
+
+例如：
+
+```json
+{
+  "task_id": "task-123",
+  "decision": "BLOCK",
+  "reason_codes": ["RULE_CLOSURE_DATA_INCOMPLETE"],
+  "previous_status": "archived",
+  "new_status": "archived",
+  "next_required_action": "governance: provide archive_summary and faq_decision",
+  "repair_hint": "add closure fields before retrying governance cycle"
+}
+```
+
+这样巡检型 AGENT 可以直接基于结构化结果补治理评论、发建议或提示下一步动作，而不需要重新推理控制器为什么失败。
+
 ## 19. 与现有 AGENT协作工具 的映射关系
 
 当前对象到新系统的映射如下：

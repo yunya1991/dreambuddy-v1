@@ -11,6 +11,7 @@
 - `agent-collaboration-system-v1-design.md`：AGENT协作系统 v1 正式设计草案
 - `agent-collaboration-system-v1-implementation-plan.md`：AGENT协作系统 v1 实施计划
 - `agent-collaboration-system-v1-governance-agent-implementation-plan.md`：治理 AGENT 与强治理状态机字段扩展实施计划
+- `agent-collaboration-system-v1-governance-cycle-implementation-plan.md`：治理账本最小闭环控制器实施计划
 
 ## 迁移说明
 
