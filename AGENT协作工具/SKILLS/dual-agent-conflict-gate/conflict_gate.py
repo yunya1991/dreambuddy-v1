@@ -261,6 +261,13 @@ def check_parallel_conditions(
             "detail": f"并行三条件不满足：{', '.join(failed)}。"
         })
 
+    if cfg.get("collaboration_policy", {}).get("validation_requires_validator_agent"):
+        issues.append({
+            "code": "VALIDATOR_REQUIRED",
+            "level": "WARNING",
+            "detail": "技术验收与记账必须由验证 AGENT 负责，用户不承担代码级验证。",
+        })
+
     return issues
 
 

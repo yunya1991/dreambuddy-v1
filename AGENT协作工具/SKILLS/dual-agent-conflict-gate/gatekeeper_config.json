@@ -42,6 +42,7 @@
     "default_execution_mode": "PHASE_BROADCAST",
     "default_parallel_within_owner": true,
     "status_broadcast_strategy": "PHASE_SUMMARY",
+    "validation_requires_validator_agent": true,
     "direct_takeover": {
       "enabled": true,
       "requires_user_authorization": true,

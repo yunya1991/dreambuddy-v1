@@ -114,6 +114,25 @@ class ConflictGateTests(unittest.TestCase):
         self.assertIn("共享边界", result["recommended_action"])
         self.assertIn("强同步", result["recommended_action"])
 
+    def test_shared_sync_required_for_validatorless_closeout(self):
+        cfg = {
+            "ownership": {"solo": ["docs/"], "claude": ["src/"]},
+            "shared_requires_approval": [],
+            "collaboration_policy": {
+                "validation_requires_validator_agent": True,
+            },
+        }
+
+        issues = MODULE.check_parallel_conditions(
+            "solo",
+            ["docs/closeout.md"],
+            [],
+            empty_git_snapshot(),
+            cfg,
+        )
+
+        self.assertTrue(any(item["code"] == "VALIDATOR_REQUIRED" for item in issues))
+
 
 if __name__ == "__main__":
     unittest.main()
