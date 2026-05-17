@@ -49,6 +49,7 @@ AGENT协作工具/
 - `AGENT协作工具/docs/agent-efficient-collaboration-mode.md`：高效协作模式与默认执行策略
 - `AGENT协作工具/docs/agent-collaboration-system-v1-design.md`：AGENT协作系统 v1 设计
 - `AGENT协作工具/docs/agent-collaboration-system-v1-implementation-plan.md`：AGENT协作系统 v1 实施计划
+- `AGENT协作工具/docs/agent-collaboration-system-v1-governance-agent-implementation-plan.md`：治理 AGENT 增量实施计划
 
 原 `docs/superpowers/` 下的对应文档当前保留兼容壳，用于承接历史链接与旧 PR 讨论。
 
