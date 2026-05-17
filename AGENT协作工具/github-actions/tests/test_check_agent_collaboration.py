@@ -45,6 +45,40 @@ class CollaborationCheckerTests(unittest.TestCase):
         self.assertEqual(result["decision"], "BLOCK")
         self.assertIn("RULE_COLLAB_SCORE_TOO_LOW", result["reason_codes"])
 
+    def test_blocks_invalid_transition_to_knowledge_synced(self):
+        payload = {
+            "current_status": "accepted",
+            "requested_status": "knowledge_synced",
+        }
+
+        result = MODULE.evaluate_payload(payload)
+
+        self.assertEqual(result["decision"], "BLOCK")
+        self.assertIn("RULE_INVALID_STATUS_TRANSITION", result["reason_codes"])
+
+    def test_blocks_serial_task_when_dependency_is_not_satisfied(self):
+        payload = {
+            "task_type": "serial",
+            "dependency_satisfied": False,
+        }
+
+        result = MODULE.evaluate_payload(payload)
+
+        self.assertEqual(result["decision"], "BLOCK")
+        self.assertIn("RULE_DEPENDENCY_NOT_SATISFIED", result["reason_codes"])
+
+    def test_blocks_shared_sync_task_when_sync_review_is_missing(self):
+        payload = {
+            "task_type": "shared-sync",
+            "current_sync_state": "pending",
+            "sync_review_present": False,
+        }
+
+        result = MODULE.evaluate_payload(payload)
+
+        self.assertEqual(result["decision"], "BLOCK")
+        self.assertIn("RULE_SYNC_REVIEW_REQUIRED", result["reason_codes"])
+
 
 if __name__ == "__main__":
     unittest.main()
