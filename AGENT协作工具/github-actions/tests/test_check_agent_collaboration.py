@@ -1,0 +1,39 @@
+import importlib.util
+import unittest
+from pathlib import Path
+
+
+MODULE_PATH = Path(__file__).resolve().parents[1] / "check_agent_collaboration.py"
+SPEC = importlib.util.spec_from_file_location("check_agent_collaboration", MODULE_PATH)
+MODULE = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(MODULE)
+
+
+class CollaborationCheckerTests(unittest.TestCase):
+    def test_blocks_when_exploration_has_no_validation(self):
+        payload = {
+            "exploration_present": True,
+            "validation_decision": "",
+            "validation_score": None,
+        }
+
+        result = MODULE.evaluate_payload(payload)
+
+        self.assertEqual(result["decision"], "BLOCK")
+        self.assertIn("RULE_COLLAB_VALIDATION_REQUIRED", result["reason_codes"])
+
+    def test_blocks_when_validation_score_is_too_low(self):
+        payload = {
+            "exploration_present": True,
+            "validation_decision": "ACCEPTED",
+            "validation_score": 59,
+        }
+
+        result = MODULE.evaluate_payload(payload)
+
+        self.assertEqual(result["decision"], "BLOCK")
+        self.assertIn("RULE_COLLAB_SCORE_TOO_LOW", result["reason_codes"])
+
+
+if __name__ == "__main__":
+    unittest.main()
