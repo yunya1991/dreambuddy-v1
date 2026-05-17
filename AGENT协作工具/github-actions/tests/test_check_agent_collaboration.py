@@ -20,6 +20,16 @@ class WorkflowPresenceTests(unittest.TestCase):
             self.assertTrue(path.exists(), str(path))
 
 
+class GovernanceWorkflowTests(unittest.TestCase):
+    def test_claim_guard_runs_single_governance_cycle_controller(self):
+        text = (
+            ROOT / ".github" / "workflows" / "agent-collaboration-claim-guard.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("Run governance ledger cycle", text)
+        self.assertIn("run_governance_ledger_cycle.py", text)
+        self.assertNotIn("Run collaboration checker", text)
+
+
 class CollaborationCheckerTests(unittest.TestCase):
     def test_blocks_when_exploration_has_no_validation(self):
         payload = {

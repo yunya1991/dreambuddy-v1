@@ -66,17 +66,17 @@ jobs:
               JSON.stringify(result, null, 2)
             );
 
-      - name: Normalize collaboration payload
-        run: python3 "AGENT协作工具/github-actions/build_agent_collaboration_payload.py" < agent_collaboration_raw.json > agent_collaboration_payload.json
-
-      - name: Run collaboration checker
+      - name: Run governance ledger cycle
         run: |
-          python3 "AGENT协作工具/github-actions/check_agent_collaboration.py" < agent_collaboration_payload.json > agent_collaboration_result.json
+          python3 "AGENT协作工具/github-actions/run_governance_ledger_cycle.py" \
+            "AGENT协作工具/ledger/tasks/index.json" \
+            "AGENT协作工具/ledger/rewards/index.json" \
+            < agent_collaboration_raw.json > agent_governance_cycle_result.json
           python3 - <<'PY'
           import json
           import sys
 
-          result = json.load(open("agent_collaboration_result.json", encoding="utf-8"))
+          result = json.load(open("agent_governance_cycle_result.json", encoding="utf-8"))
           if result.get("decision") != "PASS":
               print(json.dumps(result, ensure_ascii=False, indent=2))
               sys.exit(1)
