@@ -103,6 +103,27 @@ class DocsEntrypointTests(unittest.TestCase):
         self.assertIn("兼容壳", text)
 
 
+class GovernanceUpdaterIOTests(unittest.TestCase):
+    def test_transition_result_reports_state_change(self):
+        task = {
+            "task_id": "task-cycle-1",
+            "status": "accepted",
+            "governance_closure": {
+                "archive_summary": "",
+                "index_updates": [],
+                "faq_decision": "",
+                "faq_entries": [],
+                "closure_agent": "",
+                "closure_completed_at": "",
+            },
+        }
+        updated, result = MODULE.apply_status_transition(task, "ledgered")
+        self.assertEqual(updated["status"], "ledgered")
+        self.assertEqual(result["previous_status"], "accepted")
+        self.assertEqual(result["new_status"], "ledgered")
+        self.assertTrue(result["state_changed"])
+
+
 class WorkflowEntrypointTests(unittest.TestCase):
     def test_ledger_maintenance_workflow_surfaces_governance_suite(self):
         text = (

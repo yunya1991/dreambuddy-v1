@@ -11,10 +11,15 @@ ALLOWED_TRANSITIONS = {
 
 def evaluate_payload(payload):
     reason_codes = []
+    recommended_next_action = ""
     if payload.get("exploration_present") and not payload.get("validation_decision"):
         reason_codes.append("RULE_COLLAB_VALIDATION_REQUIRED")
+        if not recommended_next_action:
+            recommended_next_action = "validator: publish validation result"
     if payload.get("validation_score") is not None and payload["validation_score"] < 60:
         reason_codes.append("RULE_COLLAB_SCORE_TOO_LOW")
+        if not recommended_next_action:
+            recommended_next_action = "developer: rework before ledger write"
 
     current_status = payload.get("current_status")
     requested_status = payload.get("requested_status")
@@ -22,11 +27,15 @@ def evaluate_payload(payload):
         allowed = ALLOWED_TRANSITIONS.get(current_status, set())
         if requested_status not in allowed:
             reason_codes.append("RULE_INVALID_STATUS_TRANSITION")
+            if not recommended_next_action:
+                recommended_next_action = "governance: adjust requested status"
 
     if payload.get("task_type") == "serial" and not payload.get(
         "dependency_satisfied", True
     ):
         reason_codes.append("RULE_DEPENDENCY_NOT_SATISFIED")
+        if not recommended_next_action:
+            recommended_next_action = "developer: satisfy dependency gate"
 
     if (
         payload.get("task_type") == "shared-sync"
@@ -34,9 +43,15 @@ def evaluate_payload(payload):
         and not payload.get("sync_review_present", False)
     ):
         reason_codes.append("RULE_SYNC_REVIEW_REQUIRED")
+        if not recommended_next_action:
+            recommended_next_action = "governance: add sync review evidence"
 
     decision = "PASS" if not reason_codes else "BLOCK"
-    return {"decision": decision, "reason_codes": reason_codes}
+    return {
+        "decision": decision,
+        "reason_codes": reason_codes,
+        "recommended_next_action": recommended_next_action,
+    }
 
 
 if __name__ == "__main__":

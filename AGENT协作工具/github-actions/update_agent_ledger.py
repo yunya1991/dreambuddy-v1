@@ -58,12 +58,21 @@ def build_governance_closure(
 
 def apply_status_transition(task, requested_status):
     current_status = task.get("status")
+    if current_status == requested_status:
+        return task, {
+            "previous_status": current_status,
+            "new_status": requested_status,
+            "state_changed": False,
+            "knowledge_sync_written": False,
+        }
+
     allowed_statuses = GOVERNANCE_ALLOWED_TRANSITIONS.get(current_status)
     if allowed_statuses is not None and requested_status not in allowed_statuses:
         raise ValueError(
             f"invalid governance transition: {current_status} -> {requested_status}"
         )
 
+    knowledge_sync_written = False
     if requested_status == "knowledge_synced":
         closure = task.get("governance_closure", {})
         required_fields = {
@@ -76,9 +85,15 @@ def apply_status_transition(task, requested_status):
             if not closure.get(field):
                 raise ValueError(error_message)
         task["knowledge_synced_at"] = utc_now()
+        knowledge_sync_written = True
 
     if requested_status == "archived":
         task["archived_at"] = utc_now()
 
     task["status"] = requested_status
-    return task
+    return task, {
+        "previous_status": current_status,
+        "new_status": requested_status,
+        "state_changed": True,
+        "knowledge_sync_written": knowledge_sync_written,
+    }

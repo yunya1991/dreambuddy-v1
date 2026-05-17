@@ -79,6 +79,19 @@ class CollaborationCheckerTests(unittest.TestCase):
         self.assertEqual(result["decision"], "BLOCK")
         self.assertIn("RULE_SYNC_REVIEW_REQUIRED", result["reason_codes"])
 
+    def test_returns_recommended_next_action_for_block(self):
+        payload = {
+            "task_type": "shared-sync",
+            "current_sync_state": "pending",
+            "sync_review_present": False,
+        }
+        result = MODULE.evaluate_payload(payload)
+        self.assertEqual(result["decision"], "BLOCK")
+        self.assertEqual(
+            result["recommended_next_action"],
+            "governance: add sync review evidence",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
