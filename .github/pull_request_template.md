@@ -4,6 +4,10 @@ Task Card: <link or inline summary>
 ## Execution Mode
 Execution Mode: <STANDARD | PHASE_BROADCAST | STRONG_SYNC>
 Direct Takeover: <no | allowed | active>
+Governance Agent: <agent>
+Task Type: <parallel | serial | shared-sync>
+Dependency Gate: <planned | accepted | ledgered | none>
+Next Required Action: <who does what next>
 Next Sync Checkpoint: <design | implementation | closeout>
 
 ## Design Review

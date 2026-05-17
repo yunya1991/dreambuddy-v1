@@ -7,6 +7,11 @@ Task ID: <task_id>
 Workspace Path: <path>
 Execution Mode: <STANDARD | PHASE_BROADCAST | STRONG_SYNC>
 Direct Takeover: <no | allowed | active>
+Governance Agent: <agent>
+Task Type: <parallel | serial | shared-sync>
+Dependency Gate: <planned | accepted | ledgered | none>
+Current Sync State: <none | pending | in_review | cleared>
+Next Required Action: <governance / developer / validator step>
 Claim Target: <task id or proposal>
 计划修改:
 - <path 1>

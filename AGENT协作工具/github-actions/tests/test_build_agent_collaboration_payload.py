@@ -54,5 +54,62 @@ class CollaborationPayloadTests(unittest.TestCase):
         self.assertEqual(payload["validation_score"], 88)
 
 
+class GovernanceTemplateFieldTests(unittest.TestCase):
+    def test_templates_and_task_entrypoints_surface_governance_fields(self):
+        started = (ROOT / "templates" / "pr-comment-started.md").read_text(
+            encoding="utf-8"
+        )
+        updated = (ROOT / "templates" / "pr-comment-updated.md").read_text(
+            encoding="utf-8"
+        )
+        done = (ROOT / "templates" / "pr-comment-done.md").read_text(
+            encoding="utf-8"
+        )
+        validation = (
+            ROOT / "templates" / "pr-comment-validation-result.md"
+        ).read_text(encoding="utf-8")
+        task_card = (
+            ROOT.parent / "docs" / "superpowers" / "templates" / "agent-task-card.md"
+        ).read_text(encoding="utf-8")
+        pr_template = (ROOT.parent / ".github" / "pull_request_template.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("Governance Agent:", started)
+        self.assertIn("Task Type:", started)
+        self.assertIn("Dependency Gate:", started)
+        self.assertIn("Current Sync State:", started)
+        self.assertIn("Next Required Action:", started)
+
+        self.assertIn("Governance Agent:", updated)
+        self.assertIn("Task Type:", updated)
+        self.assertIn("Current Sync State:", updated)
+        self.assertIn("Next Required Action:", updated)
+
+        self.assertIn("Validation Pointer:", done)
+        self.assertIn("Archive Summary:", done)
+        self.assertIn("Governance Handoff:", validation)
+
+        self.assertIn("## Governance", task_card)
+        self.assertIn("Dependency Gate:", task_card)
+        self.assertIn("Next Required Action:", task_card)
+
+        self.assertIn("Governance Agent:", pr_template)
+        self.assertIn("Task Type:", pr_template)
+        self.assertIn("Dependency Gate:", pr_template)
+        self.assertIn("Next Required Action:", pr_template)
+
+        self.assertIn("Execution Mode:", started)
+        self.assertIn("Direct Takeover:", started)
+        self.assertIn("Execution Mode:", updated)
+        self.assertIn("Direct Takeover:", updated)
+        self.assertIn("Execution Mode:", done)
+        self.assertIn("Direct Takeover:", done)
+        self.assertIn("Execution Mode:", task_card)
+        self.assertIn("Direct Takeover:", task_card)
+        self.assertIn("Execution Mode:", pr_template)
+        self.assertIn("Direct Takeover:", pr_template)
+
+
 if __name__ == "__main__":
     unittest.main()
