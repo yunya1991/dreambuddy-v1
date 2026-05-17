@@ -50,8 +50,13 @@ class CollaborationPayloadTests(unittest.TestCase):
         payload = MODULE.build_payload(raw)
 
         self.assertTrue(payload["exploration_present"])
+        self.assertTrue(payload["validation_present"])
+        self.assertFalse(payload["ledger_entry_present"])
         self.assertEqual(payload["validation_decision"], "ACCEPTED")
         self.assertEqual(payload["validation_score"], 88)
+        self.assertEqual(payload["task_id"], "")
+        self.assertEqual(payload["requested_status"], "")
+        self.assertEqual(payload["recommended_next_action"], "")
 
     def test_extracts_governance_and_state_machine_fields(self):
         raw = {
@@ -77,12 +82,53 @@ class CollaborationPayloadTests(unittest.TestCase):
 
         payload = MODULE.build_payload(raw)
 
+        self.assertEqual(payload["task_id"], "task-governance-1")
         self.assertEqual(payload["governance_agent"], "SOLO-GOV")
         self.assertEqual(payload["task_type"], "shared-sync")
         self.assertEqual(payload["dependency_gate"], "accepted")
         self.assertEqual(payload["current_sync_state"], "pending")
         self.assertEqual(payload["next_required_action"], "validator sync review")
+        self.assertEqual(payload["recommended_next_action"], "validator sync review")
         self.assertEqual(payload["governance_handoff"], "ledgered")
+        self.assertEqual(payload["requested_status"], "ledgered")
+        self.assertTrue(payload["validation_present"])
+        self.assertFalse(payload["ledger_entry_present"])
+
+    def test_extracts_controller_fields_from_ledger_entry(self):
+        raw = {
+            "branch": "agent/solo/governance-cycle-v1",
+            "pr_body": "## Owner Agent\nOwner Agent: SOLO\n",
+            "comments": [
+                "[协作开工声明 / STARTED]\n\n"
+                "Agent: SOLO\n"
+                "Task ID: task-cycle-1\n"
+                "Governance Agent: SOLO-GOV\n"
+                "Task Type: serial\n"
+                "Dependency Gate: accepted\n"
+                "Current Sync State: cleared\n"
+                "Next Required Action: governance ledger write\n"
+                "状态: STARTED\n",
+                "[验证结论 / VALIDATION_RESULT]\n\n"
+                "Validator: Claude Code\n"
+                "Hard Gate Result: PASS\n"
+                "Score: 90\n"
+                "Decision: ACCEPTED\n"
+                "Governance Handoff: ledgered\n",
+                "[账本记账 / LEDGER_ENTRY]\n\n"
+                "Validator: Claude Code\n"
+                "Task ID: task-cycle-1\n"
+                "Accepted Delivery Pointer: pointer-1\n"
+                "Reward Result: 12\n",
+            ],
+        }
+
+        payload = MODULE.build_payload(raw)
+
+        self.assertEqual(payload["task_id"], "task-cycle-1")
+        self.assertEqual(payload["requested_status"], "ledgered")
+        self.assertTrue(payload["validation_present"])
+        self.assertTrue(payload["ledger_entry_present"])
+        self.assertEqual(payload["recommended_next_action"], "governance ledger write")
 
 
 class GovernanceTemplateFieldTests(unittest.TestCase):

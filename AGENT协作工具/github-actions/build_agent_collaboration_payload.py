@@ -15,6 +15,16 @@ def last_comment_with_prefix(comments, prefix):
     return matched[-1] if matched else ""
 
 
+def handoff_to_requested_status(handoff):
+    mapping = {
+        "ledgered": "ledgered",
+        "archived": "archived",
+        "knowledge_synced": "knowledge_synced",
+        "knowledge_synced pending": "knowledge_synced",
+    }
+    return mapping.get(handoff.strip(), "")
+
+
 def build_payload(raw):
     comments = raw.get("comments", [])
     latest_started = last_comment_with_prefix(comments, "[协作开工声明 / STARTED]")
@@ -24,11 +34,17 @@ def build_payload(raw):
     latest_validation = last_comment_with_prefix(
         comments, "[验证结论 / VALIDATION_RESULT]"
     )
+    latest_ledger_entry = last_comment_with_prefix(comments, "[账本记账 / LEDGER_ENTRY]")
     score = extract_field(latest_validation, "Score")
+    handoff = extract_field(latest_validation, "Governance Handoff")
 
     return {
         "branch": raw.get("branch", ""),
+        "task_id": extract_field(latest_started, "Task ID")
+        or extract_field(latest_ledger_entry, "Task ID"),
         "exploration_present": bool(latest_exploration),
+        "validation_present": bool(latest_validation),
+        "ledger_entry_present": bool(latest_ledger_entry),
         "validation_decision": extract_field(latest_validation, "Decision"),
         "validation_score": int(score) if score else None,
         "governance_agent": extract_field(latest_started, "Governance Agent"),
@@ -36,7 +52,9 @@ def build_payload(raw):
         "dependency_gate": extract_field(latest_started, "Dependency Gate"),
         "current_sync_state": extract_field(latest_started, "Current Sync State"),
         "next_required_action": extract_field(latest_started, "Next Required Action"),
-        "governance_handoff": extract_field(latest_validation, "Governance Handoff"),
+        "recommended_next_action": extract_field(latest_started, "Next Required Action"),
+        "governance_handoff": handoff,
+        "requested_status": handoff_to_requested_status(handoff),
     }
 
 
