@@ -1,0 +1,19 @@
+{
+  "task_id": "task-example",
+  "title": "Example task",
+  "source_type": "assigned",
+  "task_type": "parallel",
+  "mode": "PHASE_BROADCAST",
+  "status": "open",
+  "owner_agent": "",
+  "validator_agent": "",
+  "exclusive_owner_agent": "",
+  "exclusive_until": "",
+  "branch": "",
+  "workspace_path": "",
+  "claim_pointer": "",
+  "delivery_pointer": "",
+  "score": null,
+  "reward": null,
+  "final_credit_agent": ""
+}
