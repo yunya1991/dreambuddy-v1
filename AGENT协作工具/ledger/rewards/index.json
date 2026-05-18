@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "generated_at": "2026-05-17T17:46:23Z",
+  "reward_records": [
+    {
+      "task_id": "task-pr9-artifact-hub-v2-build-1",
+      "reward_type": "effective_delivery",
+      "base_reward": 10,
+      "quality_multiplier": 1.2,
+      "final_reward": 12,
+      "credited_agent": "Claude Code",
+      "credited_at": "2026-05-17T17:46:23Z"
+    }
+  ]
+}

@@ -66,7 +66,7 @@
 ## 📁 目录结构
 
 ```
-dream-universal-gateway/
+3-FRONTEND/dream-universal-gateway/
 ├── src/
 │   ├── app/                      # Next.js App Router
 │   │   ├── layout.tsx           # 根布局

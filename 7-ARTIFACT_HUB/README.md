@@ -8,7 +8,7 @@
 
 ## 🔗 相关链接
 
-- **Dream Universal Gateway**: [../dream-universal-gateway/](../dream-universal-gateway/)
+- **Dream Universal Gateway**: [../3-FRONTEND/dream-universal-gateway/](../3-FRONTEND/dream-universal-gateway/)
 - **前端系统设计**: [../3-FRONTEND/](../3-FRONTEND/)
 - **AAM SKILL**: `~/.workbuddy/skills/artifact-alignment-manager/`
 - **产物中心维护 SKILL**: `~/.workbuddy/skills/dream-product-hub-maintenance/`
@@ -17,7 +17,7 @@
 
 ```
 项目根目录
-├── dream-universal-gateway/     # 用户前端 (Next.js)
+├── 3-FRONTEND/dream-universal-gateway/     # 用户前端 (Next.js)
 ├── 1-ARCHITECTURE/             # 架构设计文档
 ├── 2-GOVERNANCE/               # 治理系统
 ├── 3-FRONTEND/                 # 前端系统

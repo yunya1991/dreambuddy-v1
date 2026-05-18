@@ -249,7 +249,7 @@ python3 ~/.workbuddy/scripts/sync_artifact.py --sync
 
 - [AAM SKILL](../skills/artifact-alignment-manager/)
 - [产物中心维护 SKILL](../skills/dream-product-hub-maintenance/)
-- [Dream Universal Gateway](../dream-universal-gateway/)
+- [Dream Universal Gateway](../3-FRONTEND/dream-universal-gateway/)
 - [前端系统设计](../3-FRONTEND/FRONTEND_SYSTEM.md)
 
 ---
