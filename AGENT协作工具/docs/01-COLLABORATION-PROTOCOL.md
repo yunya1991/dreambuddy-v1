@@ -1,6 +1,6 @@
 # Collaboration Protocol (PR Comments + Gates)
 
-> Status: active  
+> Status: active
 > Scope: collaboration protocol for PR-based work in `dreambuddy-v1`
 
 ## 1. Canonical Anchors
@@ -14,6 +14,7 @@ Structured PR comments are the canonical collaboration interface.
 - `[测试报告 / TEST_REPORT]`
 - `[验证结论 / VALIDATION_RESULT]`
 - `[协作完成回报 / DONE]`
+- `[账本同步 / LEDGER_SYNC]` ⭐ new — posted by CLI or GitHub Action when ledger/workspace state changes
 
 Templates live in `AGENT协作工具/templates/`.
 
@@ -56,6 +57,17 @@ Templates live in `AGENT协作工具/templates/`.
 - `提交: <commit sha>`
 - Delivery summary
 
+### 2.6 LEDGER_SYNC (new)
+
+- `Sync Agent: CLI | GitHub Action`
+- `Protocol File: <path to LEDGER-YYYYMMDD.md>`
+- `Changed Tasks:` list of `<task_id>: <old> → <new>`
+- `Workspace Updated: <workspace>/PLAN.md`
+- `Ledger SHA: <before> → <after>`
+- `Sync Time: <ISO8601>`
+
+This anchor is posted automatically by `ledger_sync.py push-status --print-comment` or by the `collab-ledger-sync.yml` GitHub Action. It is informational and does not trigger lifecycle gate checks.
+
 ## 3. Scope Change Rule (Fail-Closed)
 
 - Any change that expands scope MUST post `[UPDATED]` first.
@@ -64,7 +76,7 @@ Templates live in `AGENT协作工具/templates/`.
 ## 4. Block Rule (Fail-Closed)
 
 - If execution cannot continue, post `[BLOCKED]` and stop.
-- A blocked PR must not be force-pushed with unrelated changes to “unstick” gates.
+- A blocked PR must not be force-pushed with unrelated changes to "unstick" gates.
 
 ## 5. Gates
 
