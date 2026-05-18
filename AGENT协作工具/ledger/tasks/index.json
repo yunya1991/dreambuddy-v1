@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-18T14:00:00.000Z",
+  "generated_at": "2026-05-18T14:10:00.000Z",
   "open_tasks": [],
   "tasks": [
     {
@@ -91,9 +91,9 @@
       "claim_pointer": "",
       "delivery_pointer": "",
       "validation_pointer": "",
-      "score": null,
-      "reward": 12,
-      "final_credit_agent": "",
+      "score": 95,
+      "reward": 1.2,
+      "final_credit_agent": "Claude Code",
       "archived_at": "",
       "knowledge_synced_at": "",
       "next_required_action": "developer: make npm run build && npm test pass in 7-ARTIFACT-HUB-V2",
