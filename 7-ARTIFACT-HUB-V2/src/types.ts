@@ -9,6 +9,8 @@ export type ArtifactType =
   | "dashboard_result"
   | "unknown";
 
+export type WorkflowType = "legacy_chain" | "trading_v2";
+
 export type RouteMode =
   | "DIRECT_RETURN"
   | "INCREMENTAL_UPDATE"
@@ -83,7 +85,7 @@ export interface Artifact {
   type: ArtifactType;
   chain_phase: string;
   workflow_id: string;
-  workflow_type: string;
+  workflow_type: WorkflowType;
   trace_id: string;
   status: ArtifactStatus;
   relative_path: string;
@@ -109,7 +111,7 @@ export interface Execution {
   intent_id: string;
   decision_id: string;
   workflow_id: string;
-  workflow_type: string;
+  workflow_type: WorkflowType;
   department: string;
   status: ExecutionStatus;
   started_at: ISODateString;
