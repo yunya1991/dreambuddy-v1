@@ -10,6 +10,17 @@ def extract_field(text, field_name):
     return ""
 
 
+def safe_int(value: str):
+    if value is None:
+        return None
+    stripped = str(value).strip()
+    if not stripped:
+        return None
+    if stripped.isdigit():
+        return int(stripped)
+    return None
+
+
 def last_comment_with_prefix(comments, prefix):
     matched = [comment for comment in comments if comment.startswith(prefix)]
     return matched[-1] if matched else ""
@@ -46,7 +57,7 @@ def build_payload(raw):
         "validation_present": bool(latest_validation),
         "ledger_entry_present": bool(latest_ledger_entry),
         "validation_decision": extract_field(latest_validation, "Decision"),
-        "validation_score": int(score) if score else None,
+        "validation_score": safe_int(score),
         "governance_agent": extract_field(latest_started, "Governance Agent"),
         "task_type": extract_field(latest_started, "Task Type"),
         "dependency_gate": extract_field(latest_started, "Dependency Gate"),
