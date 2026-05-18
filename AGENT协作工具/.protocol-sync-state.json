@@ -1,6 +1,6 @@
 {
-  "last_synced_sha": "f7299779f19a05632a1e9021f2f90a77ddd7bea9",
-  "last_synced_date": "2026-05-18",
+  "last_synced_sha": "2a88cc732dd04cda33153e57861d1a96fac4f2a2",
+  "synced_at": "2026-05-18T12:32:28.106Z",
   "synced_docs": [
     "AGENT协作工具/docs/00-AGENT-CONSTITUTION.md",
     "AGENT协作工具/docs/01-COLLABORATION-PROTOCOL.md",
@@ -21,5 +21,6 @@
     "AGENT协作工具/docs/agent-standard-dev-lifecycle-implementation-plan.md",
     "AGENT协作工具/docs/dual-agent-collaboration-foundation-design.md",
     "AGENT协作工具/docs/self-hosted-runner.md"
-  ]
+  ],
+  "note": "PR #44 merged (Phase2 promote+planner+bridge SOP). New SKILLS: collab-ledger-planner. Doc count unchanged (07 was already tracked). SHA updated to 2a88cc73."
 }
