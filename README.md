@@ -84,6 +84,14 @@ dream-multiSkill-architecture/
 
 - `AGENT协作工具/docs/README.md`
 
+广播（作为各 AGENT 记忆固定引用）：
+
+- 协作宪法（允许/禁止/裁决，fail-closed）：`AGENT协作工具/docs/00-AGENT-CONSTITUTION.md`
+- 协作协议（PR 评论锚点 + 门禁）：`AGENT协作工具/docs/01-COLLABORATION-PROTOCOL.md`
+- 工程索引（改哪里/查哪里）：`AGENT协作工具/docs/04-ENGINEERING-INDEX.md`
+- FAQ（常见阻塞与修复）：`AGENT协作工具/docs/05-FAQ.md`
+- SKILL 清单（什么时候调用什么）：`AGENT协作工具/docs/06-SKILLS-INVENTORY.md`
+
 当前默认协作方式：
 
 - 以 `7-ARTIFACT-HUB-V2/**` 为核心工作区

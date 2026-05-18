@@ -43,6 +43,11 @@ AGENT协作工具/
 以下文档已作为全局 `AGENT` 协作主干迁入 `AGENT协作工具/docs/`：
 
 - `AGENT协作工具/docs/README.md`：协作文档总入口
+- `AGENT协作工具/docs/00-AGENT-CONSTITUTION.md`：协作宪法（fail-closed）
+- `AGENT协作工具/docs/01-COLLABORATION-PROTOCOL.md`：协作协议（评论锚点 + 门禁）
+- `AGENT协作工具/docs/04-ENGINEERING-INDEX.md`：工程索引（改哪里/查哪里）
+- `AGENT协作工具/docs/05-FAQ.md`：FAQ（常见阻塞与修复）
+- `AGENT协作工具/docs/06-SKILLS-INVENTORY.md`：SKILL 工具清单
 - `AGENT协作工具/docs/dual-agent-collaboration-foundation-design.md`：双代理协作底座设计
 - `AGENT协作工具/docs/agent-standard-dev-lifecycle-design.md`：标准开发生命周期与协作监督体系设计
 - `AGENT协作工具/docs/agent-standard-dev-lifecycle-implementation-plan.md`：标准开发生命周期实施计划
@@ -85,6 +90,12 @@ AGENT协作工具/
 7. 允许少量例外文件用于支撑 `7-ARTIFACT-HUB-V2` 的 build/test/运行，但必须在 `STARTED/UPDATED` 显式声明例外范围
 8. owner 目录内默认并行开发；白名单直接接管项允许修复方直接接手，修后广播结果
 9. 角色拆分与硬约束以主干短规范为准：`AGENT协作工具/docs/agent-ledger-protocol-vs-governance-short-spec.md`
+10. 遇到阻塞先查文档再行动（作为 AGENT 记忆固定引用）：
+    - 允许/禁止/裁决：`AGENT协作工具/docs/00-AGENT-CONSTITUTION.md`
+    - 评论字段/模板/门禁：`AGENT协作工具/docs/01-COLLABORATION-PROTOCOL.md`
+    - 改哪里/查哪里：`AGENT协作工具/docs/04-ENGINEERING-INDEX.md`
+    - 常见失败：`AGENT协作工具/docs/05-FAQ.md`
+    - SKILL 使用：`AGENT协作工具/docs/06-SKILLS-INVENTORY.md`
 
 ## 快速使用
 
