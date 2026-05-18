@@ -4,7 +4,6 @@
   "open_tasks": [
     "task-pr9-central-hub-v2-0",
     "task-pr9-ahv2-object-model-align-1",
-    "task-pr9-ahv2-chain-workflows-plan-1",
     "task-pr9-ahv2-ops-ui-skeleton-1"
   ],
   "tasks": [
@@ -236,5 +235,7 @@
         "closure_completed_at": ""
       }
     }
-  ]
+  ],
+  "last_updated": "2026-05-18T10:28:43.379Z",
+  "ledger_agent_sync": "2026-05-18T10:28:43.393Z"
 }
