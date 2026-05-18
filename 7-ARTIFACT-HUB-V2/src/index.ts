@@ -8,7 +8,7 @@ import { readJson, sendJson, methodNotAllowed, notFound } from "./http-utils.js"
 import { MetaStore } from "./meta-store.js";
 import { RouterEngine } from "./router-engine.js";
 import { WorkOrderManager } from "./work-order.js";
-import type { Intent } from "./types.js";
+import type { Intent, MarketIntel } from "./types.js";
 import { groupByWorkflowType, normalizeWorkflowType } from "./chain-workflow-guard.js";
 
 const repoRoot = resolveRepoRoot();
@@ -153,6 +153,31 @@ const server = createServer(async (req, res) => {
     const traceIdFilter = url.searchParams.get("trace_id") ?? undefined;
     const reviews = meta.listExecutionReviews(traceIdFilter);
     return sendJson(res, 200, { reviews, total: reviews.length });
+  }
+
+  if (url.pathname === "/chain/distributions") {
+    if (req.method !== "GET") return methodNotAllowed(res);
+    const traceId = url.searchParams.get("trace_id") ?? undefined;
+    return sendJson(res, 200, { success: true, data: meta.listDistributions(traceId) });
+  }
+
+  if (url.pathname === "/chain/performance") {
+    if (req.method !== "GET") return methodNotAllowed(res);
+    const workflowId = url.searchParams.get("workflow_id") ?? undefined;
+    return sendJson(res, 200, { success: true, data: meta.listPerformance(workflowId) });
+  }
+
+  if (url.pathname === "/chain/market-intel") {
+    if (req.method === "GET") {
+      const symbol = url.searchParams.get("symbol") ?? undefined;
+      return sendJson(res, 200, { success: true, data: meta.listMarketIntel(symbol) });
+    }
+    if (req.method === "POST") {
+      const body = await readJson<MarketIntel>(req);
+      meta.addMarketIntel(body);
+      return sendJson(res, 201, { success: true });
+    }
+    return methodNotAllowed(res);
   }
 
   return notFound(res);
