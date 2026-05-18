@@ -252,6 +252,198 @@
 
 其中 `MinisterAgent`、`BoardProposal`、`ApprovalGate`、`Performance`、`MarketIntel` 当前均属于后续阶段对象，不代表主仓已有实现。
 
+## 8.1 Phase 3 已实现 API 路由
+
+> 更新日期：2026-05-18
+> 实现状态：**已交付（Phase 3, PR #45 + PR #47）**
+
+以下路由已在 `7-ARTIFACT-HUB-V2/src/` 中完整实现，MetaStore 持久化至 SQLite（`artifact_hub.sqlite`）。
+
+### 8.1.1 BoardProposal — 议案管理
+
+**类型定义（`src/types.ts`）：**
+
+```typescript
+type BoardProposalStatus = 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'withdrawn';
+
+interface BoardProposal {
+  proposal_id: string;
+  trace_id: string;
+  department: string;
+  decision_level: DecisionLevel;    // "L1" | "L2" | "L3"
+  title: string;
+  summary: string;
+  proposer_agent: MinisterAgent;    // enum: "governance_minister_agent" 等
+  status: BoardProposalStatus;
+  created_at: ISODateString;
+  resolved_at?: ISODateString;
+}
+```
+
+**MetaStore 持久化方法（`src/meta-store.ts`）：**
+
+| 方法 | 签名 | 说明 |
+|------|------|------|
+| `addBoardProposal` | `(proposal: BoardProposal): void` | 插入议案记录 |
+
+**SQLite 表结构（`board_proposals`）：**
+
+```sql
+CREATE TABLE IF NOT EXISTS board_proposals (
+  proposal_id   TEXT PRIMARY KEY,
+  trace_id      TEXT NOT NULL,
+  department    TEXT NOT NULL,
+  decision_level TEXT NOT NULL,
+  title         TEXT NOT NULL,
+  summary       TEXT NOT NULL,
+  proposer_agent TEXT NOT NULL,
+  status        TEXT NOT NULL DEFAULT 'draft',
+  created_at    TEXT NOT NULL,
+  resolved_at   TEXT
+);
+```
+
+### 8.1.2 ApprovalGate — 审批门控
+
+**类型定义（`src/types.ts`）：**
+
+```typescript
+interface ApprovalGate {
+  gate_id: string;
+  proposal_id: string;
+  required_approvers: MinisterAgent[];
+  received_approvals: MinisterAgent[];
+  status: ApprovalStatus;    // "pending" | "approved" | "rejected" | "needs_more_evidence"
+  decided_at?: ISODateString;
+}
+```
+
+**MetaStore 持久化方法：**
+
+| 方法 | 签名 | 说明 |
+|------|------|------|
+| `addApprovalGate` | `(gate: ApprovalGate): void` | 插入审批门控记录，数组字段 JSON 序列化 |
+
+**SQLite 表结构（`approval_gates`）：**
+
+```sql
+CREATE TABLE IF NOT EXISTS approval_gates (
+  gate_id                TEXT PRIMARY KEY,
+  proposal_id            TEXT NOT NULL,
+  required_approvers_json TEXT NOT NULL,
+  received_approvals_json TEXT NOT NULL DEFAULT '[]',
+  status                 TEXT NOT NULL DEFAULT 'pending',
+  decided_at             TEXT
+);
+```
+
+### 8.1.3 ExecutionReview — 执行复审
+
+**类型定义（`src/types.ts`）：**
+
+```typescript
+interface ExecutionReview {
+  review_id: string;
+  trace_id: string;
+  execution_id: string;
+  reviewer_agent: MinisterAgent;
+  verdict: 'pass' | 'pass_with_notes' | 'fail' | 'escalate';
+  findings: string;
+  recommendations: string;
+  reviewed_at: ISODateString;
+}
+```
+
+**MetaStore 持久化方法：**
+
+| 方法 | 签名 | 说明 |
+|------|------|------|
+| `addExecutionReview` | `(review: ExecutionReview): void` | 插入复审记录 |
+| `listExecutionReviews` | `(traceId?: string): ExecutionReview[]` | 查询复审列表，支持 trace_id 过滤 |
+
+**SQLite 表结构（`execution_reviews`）：**
+
+```sql
+CREATE TABLE IF NOT EXISTS execution_reviews (
+  review_id      TEXT PRIMARY KEY,
+  trace_id       TEXT NOT NULL,
+  execution_id   TEXT NOT NULL,
+  reviewer_agent TEXT NOT NULL,
+  verdict        TEXT NOT NULL,
+  findings       TEXT NOT NULL,
+  recommendations TEXT NOT NULL,
+  reviewed_at    TEXT NOT NULL
+);
+```
+
+### 8.1.4 HTTP 路由 — GET /chain/reviews
+
+**实现位置：** `src/index.ts`
+
+```
+GET /chain/reviews
+GET /chain/reviews?trace_id=<trace_id>
+```
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `trace_id` | query string | 否 | 按 trace_id 过滤结果 |
+
+**响应结构：**
+
+```json
+{
+  "reviews": [
+    {
+      "review_id": "rev-001",
+      "trace_id": "trace-abc",
+      "execution_id": "exec-001",
+      "reviewer_agent": "governance_minister_agent",
+      "verdict": "pass",
+      "findings": "...",
+      "recommendations": "...",
+      "reviewed_at": "2026-05-18T10:00:00Z"
+    }
+  ],
+  "total": 1
+}
+```
+
+**错误响应：**
+
+| 状态码 | 场景 |
+|--------|------|
+| `405 Method Not Allowed` | 非 GET 请求 |
+
+### 8.1.5 Phase 3 对象关系图
+
+```
+BoardProposal (board_proposals)
+    ├── proposal_id (PK)
+    ├── trace_id → links to executions.trace_id
+    ├── decision_level: L1 / L2 / L3
+    ├── proposer_agent: MinisterAgent enum
+    └── status: draft → submitted → under_review → approved/rejected/withdrawn
+
+ApprovalGate (approval_gates)
+    ├── gate_id (PK)
+    ├── proposal_id → BoardProposal.proposal_id
+    ├── required_approvers: MinisterAgent[]  (JSON)
+    ├── received_approvals: MinisterAgent[]  (JSON)
+    └── status: pending → approved/rejected/needs_more_evidence
+
+ExecutionReview (execution_reviews)
+    ├── review_id (PK)
+    ├── trace_id → links to executions.trace_id
+    ├── execution_id → executions.execution_id
+    ├── reviewer_agent: MinisterAgent enum
+    └── verdict: pass / pass_with_notes / fail / escalate
+
+HTTP Route:
+    GET /chain/reviews[?trace_id=X] → MetaStore.listExecutionReviews(traceId?)
+```
+
+
 ## 9. 页面风格建议
 
 董事会总览台不应做成“花哨大屏”，而应更像：
