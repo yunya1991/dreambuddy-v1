@@ -21,7 +21,8 @@ jobs:
         id: refresh_tasks
         run: |
           python3 "AGENT协作工具/github-actions/refresh_open_tasks.py" "AGENT协作工具/ledger/tasks/index.json" > /tmp/open_tasks_result.json
-          python3 -c 'import json; print(f"changed={str(json.load(open(\"/tmp/open_tasks_result.json\"))[\"changed\"]).lower()}")' >> "$GITHUB_OUTPUT"
+          changed=$(python3 -c "import json; print('true' if json.load(open('/tmp/open_tasks_result.json'))['changed'] else 'false')")
+          echo \"changed=${changed}\" >> \"$GITHUB_OUTPUT\"
 
       - name: Check for protocol doc changes
         id: check_changes
