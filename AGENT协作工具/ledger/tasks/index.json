@@ -2,7 +2,9 @@
   "version": 1,
   "generated_at": "2026-05-18T11:53:42.703Z",
   "open_tasks": [
-    "task-pr9-central-hub-v2-0"
+    "task-pr9-central-hub-v2-0",
+    "task-pr9-ahv2-board-proposal-1",
+    "task-pr9-ahv2-execution-review-1"
   ],
   "tasks": [
     {
@@ -371,8 +373,148 @@
         "closure_agent": "",
         "closure_completed_at": ""
       }
+    },
+    {
+      "goal_id": "goal-pr9-central-hub",
+      "task_id": "task-pr9-ahv2-board-proposal-1",
+      "parent_task_id": "task-pr9-central-hub-v2-0",
+      "title": "PR9: Phase 3 — BoardProposal + ApprovalGate types + MetaStore persistence",
+      "source_type": "derived",
+      "task_type": "shared-sync",
+      "mode": "STRONG_SYNC",
+      "status": "ready",
+      "depends_on": [
+        "task-pr9-ahv2-governance-spec-impl-1"
+      ],
+      "dependency_gate": "ledgered",
+      "shared_boundary": [
+        "7-ARTIFACT-HUB-V2/src/types.ts"
+      ],
+      "sync_checkpoint": [
+        "7-ARTIFACT-HUB-V2/GOVERNANCE_SPEC.md"
+      ],
+      "current_sync_state": "none",
+      "owner_agent": "",
+      "validator_agent": "Validator AGENT",
+      "governance_agent": "Governance AGENT",
+      "exclusive_owner_agent": "",
+      "exclusive_until": "",
+      "branch": "",
+      "workspace_path": "7-ARTIFACT-HUB-V2",
+      "claim_pointer": "",
+      "delivery_pointer": "",
+      "validation_pointer": "",
+      "score": null,
+      "reward": null,
+      "final_credit_agent": "",
+      "archived_at": "",
+      "knowledge_synced_at": "",
+      "next_required_action": "developer: implement BoardProposal + ApprovalGate interfaces + addBoardProposal() in MetaStore",
+      "governance_closure": {
+        "archive_summary": "",
+        "index_updates": [],
+        "faq_decision": "",
+        "faq_entries": [],
+        "rollup_effect": "",
+        "followup_tasks": [],
+        "closure_agent": "",
+        "closure_completed_at": ""
+      }
+    },
+    {
+      "goal_id": "goal-pr9-central-hub",
+      "task_id": "task-pr9-ahv2-execution-review-1",
+      "parent_task_id": "task-pr9-central-hub-v2-0",
+      "title": "PR9: Phase 3 — ExecutionReview type + MetaStore persistence + GET /chain/reviews route",
+      "source_type": "derived",
+      "task_type": "shared-sync",
+      "mode": "STRONG_SYNC",
+      "status": "ready",
+      "depends_on": [
+        "task-pr9-ahv2-chain-workflow-query-1"
+      ],
+      "dependency_gate": "ledgered",
+      "shared_boundary": [
+        "7-ARTIFACT-HUB-V2/src/types.ts",
+        "7-ARTIFACT-HUB-V2/src/index.ts"
+      ],
+      "sync_checkpoint": [
+        "7-ARTIFACT-HUB-V2/CHAIN_WORKFLOWS.md"
+      ],
+      "current_sync_state": "none",
+      "owner_agent": "",
+      "validator_agent": "Validator AGENT",
+      "governance_agent": "Governance AGENT",
+      "exclusive_owner_agent": "",
+      "exclusive_until": "",
+      "branch": "",
+      "workspace_path": "7-ARTIFACT-HUB-V2",
+      "claim_pointer": "",
+      "delivery_pointer": "",
+      "validation_pointer": "",
+      "score": null,
+      "reward": null,
+      "final_credit_agent": "",
+      "archived_at": "",
+      "knowledge_synced_at": "",
+      "next_required_action": "developer: add ExecutionReview interface + MetaStore addExecutionReview() + GET /chain/reviews route",
+      "governance_closure": {
+        "archive_summary": "",
+        "index_updates": [],
+        "faq_decision": "",
+        "faq_entries": [],
+        "rollup_effect": "",
+        "followup_tasks": [],
+        "closure_agent": "",
+        "closure_completed_at": ""
+      }
+    },
+    {
+      "goal_id": "goal-pr9-central-hub",
+      "task_id": "task-pr9-ahv2-board-console-spec-1",
+      "parent_task_id": "task-pr9-central-hub-v2-0",
+      "title": "PR9: Phase 3 — Update BOARD_CONSOLE_DESIGN.md with Phase 3 API surface and routes",
+      "source_type": "derived",
+      "task_type": "parallel",
+      "mode": "PHASE_BROADCAST",
+      "status": "planned",
+      "depends_on": [
+        "task-pr9-ahv2-board-proposal-1"
+      ],
+      "dependency_gate": "ledgered",
+      "shared_boundary": [],
+      "sync_checkpoint": [
+        "7-ARTIFACT-HUB-V2/BOARD_CONSOLE_DESIGN.md"
+      ],
+      "current_sync_state": "none",
+      "owner_agent": "",
+      "validator_agent": "Validator AGENT",
+      "governance_agent": "Governance AGENT",
+      "exclusive_owner_agent": "",
+      "exclusive_until": "",
+      "branch": "",
+      "workspace_path": "7-ARTIFACT-HUB-V2",
+      "claim_pointer": "",
+      "delivery_pointer": "",
+      "validation_pointer": "",
+      "score": null,
+      "reward": null,
+      "final_credit_agent": "",
+      "archived_at": "",
+      "knowledge_synced_at": "",
+      "next_required_action": "developer: update BOARD_CONSOLE_DESIGN.md Phase 3 section with implemented API routes",
+      "governance_closure": {
+        "archive_summary": "",
+        "index_updates": [],
+        "faq_decision": "",
+        "faq_entries": [],
+        "rollup_effect": "",
+        "followup_tasks": [],
+        "closure_agent": "",
+        "closure_completed_at": ""
+      }
     }
   ],
-  "last_updated": "2026-05-18T12:30:04.819Z",
-  "ledger_agent_sync": "2026-05-18T12:30:04.819Z"
+  "last_updated": "2026-05-18T12:46:27.349Z",
+  "ledger_agent_sync": "2026-05-18T12:46:27.349Z"
 }
