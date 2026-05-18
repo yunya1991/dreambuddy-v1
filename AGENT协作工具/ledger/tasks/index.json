@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-18T20:30:00.000Z",
+  "generated_at": "2026-05-18T20:35:00.000Z",
   "open_tasks": [
     "task-ahv2-impl-20260518-root-0",
     "task-ahv2-impl-20260518-chain-dual-3",
@@ -1129,7 +1129,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "ready",
+      "status": "in_progress",
       "depends_on": [
         "task-ahv2-impl-20260518-market-ui-4"
       ],
@@ -1142,7 +1142,7 @@
       "governance_agent": "Governance AGENT",
       "exclusive_owner_agent": "",
       "exclusive_until": "",
-      "branch": "",
+      "branch": "agent/claude/ahv2-impl-market-route-4b",
       "workspace_path": "7-ARTIFACT-HUB-V2",
       "claim_pointer": "",
       "delivery_pointer": "",
