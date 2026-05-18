@@ -30,7 +30,35 @@ export class MetaStore {
         decision_json TEXT NOT NULL,
         policy_version TEXT NOT NULL,
         created_at INTEGER NOT NULL,
+        department TEXT NOT NULL DEFAULT 'unknown',
+        selected_route TEXT NOT NULL DEFAULT '',
+        decision_level TEXT NOT NULL DEFAULT 'standard',
         PRIMARY KEY (trace_id, decision_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS executions (
+        execution_id TEXT PRIMARY KEY,
+        trace_id TEXT NOT NULL,
+        intent_id TEXT NOT NULL,
+        decision_id TEXT NOT NULL,
+        workflow_id TEXT NOT NULL,
+        workflow_type TEXT NOT NULL,
+        department TEXT NOT NULL,
+        status TEXT NOT NULL,
+        started_at INTEGER NOT NULL,
+        finished_at INTEGER
+      );
+
+      CREATE TABLE IF NOT EXISTS audit_records (
+        audit_id TEXT PRIMARY KEY,
+        trace_id TEXT NOT NULL,
+        department TEXT NOT NULL,
+        decision_snapshot_json TEXT NOT NULL,
+        execution_snapshot_json TEXT NOT NULL,
+        events_json TEXT NOT NULL DEFAULT '[]',
+        risk_flags_json TEXT,
+        review_notes TEXT,
+        created_at INTEGER NOT NULL
       );
     `);
   }
@@ -65,10 +93,13 @@ export class MetaStore {
     intent: unknown,
     decision: unknown,
     policyVersion = "v0",
-    createdAt = Date.now()
+    createdAt = Date.now(),
+    department = "unknown",
+    selectedRoute = "",
+    decisionLevel = "standard"
   ): void {
     const stmt = this.db.prepare(
-      `INSERT INTO route_decisions(trace_id,decision_id,intent_json,decision_json,policy_version,created_at) VALUES(?,?,?,?,?,?)`
+      `INSERT INTO route_decisions(trace_id,decision_id,intent_json,decision_json,policy_version,created_at,department,selected_route,decision_level) VALUES(?,?,?,?,?,?,?,?,?)`
     );
     stmt.run(
       traceId,
@@ -76,7 +107,10 @@ export class MetaStore {
       JSON.stringify(intent),
       JSON.stringify(decision),
       policyVersion,
-      createdAt
+      createdAt,
+      department,
+      selectedRoute,
+      decisionLevel
     );
   }
 
@@ -93,5 +127,56 @@ export class MetaStore {
       decision: JSON.parse(row.decision_json),
       created_at: row.created_at,
     };
+  }
+
+  addExecution(
+    executionId: string,
+    traceId: string,
+    intentId: string,
+    decisionId: string,
+    workflowId: string,
+    workflowType: string,
+    department: string,
+    status: string,
+    startedAt = Date.now()
+  ): void {
+    const stmt = this.db.prepare(
+      `INSERT INTO executions(execution_id,trace_id,intent_id,decision_id,workflow_id,workflow_type,department,status,started_at) VALUES(?,?,?,?,?,?,?,?,?)`
+    );
+    stmt.run(executionId, traceId, intentId, decisionId, workflowId, workflowType, department, status, startedAt);
+  }
+
+  updateExecutionStatus(executionId: string, status: string, finishedAt = Date.now()): void {
+    const stmt = this.db.prepare(
+      `UPDATE executions SET status=?,finished_at=? WHERE execution_id=?`
+    );
+    stmt.run(status, finishedAt, executionId);
+  }
+
+  addAuditRecord(
+    auditId: string,
+    traceId: string,
+    department: string,
+    decisionSnapshot: unknown,
+    executionSnapshot: unknown,
+    events: unknown[] = [],
+    riskFlags?: string[],
+    reviewNotes?: string,
+    createdAt = Date.now()
+  ): void {
+    const stmt = this.db.prepare(
+      `INSERT INTO audit_records(audit_id,trace_id,department,decision_snapshot_json,execution_snapshot_json,events_json,risk_flags_json,review_notes,created_at) VALUES(?,?,?,?,?,?,?,?,?)`
+    );
+    stmt.run(
+      auditId,
+      traceId,
+      department,
+      JSON.stringify(decisionSnapshot),
+      JSON.stringify(executionSnapshot),
+      JSON.stringify(events),
+      riskFlags ? JSON.stringify(riskFlags) : null,
+      reviewNotes ?? null,
+      createdAt
+    );
   }
 }
