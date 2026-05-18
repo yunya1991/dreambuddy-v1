@@ -94,6 +94,32 @@ class CollaborationPayloadTests(unittest.TestCase):
         self.assertTrue(payload["validation_present"])
         self.assertFalse(payload["ledger_entry_present"])
 
+    def test_non_numeric_validation_score_is_ignored(self):
+        raw = {
+            "branch": "agent/solo/governance-v1",
+            "pr_body": "## Owner Agent\nOwner Agent: SOLO\n",
+            "comments": [
+                "[协作开工声明 / STARTED]\n\n"
+                "Agent: SOLO\n"
+                "Task ID: task-governance-1\n"
+                "Governance Agent: SOLO-GOV\n"
+                "Task Type: shared-sync\n"
+                "Dependency Gate: accepted\n"
+                "Current Sync State: pending\n"
+                "Next Required Action: validator sync review\n"
+                "状态: STARTED\n",
+                "[验证结论 / VALIDATION_RESULT]\n\n"
+                "Validator: Claude Code\n"
+                "Score: N/A\n"
+                "Decision: ACCEPTED\n"
+                "Governance Handoff: ledgered\n",
+            ],
+        }
+
+        payload = MODULE.build_payload(raw)
+
+        self.assertIsNone(payload["validation_score"])
+
     def test_extracts_controller_fields_from_ledger_entry(self):
         raw = {
             "branch": "agent/solo/governance-cycle-v1",
