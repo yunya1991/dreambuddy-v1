@@ -163,6 +163,33 @@ export class MetaStore {
     stmt.run(status, finishedAt, executionId);
   }
 
+  addAuditRecord(
+    auditId: string,
+    traceId: string,
+    department: string,
+    decisionSnapshot: unknown,
+    executionSnapshot: unknown,
+    events: unknown[] = [],
+    riskFlags?: string[],
+    reviewNotes?: string,
+    createdAt = Date.now()
+  ): void {
+    const stmt = this.db.prepare(
+      `INSERT INTO audit_records(audit_id,trace_id,department,decision_snapshot_json,execution_snapshot_json,events_json,risk_flags_json,review_notes,created_at) VALUES(?,?,?,?,?,?,?,?)`
+    );
+    stmt.run(
+      auditId,
+      traceId,
+      department,
+      JSON.stringify(decisionSnapshot),
+      JSON.stringify(executionSnapshot),
+      JSON.stringify(events),
+      riskFlags ? JSON.stringify(riskFlags) : null,
+      reviewNotes ?? null,
+      createdAt
+    );
+  }
+
   addExecutionReview(
     reviewId: string,
     traceId: string,
