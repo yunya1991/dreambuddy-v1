@@ -232,3 +232,63 @@ test("ops-ui proxies route decide/execute and traces to hub", async () => {
     await hubListener.close();
   }
 });
+test("ops-ui /api/ops/health includes typed hub_health HealthViewModel when hub returns valid contract", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "artifact-hub-health-adapter-"));
+  fs.mkdirSync(path.join(root, "tasks"), { recursive: true });
+  fs.mkdirSync(path.join(root, "results"), { recursive: true });
+
+  const hubHealthPayload = {
+    service: "artifact-hub",
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    dependencies: {
+      artifact_hub: "ok",
+      gateway: "ok",
+      meta_db: "ok",
+    },
+  };
+
+  const hub = createServer((_req, res) => {
+    res.statusCode = 200;
+    res.setHeader("content-type", "application/json; charset=utf-8");
+    res.end(JSON.stringify(hubHealthPayload));
+  });
+
+  const gateway = createServer((_req, res) => {
+    res.statusCode = 200;
+    res.setHeader("content-type", "application/json; charset=utf-8");
+    res.end(JSON.stringify({ ok: true }));
+  });
+
+  const hubListener = await listen(hub);
+  const gatewayListener = await listen(gateway);
+  const prevHubUrl = process.env.HUB_URL;
+  const prevGatewayUrl = process.env.GATEWAY_URL;
+  const prevArtifactsRoot = process.env.ARTIFACTS_ROOT;
+  process.env.HUB_URL = hubListener.url;
+  process.env.GATEWAY_URL = gatewayListener.url;
+  process.env.ARTIFACTS_ROOT = root;
+
+  const opsListener = await listen(createOpsServer());
+  try {
+    const res = await fetch(new URL("/api/ops/health", opsListener.url));
+    assert.equal(res.status, 200);
+    const body = (await res.json()) as {
+      ok: boolean;
+      hub_health: { service: string; status: string; dependencyList: Array<{ name: string; status: string }> } | null;
+    };
+    assert.equal(body.ok, true);
+    assert.ok(body.hub_health, "hub_health should be present");
+    assert.equal(body.hub_health!.service, "artifact-hub");
+    assert.equal(body.hub_health!.status, "ok");
+    assert.ok(Array.isArray(body.hub_health!.dependencyList));
+    assert.equal(body.hub_health!.dependencyList.length, 3);
+  } finally {
+    process.env.HUB_URL = prevHubUrl;
+    process.env.GATEWAY_URL = prevGatewayUrl;
+    process.env.ARTIFACTS_ROOT = prevArtifactsRoot;
+    await opsListener.close();
+    await hubListener.close();
+    await gatewayListener.close();
+  }
+});
