@@ -3,7 +3,6 @@
   "generated_at": "2026-05-18T11:53:42.703Z",
   "open_tasks": [
     "task-pr9-central-hub-v2-0",
-    "task-pr9-ahv2-board-proposal-1",
     "task-pr9-ahv2-execution-review-1"
   ],
   "tasks": [
@@ -382,7 +381,7 @@
       "source_type": "derived",
       "task_type": "shared-sync",
       "mode": "STRONG_SYNC",
-      "status": "ready",
+      "status": "ledgered",
       "depends_on": [
         "task-pr9-ahv2-governance-spec-impl-1"
       ],
@@ -402,12 +401,12 @@
       "branch": "",
       "workspace_path": "7-ARTIFACT-HUB-V2",
       "claim_pointer": "",
-      "delivery_pointer": "",
+      "delivery_pointer": "d75dcfb119e3a92c6702e91bc6f843db3e99490f",
       "validation_pointer": "",
-      "score": null,
-      "reward": null,
+      "score": 95,
+      "reward": 95,
       "final_credit_agent": "",
-      "archived_at": "",
+      "archived_at": "2026-05-18T13:20:23.736Z",
       "knowledge_synced_at": "",
       "next_required_action": "developer: implement BoardProposal + ApprovalGate interfaces + addBoardProposal() in MetaStore",
       "governance_closure": {
@@ -515,6 +514,6 @@
       }
     }
   ],
-  "last_updated": "2026-05-18T12:46:27.349Z",
+  "last_updated": "2026-05-18T13:20:23.741Z",
   "ledger_agent_sync": "2026-05-18T12:46:27.349Z"
 }
