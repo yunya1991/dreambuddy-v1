@@ -80,6 +80,7 @@ export class ArtifactStore {
           chain_phase: chainPhase,
           url: `/feed/${category}/${artifactId}`,
           tags,
+          workflow_type: item.workflow_type === 'trading_v2' ? 'trading_v2' : (item.workflow_type === 'legacy_chain' ? 'legacy_chain' : undefined),
           excerpt: item.excerpt ? cleanExcerpt(String(item.excerpt)) : undefined
         });
       }
@@ -89,4 +90,5 @@ export class ArtifactStore {
     return index;
   }
 }
+
 
