@@ -1,6 +1,6 @@
 # AGENT协作系统 v1 设计
 
-> 仓库：`/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1`  
+> 仓库：`dreambuddy-v1`  
 > 版本：v1 草案  
 > 日期：2026-05-17  
 > 状态：draft  
@@ -14,6 +14,11 @@
 - 执行任务实现与交付的 `developer agent`
 - 负责验收与裁决的 `validator agent`
 - 负责确认顶层目标与治理约束、但不承担代码级验收的用户
+
+补充说明：
+
+- 协作工程实践中，建议将“账本协议维护”与“合并/冲突治理”拆分为两个独立职责，以避免互相干扰
+- 拆分短规范见：`AGENT协作工具/docs/agent-ledger-protocol-vs-governance-short-spec.md`
 
 一句话定义如下：
 

@@ -1,5 +1,13 @@
 # Dual-Agent Collaboration Foundation Implementation Plan
 
+> 注意：本文件为历史计划文档。当前协作主干以 `AGENT协作工具/docs/` 为准；默认工作区以 `7-ARTIFACT-HUB-V2/**` 为准；分支策略以 `agent/*` 独立 PR 为准。
+
+主入口：
+
+- `AGENT协作工具/docs/README.md`
+- `AGENT协作工具/docs/agent-efficient-collaboration-mode.md`
+- `AGENT协作工具/docs/agent-ledger-protocol-vs-governance-short-spec.md`
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 为 `7-ARTIFACT-HUB-V2` 建立可落地的双代理协作底座，产出可直接复用的 checklist、任务卡模板、最小协作契约包、首批任务板与里程碑分支。
@@ -44,7 +52,7 @@ This protocol is mandatory for both SOLO and Claude Code whenever they touch sha
 - `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/docs/superpowers/plans/2026-05-16-m1-dual-agent-foundation-task-board.md`
 
 **Modify**
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/docs/superpowers/specs/2026-05-16-dual-agent-collaboration-foundation-design.md`
+- `docs/superpowers/specs/2026-05-16-dual-agent-collaboration-foundation-design.md`
 
 ---
 

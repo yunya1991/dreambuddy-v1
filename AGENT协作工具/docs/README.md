@@ -13,6 +13,7 @@
 - `agent-collaboration-system-v1-governance-agent-implementation-plan.md`：治理 AGENT 与强治理状态机字段扩展实施计划
 - [agent-collaboration-system-v1-governance-cycle-implementation-plan.md](agent-collaboration-system-v1-governance-cycle-implementation-plan.md)：治理账本最小闭环控制器实施计划
 - `self-hosted-runner.md`：Self-hosted runner 自动化（PR9）
+- `agent-ledger-protocol-vs-governance-short-spec.md`：账本协议AGENT 与 治理AGENT 职责拆分短规范
 
 ## 当前协作约定（7-ARTIFACT-HUB-V2）
 
