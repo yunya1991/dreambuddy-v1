@@ -38,6 +38,7 @@ export interface ArtifactIndexItem {
   chain_phase: string;
   url: string;
   tags: string;
+  workflow_id?: string;
   workflow_type?: WorkflowType;
   excerpt?: string;
 }

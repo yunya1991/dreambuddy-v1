@@ -126,7 +126,7 @@ const server = createServer(async (req, res) => {
         category: a.id.split("/")[0] ?? "",
         type: a.type,
         chain_phase: a.chain_phase,
-        workflow_id: "",
+        workflow_id: a.workflow_id || "",
         workflow_type: normalizeWorkflowType(a.workflow_type),
         trace_id: "",
         status: a.status,
