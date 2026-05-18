@@ -1,17 +1,7 @@
 {
   "version": 1,
   "generated_at": "2026-05-18T23:15:00.000Z",
-  "open_tasks": [
-    "task-ahv2-impl-20260518-root-0",
-    "task-ahv2-impl-20260518-chain-dual-3",
-    "task-ahv2-impl-20260518-chain-wf-field-3a",
-    "task-ahv2-impl-20260518-market-ui-4",
-    "task-ahv2-impl-20260518-board-ui-5",
-    "task-ahv2-impl-20260518-phase2-obj-6",
-    "task-ahv2-impl-20260518-dist-obj-6a",
-    "task-ahv2-impl-20260518-perf-obj-6b",
-    "task-ahv2-impl-20260518-market-intel-6c"
-  ],
+  "open_tasks": [],
   "tasks": [
     {
       "goal_id": "goal-pr9-central-hub",
@@ -1665,7 +1655,7 @@
       }
     }
   ],
-  "last_updated": "2026-05-18T13:34:29.378Z",
-  "ledger_agent_sync": "2026-05-18T12:46:27.349Z",
+  "last_updated": "2026-05-18T16:03:47.477Z",
+  "ledger_agent_sync": "2026-05-18T16:03:47.477Z",
   "summary": "ledgered:39 | open:0"
 }
