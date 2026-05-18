@@ -2,7 +2,6 @@
   "version": 1,
   "generated_at": "2026-05-18T11:53:42.703Z",
   "open_tasks": [
-    "task-pr9-ahv2-board-console-spec-1",
     "task-pr9-central-hub-v2-0"
   ],
   "tasks": [
@@ -476,7 +475,7 @@
       "source_type": "derived",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "ready",
+      "status": "ledgered",
       "depends_on": [
         "task-pr9-ahv2-board-proposal-1"
       ],
@@ -494,12 +493,12 @@
       "branch": "",
       "workspace_path": "7-ARTIFACT-HUB-V2",
       "claim_pointer": "",
-      "delivery_pointer": "",
+      "delivery_pointer": "a04e6b31f9431071666d865cebdff17290bf812d",
       "validation_pointer": "",
-      "score": null,
-      "reward": null,
+      "score": 98,
+      "reward": 117.6,
       "final_credit_agent": "",
-      "archived_at": "",
+      "archived_at": "2026-05-18T13:34:29.373Z",
       "knowledge_synced_at": "",
       "next_required_action": "developer: update BOARD_CONSOLE_DESIGN.md Phase 3 section with implemented API routes",
       "governance_closure": {
@@ -514,6 +513,6 @@
       }
     }
   ],
-  "last_updated": "2026-05-18T13:28:21.219Z",
+  "last_updated": "2026-05-18T13:34:29.378Z",
   "ledger_agent_sync": "2026-05-18T12:46:27.349Z"
 }
