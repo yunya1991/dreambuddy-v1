@@ -7,6 +7,7 @@ export interface WorkOrder {
   created_at: string;
   intent: unknown;
   routing_plan: unknown;
+  ledger_task_id?: string;
 }
 
 export interface WorkResult {
@@ -66,4 +67,3 @@ export class WorkOrderManager {
     return () => clearInterval(timer);
   }
 }
-
