@@ -38,6 +38,7 @@ export interface ArtifactIndexItem {
   chain_phase: string;
   url: string;
   tags: string;
+  workflow_type?: WorkflowType;
   excerpt?: string;
 }
 
@@ -305,3 +306,4 @@ export function failClosedCheck(params: {
       : undefined,
   };
 }
+
