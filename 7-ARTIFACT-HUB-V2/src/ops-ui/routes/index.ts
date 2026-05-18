@@ -5,6 +5,8 @@ import { renderOpsHtml } from "../html.js";
 import { getQueueSnapshot } from "../ops-api.js";
 import { listStrategies, readStrategy } from "../strategy-library.js";
 import { renderUiMapHtml } from "../ui-map.js";
+import { toHealthViewModel } from "../adapters/index.js";
+import type { HealthContractV1 } from "../adapters/index.js";
 
 function sendHtml(res: Response, statusCode: number, html: string) {
   res.setHeader("content-type", "text/html; charset=utf-8");
@@ -60,6 +62,20 @@ async function proxyJson(req: Request, res: Response, targetUrl: string) {
       message: e instanceof Error ? e.message : String(e),
     });
   }
+}
+
+function tryParseHealthContract(data: unknown): HealthContractV1 | null {
+  if (
+    data !== null &&
+    typeof data === "object" &&
+    "service" in data &&
+    "status" in data &&
+    "timestamp" in data &&
+    "dependencies" in data
+  ) {
+    return data as HealthContractV1;
+  }
+  return null;
 }
 
 export function buildOpsRouter(): express.Router {
@@ -127,10 +143,15 @@ export function buildOpsRouter(): express.Router {
       safeFetchJson(new URL("/api/monitor/stats", gatewayBaseUrl).toString()),
     ]);
     const queues = getQueueSnapshot();
+
+    const hubContract = hub.ok ? tryParseHealthContract(hub.data) : null;
+    const hubHealthView = hubContract ? toHealthViewModel(hubContract) : null;
+
     return res.status(200).json({
       ok: hub.ok && gateway.ok,
       generated_at: new Date().toISOString(),
       hub: { base_url: hubBaseUrl, result: hub },
+      hub_health: hubHealthView,
       gateway: { base_url: gatewayBaseUrl, result: gateway },
       queues,
     });
