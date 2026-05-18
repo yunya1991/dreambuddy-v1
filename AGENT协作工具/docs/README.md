@@ -4,7 +4,7 @@
 
 ## 核心文档
 
-- `dual-agent-collaboration-foundation-design.md`：双代理协作底座设计
+- `dual-agent-collaboration-foundation-design.md`：双代理协作底座设计（历史/兼容：多 AGENT 协作的子集）
 - `agent-standard-dev-lifecycle-design.md`：全局 AGENT 标准开发生命周期设计
 - `agent-standard-dev-lifecycle-implementation-plan.md`：标准开发生命周期实施计划
 - `agent-efficient-collaboration-mode.md`：高效协作模式与默认执行策略
@@ -12,7 +12,7 @@
 - `agent-collaboration-system-v1-implementation-plan.md`：AGENT协作系统 v1 实施计划
 - `agent-collaboration-system-v1-governance-agent-implementation-plan.md`：治理 AGENT 与强治理状态机字段扩展实施计划
 - [agent-collaboration-system-v1-governance-cycle-implementation-plan.md](agent-collaboration-system-v1-governance-cycle-implementation-plan.md)：治理账本最小闭环控制器实施计划
-- `self-hosted-runner.md`：Self-hosted runner 自动化（PR9）
+- `self-hosted-runner.md`：Self-hosted runner 自动化（试点 PR9，可复用）
 - `agent-ledger-protocol-vs-governance-short-spec.md`：账本协议AGENT 与 治理AGENT 职责拆分短规范
 
 ## 当前协作约定（7-ARTIFACT-HUB-V2）

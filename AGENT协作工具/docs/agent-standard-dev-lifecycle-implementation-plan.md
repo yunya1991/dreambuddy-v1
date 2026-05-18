@@ -81,8 +81,8 @@ Reference document:
 ### Task 1: Expand the collaboration entrypoints
 
 **Files:**
-- Modify: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/README.md`
-- Modify: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/docs/superpowers/templates/agent-task-card.md`
+- Modify: `AGENT协作工具/README.md`
+- Modify: `docs/superpowers/templates/agent-task-card.md`
 
 - [ ] **Step 1: Update the main collaboration README with the lifecycle stack**
 
@@ -181,8 +181,8 @@ Replace the existing template content in `docs/superpowers/templates/agent-task-
 Run:
 
 ```bash
-grep -n "agent-standard-dev-lifecycle\\|Phase 0\\|Phase 8" /Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/README.md
-grep -n "Lifecycle Evidence\\|Supervision passed" /Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/docs/superpowers/templates/agent-task-card.md
+grep -n "agent-standard-dev-lifecycle\\|Phase 0\\|Phase 8" AGENT协作工具/README.md
+grep -n "Lifecycle Evidence\\|Supervision passed" docs/superpowers/templates/agent-task-card.md
 ```
 
 Expected:
@@ -204,12 +204,12 @@ git commit -m "docs(collaboration): expand lifecycle entrypoints"
 ### Task 2: Add reusable PR and review templates
 
 **Files:**
-- Create: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-started.md`
-- Create: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-updated.md`
-- Create: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-blocked.md`
-- Create: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-done.md`
-- Create: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/design-review-comment.md`
-- Create: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/test-report-comment.md`
+- Create: `AGENT协作工具/templates/pr-comment-started.md`
+- Create: `AGENT协作工具/templates/pr-comment-updated.md`
+- Create: `AGENT协作工具/templates/pr-comment-blocked.md`
+- Create: `AGENT协作工具/templates/pr-comment-done.md`
+- Create: `AGENT协作工具/templates/design-review-comment.md`
+- Create: `AGENT协作工具/templates/test-report-comment.md`
 
 - [ ] **Step 1: Create the `STARTED` and `UPDATED` templates**
 

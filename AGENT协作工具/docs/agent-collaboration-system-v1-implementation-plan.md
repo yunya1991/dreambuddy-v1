@@ -94,11 +94,11 @@ The implementation should be delivered in six slices:
 ### Task 1: Create the ledger file structure
 
 **Files:**
-- Create: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/ledger/README.md`
-- Create: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/ledger/tasks/index.json`
-- Create: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/ledger/rewards/index.json`
-- Create: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/ledger/templates/task-record.json`
-- Create: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/ledger/templates/reward-record.json`
+- Create: `AGENT协作工具/ledger/README.md`
+- Create: `AGENT协作工具/ledger/tasks/index.json`
+- Create: `AGENT协作工具/ledger/rewards/index.json`
+- Create: `AGENT协作工具/ledger/templates/task-record.json`
+- Create: `AGENT协作工具/ledger/templates/reward-record.json`
 
 - [ ] **Step 1: Add a failing JSON shape test for the task ledger skeleton**
 
@@ -241,13 +241,13 @@ git commit -m "feat(collaboration): add ledger seed files"
 ### Task 2: Add exploration, validation, and ledger templates
 
 **Files:**
-- Create: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-exploration-proposal.md`
-- Create: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-validation-result.md`
-- Create: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-ledger-entry.md`
-- Modify: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-started.md`
-- Modify: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-done.md`
-- Modify: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/test-report-comment.md`
-- Modify: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/docs/superpowers/templates/agent-task-card.md`
+- Create: `AGENT协作工具/templates/pr-comment-exploration-proposal.md`
+- Create: `AGENT协作工具/templates/pr-comment-validation-result.md`
+- Create: `AGENT协作工具/templates/pr-comment-ledger-entry.md`
+- Modify: `AGENT协作工具/templates/pr-comment-started.md`
+- Modify: `AGENT协作工具/templates/pr-comment-done.md`
+- Modify: `AGENT协作工具/templates/test-report-comment.md`
+- Modify: `docs/superpowers/templates/agent-task-card.md`
 
 - [ ] **Step 1: Write a failing template presence test**
 

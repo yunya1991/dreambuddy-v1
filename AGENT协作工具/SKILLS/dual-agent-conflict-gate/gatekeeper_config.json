@@ -9,7 +9,7 @@
       "dreambuddy/config/",
       "docs/superpowers/contracts/",
       "docs/superpowers/specs/",
-      "docs/superpowers/checklists/"
+      "docs/superpowers/templates/"
     ],
     "claude": [
       "7-ARTIFACT-HUB-V2/src/ops-ui/",
@@ -39,6 +39,8 @@
 
   "collaboration_policy": {
     "_comment": "默认并行 + 白名单接管 + 关键节点强同步。新增字段供模板、门禁与后续 checker 共用，保留旧字段兼容存量脚本。",
+    "default_workspace": "7-ARTIFACT-HUB-V2",
+    "default_workspace_glob": "7-ARTIFACT-HUB-V2/**",
     "default_execution_mode": "PHASE_BROADCAST",
     "default_parallel_within_owner": true,
     "status_broadcast_strategy": "PHASE_SUMMARY",
