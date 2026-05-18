@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-18T23:00:00.000Z",
+  "generated_at": "2026-05-18T23:15:00.000Z",
   "open_tasks": [
     "task-ahv2-impl-20260518-root-0",
     "task-ahv2-impl-20260518-chain-dual-3",
@@ -1380,7 +1380,7 @@
       "source_type": "assigned",
       "task_type": "serial",
       "mode": "STANDARD",
-      "status": "ready",
+      "status": "ledgered",
       "depends_on": [
         "task-ahv2-impl-20260518-root-0"
       ],
@@ -1404,13 +1404,19 @@
       "claim_pointer": "",
       "delivery_pointer": "",
       "validation_pointer": "",
-      "score": 0,
+      "score": 91,
       "reward": 1,
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
       "next_required_action": "developer: claim task, post STARTED, implement",
-      "governance_closure": {}
+      "governance_closure": {},
+      "owner": "claude-dev-agent",
+      "delivered_at": "2026-05-18T23:15:00.000Z",
+      "accepted_at": "2026-05-18T23:15:00.000Z",
+      "ledgered_at": "2026-05-18T23:15:00.000Z",
+      "pr_number": 62,
+      "delivery_proof": "Phase 6 coordinator: Distribution+Performance+MarketIntel all delivered in PR #62"
     },
     {
       "goal_id": "ahv2-impl-20260518",
@@ -1420,7 +1426,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "ready",
+      "status": "ledgered",
       "depends_on": [
         "task-ahv2-impl-20260518-phase2-obj-6"
       ],
@@ -1441,13 +1447,19 @@
       "claim_pointer": "",
       "delivery_pointer": "",
       "validation_pointer": "",
-      "score": 0,
+      "score": 91,
       "reward": 1,
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
       "next_required_action": "developer: claim task, post STARTED, implement",
-      "governance_closure": {}
+      "governance_closure": {},
+      "owner": "claude-dev-agent",
+      "delivered_at": "2026-05-18T23:15:00.000Z",
+      "accepted_at": "2026-05-18T23:15:00.000Z",
+      "ledgered_at": "2026-05-18T23:15:00.000Z",
+      "pr_number": 62,
+      "delivery_proof": "PR #62: Distribution type + distributions SQLite table + /chain/distributions GET endpoint"
     },
     {
       "goal_id": "ahv2-impl-20260518",
@@ -1457,7 +1469,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "ready",
+      "status": "ledgered",
       "depends_on": [
         "task-ahv2-impl-20260518-phase2-obj-6"
       ],
@@ -1478,13 +1490,19 @@
       "claim_pointer": "",
       "delivery_pointer": "",
       "validation_pointer": "",
-      "score": 0,
+      "score": 91,
       "reward": 1,
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
       "next_required_action": "developer: claim task, post STARTED, implement",
-      "governance_closure": {}
+      "governance_closure": {},
+      "owner": "claude-dev-agent",
+      "delivered_at": "2026-05-18T23:15:00.000Z",
+      "accepted_at": "2026-05-18T23:15:00.000Z",
+      "ledgered_at": "2026-05-18T23:15:00.000Z",
+      "pr_number": 62,
+      "delivery_proof": "PR #62: Performance type + performance_records SQLite table + /chain/performance GET endpoint"
     },
     {
       "goal_id": "ahv2-impl-20260518",
@@ -1494,7 +1512,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "ready",
+      "status": "ledgered",
       "depends_on": [
         "task-ahv2-impl-20260518-phase2-obj-6"
       ],
@@ -1515,13 +1533,19 @@
       "claim_pointer": "",
       "delivery_pointer": "",
       "validation_pointer": "",
-      "score": 0,
+      "score": 91,
       "reward": 1,
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
       "next_required_action": "developer: claim task, post STARTED, implement",
-      "governance_closure": {}
+      "governance_closure": {},
+      "owner": "claude-dev-agent",
+      "delivered_at": "2026-05-18T23:15:00.000Z",
+      "accepted_at": "2026-05-18T23:15:00.000Z",
+      "ledgered_at": "2026-05-18T23:15:00.000Z",
+      "pr_number": 62,
+      "delivery_proof": "PR #62: MarketIntel type + market_intel SQLite table + /chain/market-intel GET+POST endpoints"
     },
     {
       "goal_id": "ahv2-impl-20260518",
@@ -1643,5 +1667,5 @@
   ],
   "last_updated": "2026-05-18T13:34:29.378Z",
   "ledger_agent_sync": "2026-05-18T12:46:27.349Z",
-  "summary": "ledgered:35 | open:4"
+  "summary": "ledgered:39 | open:0"
 }
