@@ -1,12 +1,11 @@
 {
   "version": 1,
-  "generated_at": "2026-05-18T21:10:00.000Z",
+  "generated_at": "2026-05-18T21:15:00.000Z",
   "open_tasks": [
     "task-ahv2-impl-20260518-root-0",
     "task-ahv2-impl-20260518-chain-dual-3",
     "task-ahv2-impl-20260518-chain-wf-field-3a",
     "task-ahv2-impl-20260518-market-ui-4",
-    "task-ahv2-impl-20260518-market-audit-4c",
     "task-ahv2-impl-20260518-board-ui-5",
     "task-ahv2-impl-20260518-board-list-5a",
     "task-ahv2-impl-20260518-board-approval-5b",
@@ -1167,7 +1166,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "accepted",
+      "status": "ledgered",
       "depends_on": [
         "task-ahv2-impl-20260518-market-ui-4"
       ],
@@ -1187,11 +1186,16 @@
       "validation_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/57#issuecomment-4479329344",
       "score": 96,
       "reward": 1.2,
-      "final_credit_agent": "",
-      "archived_at": "",
+      "final_credit_agent": "Claude Code (Developer AGENT)",
+      "archived_at": "2026-05-18T21:15:00.000Z",
       "knowledge_synced_at": "",
-      "next_required_action": "governance: merge PR #57",
-      "governance_closure": {}
+      "next_required_action": "ledgered — no further action required",
+      "governance_closure": {
+        "merge_commit": "a8ee5a056965c69ad16f2ad8caf522b4364b44c9",
+        "merged_at": "2026-05-18T21:15:00.000Z",
+        "merged_by": "Governance AGENT",
+        "branch_deleted": true
+      }
     },
     {
       "goal_id": "ahv2-impl-20260518",
