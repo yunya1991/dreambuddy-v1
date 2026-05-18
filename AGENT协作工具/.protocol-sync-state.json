@@ -1,7 +1,14 @@
 {
-  "last_synced_sha": "5a9ecc68d395d76eb59f2f0f3427adf110b40303",
+  "last_synced_sha": "081995ad85160b80cb2cf6bcf9ebdcc77808c472",
   "last_synced_date": "2026-05-18",
   "synced_docs": [
+    "AGENT协作工具/docs/00-AGENT-CONSTITUTION.md",
+    "AGENT协作工具/docs/01-COLLABORATION-PROTOCOL.md",
+    "AGENT协作工具/docs/02-ARCHITECTURE.md",
+    "AGENT协作工具/docs/03-WORKFLOWS-AND-NORMS.md",
+    "AGENT协作工具/docs/04-ENGINEERING-INDEX.md",
+    "AGENT协作工具/docs/05-FAQ.md",
+    "AGENT协作工具/docs/06-SKILLS-INVENTORY.md",
     "AGENT协作工具/docs/README.md",
     "AGENT协作工具/docs/agent-collaboration-system-v1-design.md",
     "AGENT协作工具/docs/agent-collaboration-system-v1-governance-agent-implementation-plan.md",
