@@ -129,3 +129,179 @@ export interface AuditRecord {
   review_notes?: string;
   created_at: ISODateString;
 }
+
+// =============================================================================
+// GOVERNANCE_SPEC Phase 1 — task-pr9-ahv2-governance-spec-impl-1
+// Based on GOVERNANCE_SPEC.md v1.1 Section 4-8
+// =============================================================================
+
+/**
+ * Decision Level Tags (GOVERNANCE_SPEC.md Section 4)
+ * L1: Department-internal low-risk items
+ * L2: Cross-department coordination or co-signature required
+ * L3: Must enter human approval gate
+ */
+export type DecisionLevel = "L1" | "L2" | "L3";
+
+/**
+ * L1 Decision Context (GOVERNANCE_SPEC.md Section 4.1)
+ * Typical scenarios: content label corrections, non-core routing adjustments
+ */
+export interface L1DecisionContext {
+  decision_level: "L1";
+  department: string;
+  category: "content_correction" | "routing_adjustment" | "summary_archive" | "retry" | "other";
+  description: string;
+}
+
+/**
+ * L2 Decision Context (GOVERNANCE_SPEC.md Section 4.2)
+ * Typical scenarios: cross-department flow changes, priority adjustments, visibility changes
+ */
+export interface L2DecisionContext {
+  decision_level: "L2";
+  departments: string[];
+  category: "flow_rearrangement" | "priority_adjustment" | "visibility_change" | "distribution_switch" | "other";
+  description: string;
+  co_signatures?: string[]; // Agent IDs who co-signed
+}
+
+/**
+ * L3 Decision Context (GOVERNANCE_SPEC.md Section 4.3)
+ * Typical scenarios: core strategy changes, high-risk fund actions, major organization changes
+ */
+export interface L3DecisionContext {
+  decision_level: "L3";
+  departments: string[];
+  category: "strategy_change" | "fund_action" | "external_distribution" | "restructuring" | "permission_change" | "other";
+  description: string;
+  approval_required: true;
+  approval_status?: ApprovalStatus;
+  evidence_refs: string[];
+  rollback_plan: string;
+}
+
+/**
+ * Six-Person Governing Board (GOVERNANCE_SPEC.md Section 5)
+ * Responsible for: oversight, coordination, issue handling, major proposals
+ */
+export enum MinisterAgent {
+  RESEARCH = "research_minister_agent",
+  TRADING = "trading_minister_agent",
+  GOVERNANCE = "governance_minister_agent",
+  OPERATIONS = "operations_minister_agent",
+  HR = "hr_minister_agent",
+  MARKETING = "marketing_minister_agent",
+}
+
+export interface GoverningBoard {
+  members: MinisterAgent[];
+  meeting_notes?: string;
+  last_updated: ISODateString;
+}
+
+/**
+ * Approval Status (GOVERNANCE_SPEC.md Section 6)
+ */
+export type ApprovalStatus = "pending" | "approved" | "rejected" | "needs_more_evidence";
+
+/**
+ * Approval Ticket Minimum Fields (GOVERNANCE_SPEC.md Section 6.2)
+ */
+export interface ApprovalTicket {
+  proposal_id: string;
+  source_department: string;
+  initiator_agent_id: string;
+  decision_level: DecisionLevel;
+  problem_summary: string;
+  evidence_refs: string[];
+  recommended_action: string;
+  expected_impact: string;
+  rollback_plan: string;
+  approval_status: ApprovalStatus;
+  approved_at?: ISODateString;
+  rejected_reason?: string;
+}
+
+/**
+ * Fail-Closed Check Result (GOVERNANCE_SPEC.md Section 8)
+ * Reason codes for failed checks
+ */
+export type FailClosedReasonCode =
+  | "missing_trace_id"
+  | "missing_workflow_id"
+  | "missing_policy_version"
+  | "approval_required"
+  | "evidence_incomplete"
+  | "rollback_plan_required"
+  | "distribution_scope_denied";
+
+export interface FailClosedResult {
+  passed: boolean;
+  reason_codes: FailClosedReasonCode[];
+  blocked_actions?: string[];
+}
+
+/**
+ * Fail-Closed Check Function (GOVERNANCE_SPEC.md Section 8.3)
+ * Checks critical conditions before allowing high-risk actions
+ */
+export function failClosedCheck(params: {
+  trace_id?: string;
+  workflow_id?: string;
+  policy_version?: string;
+  decision_level?: DecisionLevel;
+  approval_status?: ApprovalStatus;
+  evidence_refs?: string[];
+  rollback_plan?: string;
+  is_distribution?: boolean;
+}): FailClosedResult {
+  const reason_codes: FailClosedReasonCode[] = [];
+
+  // Required field checks
+  if (!params.trace_id) {
+    reason_codes.push("missing_trace_id");
+  }
+  if (!params.workflow_id) {
+    reason_codes.push("missing_workflow_id");
+  }
+  if (!params.policy_version) {
+    reason_codes.push("missing_policy_version");
+  }
+
+  // L3 decision requires approval
+  if (params.decision_level === "L3") {
+    if (!params.approval_status || params.approval_status !== "approved") {
+      reason_codes.push("approval_required");
+    }
+  }
+
+  // High-risk actions require evidence
+  if (reason_codes.length === 0) {
+    if (!params.evidence_refs || params.evidence_refs.length === 0) {
+      reason_codes.push("evidence_incomplete");
+    }
+  }
+
+  // Major actions require rollback plan
+  if (params.decision_level === "L3" || params.is_distribution) {
+    if (!params.rollback_plan) {
+      reason_codes.push("rollback_plan_required");
+    }
+  }
+
+  // External distribution requires approval
+  if (params.is_distribution) {
+    if (params.decision_level === "L3" && params.approval_status !== "approved") {
+      reason_codes.push("distribution_scope_denied");
+    }
+  }
+
+  return {
+    passed: reason_codes.length === 0,
+    reason_codes,
+    blocked_actions: reason_codes.length > 0
+      ? ["Cannot proceed: fail-closed triggered"]
+      : undefined,
+  };
+}
