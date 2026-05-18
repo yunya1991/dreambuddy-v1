@@ -11,9 +11,14 @@ on:
         description: "Task ID (ledger pointer)"
         required: true
         type: string
+      workspace_path:
+        description: "Workspace path (default 7-ARTIFACT-HUB-V2)"
+        required: false
+        default: "7-ARTIFACT-HUB-V2"
+        type: string
 
 permissions:
-  contents: read
+  contents: write
   issues: write
   pull-requests: write
 
@@ -27,6 +32,7 @@ jobs:
     env:
       PR_NUMBER: ${{ inputs.pr_number }}
       TASK_ID: ${{ inputs.task_id }}
+      WORKSPACE_PATH: ${{ inputs.workspace_path }}
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
@@ -45,11 +51,12 @@ jobs:
           gh pr view ${PR_NUMBER} --json comments --jq '.comments[].body' > pr_comments.txt || true
           echo "comment_file=pr_comments.txt" >> "$GITHUB_OUTPUT"
 
-      - name: Protocol completeness check
+      - name: Protocol completeness and acceptance check
         run: |
           started_ok=0
           test_report_ok=0
           validation_ok=0
+          accepted_ok=0
 
           if grep -q '^\[协作开工声明 / STARTED\]' "${{ steps.comments.outputs.comment_file }}"; then
             started_ok=1
@@ -60,18 +67,23 @@ jobs:
           if grep -q '^\[验证结论 / VALIDATION_RESULT\]' "${{ steps.comments.outputs.comment_file }}"; then
             validation_ok=1
           fi
+          if grep -q '^Decision: ACCEPTED' "${{ steps.comments.outputs.comment_file }}" && grep -q '^Governance Handoff: ledgered' "${{ steps.comments.outputs.comment_file }}"; then
+            accepted_ok=1
+          fi
 
-          if [ "$started_ok" -eq 1 ] && [ "$test_report_ok" -eq 1 ] && [ "$validation_ok" -eq 1 ]; then
+          if [ "$started_ok" -eq 1 ] && [ "$test_report_ok" -eq 1 ] && [ "$validation_ok" -eq 1 ] && [ "$accepted_ok" -eq 1 ]; then
             exit 0
           fi
 
-          next_action="developer: post TEST_REPORT; validator: post VALIDATION_RESULT with Governance Handoff: ledgered"
+          next_action="validator: post VALIDATION_RESULT with Decision: ACCEPTED + Governance Handoff: ledgered"
           if [ "$started_ok" -eq 0 ]; then
             next_action="developer: post STARTED"
           elif [ "$test_report_ok" -eq 0 ]; then
             next_action="developer: run build/test and post TEST_REPORT"
           elif [ "$validation_ok" -eq 0 ]; then
             next_action="validator: re-run build/test and post VALIDATION_RESULT"
+          elif [ "$accepted_ok" -eq 0 ]; then
+            next_action="validator: ensure Decision: ACCEPTED and Governance Handoff: ledgered are present in VALIDATION_RESULT"
           fi
 
           {
@@ -87,7 +99,7 @@ jobs:
               'Current Sync State: pending' \
               "Next Required Action: ${next_action}" \
               '变更说明:' \
-              '- protocol anchor missing' \
+              '- protocol/acceptance evidence missing' \
               '' \
               '当前占用范围:' \
               '- (see STARTED comment)' \
@@ -95,3 +107,113 @@ jobs:
               '状态: UPDATED'
           } > pr_updated.md
           gh pr comment ${PR_NUMBER} --body-file pr_updated.md
+
+      - name: Resolve PR metadata
+        id: pr
+        run: |
+          echo "head_ref=$(gh pr view ${PR_NUMBER} --json headRefName --jq .headRefName)" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$(gh pr view ${PR_NUMBER} --json headRefOid --jq .headRefOid)" >> "$GITHUB_OUTPUT"
+          echo "merge_state=$(gh pr view ${PR_NUMBER} --json mergeStateStatus --jq .mergeStateStatus)" >> "$GITHUB_OUTPUT"
+
+      - name: Auto rescue PR head if conflicting or dirty
+        if: ${{ steps.pr.outputs.merge_state == 'CONFLICTING' || steps.pr.outputs.merge_state == 'DIRTY' }}
+        run: |
+          head_ref="${{ steps.pr.outputs.head_ref }}"
+          git fetch origin main "${head_ref}"
+          git checkout -B "governance/rescue/pr${PR_NUMBER}" "origin/main"
+          git checkout "origin/${head_ref}" -- "${WORKSPACE_PATH}"
+          git add -A "${WORKSPACE_PATH}"
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "chore(governance): rescue PR${PR_NUMBER} ${WORKSPACE_PATH}"
+          git push origin HEAD:"${head_ref}" --force-with-lease
+
+      - name: Checkout updated PR head
+        run: |
+          head_ref="${{ steps.pr.outputs.head_ref }}"
+          git fetch origin "${head_ref}"
+          git checkout -B "pr${PR_NUMBER}" "origin/${head_ref}"
+
+      - name: Run build/test and stress in workspace
+        id: verify
+        run: |
+          set +e
+          cd "${WORKSPACE_PATH}"
+          npm ci
+          npm_ci_exit=$?
+          npm run build
+          build_exit=$?
+          npm test
+          test_exit=$?
+          stress_exit=0
+          if [ -d "scripts" ]; then
+            while IFS= read -r f; do
+              node "$f"
+              rc=$?
+              if [ "$rc" -ne 0 ]; then
+                stress_exit=$rc
+              fi
+            done < <(find scripts -maxdepth 1 -type f -name 'stress-*.mjs' -print | sort)
+          fi
+          set -e
+
+          overall=0
+          if [ "$npm_ci_exit" -ne 0 ] || [ "$build_exit" -ne 0 ] || [ "$test_exit" -ne 0 ] || [ "$stress_exit" -ne 0 ]; then
+            overall=1
+          fi
+
+          echo "npm_ci_exit=$npm_ci_exit" >> "$GITHUB_OUTPUT"
+          echo "build_exit=$build_exit" >> "$GITHUB_OUTPUT"
+          echo "test_exit=$test_exit" >> "$GITHUB_OUTPUT"
+          echo "stress_exit=$stress_exit" >> "$GITHUB_OUTPUT"
+          echo "overall=$overall" >> "$GITHUB_OUTPUT"
+
+      - name: Block PR on governance verification failure
+        if: ${{ steps.verify.outputs.overall != '0' }}
+        run: |
+          run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          {
+            printf '%s\n' \
+              '[协作阻塞通知 / BLOCKED]' \
+              '' \
+              'Agent: collab-governance-agent' \
+              "任务: governance verification for PR${PR_NUMBER}" \
+              'Execution Mode: STANDARD' \
+              'Direct Takeover: yes' \
+              "Workspace Path: ${WORKSPACE_PATH}" \
+              '阻塞原因:' \
+              '- build/test/stress failed' \
+              '' \
+              'Evidence:' \
+              "- actions_run=${run_url}" \
+              "- npm_ci_exit=${{ steps.verify.outputs.npm_ci_exit }}" \
+              "- build_exit=${{ steps.verify.outputs.build_exit }}" \
+              "- test_exit=${{ steps.verify.outputs.test_exit }}" \
+              "- stress_exit=${{ steps.verify.outputs.stress_exit }}" \
+              '' \
+              'Next Required Action: developer: fix failures and re-run validator + governance'
+          } > pr_blocked.md
+          gh pr comment ${PR_NUMBER} --body-file pr_blocked.md
+          exit 1
+
+      - name: Merge PR and delete branch
+        run: |
+          gh pr merge ${PR_NUMBER} --squash --delete-branch
+
+      - name: Post DONE comment
+        run: |
+          run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          {
+            printf '%s\n' \
+              '[协作完成回报 / DONE]' \
+              '' \
+              'Agent: collab-governance-agent' \
+              "任务: merged PR${PR_NUMBER}" \
+              "Workspace Path: ${WORKSPACE_PATH}" \
+              "Ledger Update: ${TASK_ID}" \
+              'Result: merged+branch-deleted' \
+              'Evidence:' \
+              "- actions_run=${run_url}"
+          } > pr_done.md
+          gh pr comment ${PR_NUMBER} --body-file pr_done.md

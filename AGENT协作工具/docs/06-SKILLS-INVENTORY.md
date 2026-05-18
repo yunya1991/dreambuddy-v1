@@ -45,6 +45,12 @@
 - Purpose: supervision of protocol evidence and branch compliance; used by lifecycle guard.
 - When to use: when PR is blocked by lifecycle guard, to understand missing evidence.
 
+### 1.7 collab-ledger-planner
+
+- Spec: `AGENT协作工具/SKILLS/collab-ledger-planner/SKILL.md`
+- Purpose: turn project planning markdown into ledger task list draft (tasks/index.json compatible).
+- When to use: when ledger protocol agent needs to convert a plan into actionable task tree quickly.
+
 ## 2. Operational Scripts (Non-SKILL but Critical)
 
 - Lifecycle payload builder: `AGENT协作工具/github-actions/build_agent_lifecycle_payload.py`
@@ -52,3 +58,4 @@
 - Collaboration payload builder/checker: `AGENT协作工具/github-actions/build_agent_collaboration_payload.py`, `check_agent_collaboration.py`
 - Ledger cycle runner: `AGENT协作工具/github-actions/run_governance_ledger_cycle.py`
 - Ledger updater: `AGENT协作工具/github-actions/update_agent_ledger.py`
+- Workspace↔ledger bridge: `AGENT协作工具/github-actions/ledger_workspace_bridge.py`

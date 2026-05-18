@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import { execFileSync } from "node:child_process";
 import path from "node:path";
 import crypto from "node:crypto";
 import { loadConfig, resolveRepoRoot } from "./config.js";
@@ -61,7 +62,11 @@ const server = createServer(async (req, res) => {
   if (url.pathname === "/route/execute") {
     if (req.method !== "POST") return methodNotAllowed(res);
 
-    const intent = await readJson<Intent>(req);
+    const body = await readJson<unknown>(req);
+    const envelope = body && typeof body === "object" ? (body as Record<string, unknown>) : null;
+    const intent = (envelope && envelope.intent ? envelope.intent : body) as Intent;
+    const ledgerTaskId =
+      envelope && typeof envelope.ledger_task_id === "string" ? envelope.ledger_task_id.trim() : undefined;
     const artifacts = store.getArtifactsIndex();
     const plan = router.decide(intent, artifacts);
     const taskId = crypto.randomUUID();
@@ -81,12 +86,34 @@ const server = createServer(async (req, res) => {
       task_id: taskId,
       created_at: new Date().toISOString(),
       intent,
-      routing_plan: plan
+      routing_plan: plan,
+      ledger_task_id: ledgerTaskId
     });
 
     events.publish(plan.trace_id, { type: "work_order.written", payload: { task_id: taskId }, ts: Date.now() });
 
     return sendJson(res, 200, { trace_id: plan.trace_id, task_id: taskId, task_file_path: taskFilePath });
+  }
+
+  if (url.pathname === "/ops/ledger/open-tasks" || url.pathname === "/api/ops/ledger/open-tasks") {
+    if (req.method !== "GET") return methodNotAllowed(res);
+    const limit = url.searchParams.get("limit")?.trim() || "200";
+    const workspacePath = url.searchParams.get("workspace_path")?.trim() || "7-ARTIFACT-HUB-V2";
+    const scriptPath = path.join(repoRoot, "AGENT协作工具", "github-actions", "ledger_workspace_bridge.py");
+
+    try {
+      const out = execFileSync("python3", ["-u", scriptPath, "--repo-root", repoRoot, "--workspace-path", workspacePath, "--limit", limit], {
+        encoding: "utf-8",
+        stdio: ["ignore", "pipe", "pipe"]
+      });
+      return sendJson(res, 200, JSON.parse(out) as unknown);
+    } catch (e) {
+      const err = e as any;
+      const message = e instanceof Error ? e.message : String(e);
+      const stdout = typeof err?.stdout === "string" ? err.stdout.slice(0, 2000) : "";
+      const stderr = typeof err?.stderr === "string" ? err.stderr.slice(0, 2000) : "";
+      return sendJson(res, 500, { ok: false, error: "ledger_workspace_bridge_failed", message, stdout, stderr });
+    }
   }
 
   if (url.pathname === "/events/stream") {
