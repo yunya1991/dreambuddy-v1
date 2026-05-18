@@ -1,0 +1,16 @@
+name: Collab Ledger Sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'AGENT协作工具/ledger/tasks/index.json'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: [self-hosted, macOS, workbuddy]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sync ledger
+        run: echo "Syncing ledger..."
