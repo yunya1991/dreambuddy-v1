@@ -307,3 +307,40 @@ export function failClosedCheck(params: {
   };
 }
 
+// ─── Phase 3 Governance Objects (OBJECT_MODEL.md §6) ───────────────────────
+
+export type BoardProposalStatus = 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'withdrawn';
+
+export interface BoardProposal {
+  proposal_id: string;
+  trace_id: string;
+  department: string;
+  decision_level: DecisionLevel;
+  title: string;
+  summary: string;
+  proposer_agent: MinisterAgent;
+  status: BoardProposalStatus;
+  created_at: ISODateString;
+  resolved_at?: ISODateString;
+}
+
+export interface ApprovalGate {
+  gate_id: string;
+  proposal_id: string;
+  required_approvers: MinisterAgent[];
+  received_approvals: MinisterAgent[];
+  status: ApprovalStatus;
+  decided_at?: ISODateString;
+}
+
+export interface ExecutionReview {
+  review_id: string;
+  trace_id: string;
+  execution_id: string;
+  reviewer_agent: MinisterAgent;
+  verdict: 'pass' | 'pass_with_notes' | 'fail' | 'escalate';
+  findings: string;
+  recommendations: string;
+  reviewed_at: ISODateString;
+}
+
