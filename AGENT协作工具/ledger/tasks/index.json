@@ -1,9 +1,8 @@
 {
   "version": 1,
-  "generated_at": "2026-05-18T16:00:00.000Z",
+  "generated_at": "2026-05-18T16:15:00.000Z",
   "open_tasks": [
     "task-ahv2-impl-20260518-root-0",
-    "task-ahv2-impl-20260518-ops-ui-svc-1",
     "task-ahv2-impl-20260518-ops-ui-skeleton-1a",
     "task-ahv2-impl-20260518-ops-ui-health-api-1b",
     "task-ahv2-impl-20260518-ops-ui-queue-api-1c",
@@ -595,7 +594,7 @@
       "source_type": "assigned",
       "task_type": "serial",
       "mode": "STANDARD",
-      "status": "delivered",
+      "status": "ledgered",
       "depends_on": [
         "task-ahv2-impl-20260518-root-0"
       ],
@@ -614,14 +613,19 @@
       "workspace_path": "7-ARTIFACT-HUB-V2",
       "claim_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/50#issuecomment-4478810937",
       "delivery_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/50#issuecomment-4478816517",
-      "validation_pointer": "",
-      "score": 0,
-      "reward": 1,
-      "final_credit_agent": "",
-      "archived_at": "",
+      "validation_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/50#issuecomment-4478825202",
+      "score": 97,
+      "reward": 1.2,
+      "final_credit_agent": "Claude Code (Developer AGENT)",
+      "archived_at": "2026-05-18T16:15:00.000Z",
       "knowledge_synced_at": "",
-      "next_required_action": "validator: review PR #50, post VALIDATION_RESULT, score",
-      "governance_closure": {}
+      "next_required_action": "ledgered — no further action required",
+      "governance_closure": {
+        "merge_commit": "4451137c6a013e637e6c99de0a00d6a96e6aa66f",
+        "merged_at": "2026-05-18T16:15:00.000Z",
+        "merged_by": "Governance AGENT",
+        "branch_deleted": true
+      }
     },
     {
       "goal_id": "ahv2-impl-20260518",
@@ -631,7 +635,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-ahv2-impl-20260518-ops-ui-svc-1"
       ],
@@ -654,7 +658,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
+      "next_required_action": "developer: claim task, post STARTED, implement",
       "governance_closure": {}
     },
     {
@@ -665,7 +669,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-ahv2-impl-20260518-ops-ui-skeleton-1a"
       ],
@@ -688,7 +692,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
+      "next_required_action": "developer: claim task, post STARTED, implement",
       "governance_closure": {}
     },
     {
@@ -699,7 +703,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-ahv2-impl-20260518-ops-ui-skeleton-1a"
       ],
@@ -722,7 +726,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
+      "next_required_action": "developer: claim task, post STARTED, implement",
       "governance_closure": {}
     },
     {
@@ -733,7 +737,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-ahv2-impl-20260518-ops-ui-skeleton-1a"
       ],
@@ -758,7 +762,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
+      "next_required_action": "developer: claim task, post STARTED, implement",
       "governance_closure": {}
     },
     {
