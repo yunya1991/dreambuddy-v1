@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-dual-agent-conflict-gate — 双代理协作冲突前置门禁
+dual-agent-conflict-gate — AGENT 协作冲突前置门禁（兼容双 AGENT 场景）
 Version: 1.0
 """
 
@@ -95,8 +95,24 @@ def path_in_domain(file_path: str, domain_list: list[str]) -> bool:
     return False
 
 
-def opponent(agent_id: str) -> str:
-    return "solo" if agent_id == "claude" else "claude"
+def shared_boundaries(cfg: dict) -> list[str]:
+    boundaries = cfg.get("shared_boundaries")
+    if boundaries:
+        return boundaries
+    return cfg.get("shared_requires_approval", [])
+
+
+def resolve_owner(file_path: str, cfg: dict) -> str | None:
+    matched_owner = None
+    matched_length = -1
+
+    for owner, domains in cfg.get("ownership", {}).items():
+        for domain in domains:
+            if file_path.startswith(domain) and len(domain) > matched_length:
+                matched_owner = owner
+                matched_length = len(domain)
+
+    return matched_owner
 
 
 # ── core checks ──────────────────────────────────────────────────────────────
@@ -104,7 +120,12 @@ def opponent(agent_id: str) -> str:
 def check_branch(agent_id: str, branch: str, cfg: dict) -> list[dict]:
     issues = []
     rules = cfg["branch_rules"]
-    expected_prefix = rules[f"{agent_id}_pattern"]
+    agent_patterns = rules.get("agent_patterns") or {}
+    expected_prefix = (
+        agent_patterns.get(agent_id)
+        or rules.get(f"{agent_id}_pattern")
+        or f"agent/{agent_id}/"
+    )
     protected = rules["protected"]
     milestone_prefix = rules["milestone_pattern"]
 
@@ -136,19 +157,18 @@ def check_file_boundaries(
     cfg: dict,
 ) -> list[dict]:
     issues = []
-    other = opponent(agent_id)
-    other_domain = cfg["ownership"].get(other, [])
-    shared_approval = cfg["shared_requires_approval"]
+    shared_approval = shared_boundaries(cfg)
 
     all_dirty = set(git_snap["modified_files"] + git_snap["staged_files"])
 
     for f in files_to_modify:
+        owner = resolve_owner(f, cfg)
         # 对方主责域
-        if path_in_domain(f, other_domain):
+        if owner and owner != agent_id:
             issues.append({
                 "code": "BOUNDARY_VIOLATION",
                 "level": "BLOCK",
-                "detail": f"文件 '{f}' 属于 {other} 主责域，{agent_id} 不得直接修改。"
+                "detail": f"文件 '{f}' 属于 {owner} 主责域，{agent_id} 不得直接修改。"
             })
         # 共享文件 — 检查是否已有脏状态
         elif any(f.startswith(s) or f == s for s in shared_approval):
@@ -156,22 +176,23 @@ def check_file_boundaries(
                 issues.append({
                     "code": "SHARED_FILE_CONFLICT",
                     "level": "BLOCK",
-                    "detail": f"共享文件 '{f}' 当前有未提交修改，存在占用冲突。"
+                    "detail": f"共享边界 '{f}' 当前有未提交修改，必须先完成强同步收口后再继续。"
                 })
             else:
                 issues.append({
                     "code": "SHARED_FILE_CONFLICT",
                     "level": "WARNING",
-                    "detail": f"文件 '{f}' 属于需申请的共享文件，请确认已在任务板中登记占用。"
+                    "detail": f"文件 '{f}' 属于共享边界，请确认已在任务卡或 PR 评论中声明，并转入强同步收口模式。"
                 })
 
     # git dirty 文件中是否有对方主责域文件（对方正在修改）
     for dirty_file in all_dirty:
-        if path_in_domain(dirty_file, other_domain) and dirty_file in files_to_modify:
+        owner = resolve_owner(dirty_file, cfg)
+        if owner and owner != agent_id and dirty_file in files_to_modify:
             issues.append({
                 "code": "BOUNDARY_VIOLATION",
                 "level": "BLOCK",
-                "detail": f"git 检测到 '{dirty_file}' 已被修改且属于 {other} 主责域——存在覆盖风险。"
+                "detail": f"git 检测到 '{dirty_file}' 已被修改且属于 {owner} 主责域——存在覆盖风险。"
             })
 
     return issues
@@ -209,13 +230,13 @@ def check_parallel_conditions(
 ) -> list[dict]:
     """三条并行条件综合判断（仅在前面无 BLOCK 时补充）。"""
     issues = []
-    other = opponent(agent_id)
-    other_domain = cfg["ownership"].get(other, [])
     all_dirty = set(git_snap["modified_files"] + git_snap["staged_files"])
     registry = cfg.get("contracts", {})
 
     # 条件1: 文件边界
-    boundary_ok = not any(path_in_domain(f, other_domain) for f in files_to_modify)
+    boundary_ok = not any(
+        (resolve_owner(f, cfg) or "") not in ("", agent_id) for f in files_to_modify
+    )
 
     # 条件2: 契约达到 L1
     contracts_ok = all(
@@ -225,7 +246,7 @@ def check_parallel_conditions(
 
     # 条件3: 无同文件依赖（本次要改的文件未被对方 dirty）
     no_same_file = not any(
-        f in all_dirty and path_in_domain(f, other_domain)
+        f in all_dirty and (resolve_owner(f, cfg) or "") not in ("", agent_id)
         for f in files_to_modify
     )
 
@@ -241,6 +262,13 @@ def check_parallel_conditions(
             "code": "PARALLEL_CONDITION_FAILED",
             "level": "BLOCK",
             "detail": f"并行三条件不满足：{', '.join(failed)}。"
+        })
+
+    if cfg.get("collaboration_policy", {}).get("validation_requires_validator_agent"):
+        issues.append({
+            "code": "VALIDATOR_REQUIRED",
+            "level": "WARNING",
+            "detail": "技术验收与记账必须由验证 AGENT 负责，用户不承担代码级验证。",
         })
 
     return issues
@@ -264,14 +292,14 @@ def aggregate(issues: list[dict]) -> dict[str, Any]:
         if any(i["code"] == "WRONG_BRANCH" for i in block_items):
             action_parts.append("切换到正确的 agent/* 分支后重新检查。")
         if any(i["code"] == "BOUNDARY_VIOLATION" for i in block_items):
-            action_parts.append("联系 SOLO 重新划定文件边界或等待对方完成修改。")
+            action_parts.append("联系对应 owner 重新划定文件边界，或等待对方完成修改后再推进。")
         if any(i["code"] in ("CONTRACT_NOT_FROZEN", "PARALLEL_CONDITION_FAILED") for i in block_items):
             action_parts.append("等待契约冻结至 L1 后再并行，或改为接力推进。")
         if any(i["code"] == "SHARED_FILE_CONFLICT" for i in block_items):
-            action_parts.append("在任务板中登记共享文件占用，由 SOLO 统一收口后再修改。")
+            action_parts.append("先在任务卡或 PR 评论中声明共享边界，并切换到强同步收口模式后再修改。")
         recommended = "停止任务。" + " ".join(action_parts)
     else:
-        recommended = "可继续任务，但请在任务卡中记录 WARNING 项并保持关注。"
+        recommended = "可继续任务，但请在任务卡中记录 WARNING 项、执行模式与下一同步点。"
 
     return {
         "decision": decision,
@@ -327,10 +355,9 @@ def run_gate(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="dual-agent-conflict-gate: 双代理协作冲突前置门禁"
+        description="dual-agent-conflict-gate: AGENT 协作冲突前置门禁（兼容双 AGENT 场景）"
     )
-    parser.add_argument("--agent", required=True, choices=["claude", "solo"],
-                        help="当前 agent 身份")
+    parser.add_argument("--agent", required=True, help="当前 agent_id")
     parser.add_argument("--task", required=True, help="任务名称")
     parser.add_argument("--files", default="",
                         help="计划修改的文件列表，逗号分隔")

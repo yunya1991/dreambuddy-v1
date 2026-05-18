@@ -12,12 +12,20 @@ RULES_PATH = (
 
 
 def load_rules():
+    if not RULES_PATH.exists():
+        raise FileNotFoundError(f"rules file not found: {RULES_PATH}")
     with RULES_PATH.open("r", encoding="utf-8") as fh:
         return json.load(fh)["rules"]
 
 
 def branch_policy_valid(branch):
     return branch.startswith("agent/") or branch.startswith("milestone/")
+
+
+def payload_flag(payload, new_key, legacy_key):
+    if new_key in payload:
+        return bool(payload.get(new_key))
+    return bool(payload.get(legacy_key))
 
 
 def check_task_card_present(payload):
@@ -33,12 +41,14 @@ def check_started_comment_present(payload):
 
 
 def check_scope_change_announcement(payload):
-    return (not payload.get("scope_changed")) or "UPDATED" in payload.get("comments", [])
+    return (not payload_flag(payload, "scope_change_declared", "scope_changed")) or (
+        "UPDATED" in payload.get("comments", [])
+    )
 
 
 def check_block_announcement(payload):
-    return (not payload.get("execution_blocked")) or "BLOCKED" in payload.get(
-        "comments", []
+    return (not payload_flag(payload, "block_declared", "execution_blocked")) or (
+        "BLOCKED" in payload.get("comments", [])
     )
 
 
@@ -75,14 +85,23 @@ CHECKERS = {
     "check_shared_files_declared": check_shared_files_declared,
 }
 
-RULE_CHECKERS = {rule["id"]: CHECKERS[rule["checker"]] for rule in load_rules()}
+
+def build_rule_checkers(rules):
+    rule_checkers = {}
+    for rule in rules:
+        checker_name = rule["checker"]
+        if checker_name not in CHECKERS:
+            raise KeyError(f"unknown checker '{checker_name}' for rule {rule['id']}")
+        rule_checkers[rule["id"]] = CHECKERS[checker_name]
+    return rule_checkers
 
 
 def evaluate_payload(payload):
     rules = load_rules()
+    rule_checkers = build_rule_checkers(rules)
     reason_codes = []
     for rule in rules:
-        if not RULE_CHECKERS[rule["id"]](payload):
+        if not rule_checkers[rule["id"]](payload):
             reason_codes.append(rule["id"])
 
     return {

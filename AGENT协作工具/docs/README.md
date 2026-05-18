@@ -1,15 +1,39 @@
-# AGENT 协作文档主干
+# AGENT Collaboration File Cabinet
 
-本目录是全局 `AGENT` 协作规则、流程设计与实施计划的主干入口。
+This folder is the source-of-truth for AGENT collaboration in this repository.
 
-## 核心文档
+## 0. Active Canonical Docs (Read First)
 
-- `dual-agent-collaboration-foundation-design.md`：双代理协作底座设计
-- `agent-standard-dev-lifecycle-design.md`：全局 AGENT 标准开发生命周期设计
-- `agent-standard-dev-lifecycle-implementation-plan.md`：标准开发生命周期实施计划
+- `00-AGENT-CONSTITUTION.md` (fail-closed rules, hard boundaries, escalation)
+- `01-COLLABORATION-PROTOCOL.md` (PR comment anchors, required fields, gates)
+- `02-ARCHITECTURE.md` (roles + system chain + source-of-truth files)
+- `03-WORKFLOWS-AND-NORMS.md` (execution workflow + norms)
+- `04-ENGINEERING-INDEX.md` (where to edit what)
+- `05-FAQ.md` (common failures and fixes)
+- `06-SKILLS-INVENTORY.md` (skills list and when to use them)
 
-## 迁移说明
+## 1. Current Default Collaboration Mode
 
-- 原 `docs/superpowers/specs/` 与 `docs/superpowers/plans/` 下的对应文档已迁移到本目录
-- 原路径当前保留兼容壳，用于承接历史链接与既有 PR 讨论
-- 后续新增的 AGENT 协作主文档，应优先写入本目录
+- Default workspace: `7-ARTIFACT-HUB-V2/**`
+- Each AGENT opens its own PR on `agent/*` branch
+- Roles are split: Ledger/Protocol vs Governance
+
+See `agent-efficient-collaboration-mode.md` and `agent-ledger-protocol-vs-governance-short-spec.md`.
+
+## 2. Design & Implementation Documents (Reference)
+
+- `agent-ledger-protocol-vs-governance-short-spec.md`
+- `agent-efficient-collaboration-mode.md`
+- `agent-standard-dev-lifecycle-design.md`
+- `agent-standard-dev-lifecycle-implementation-plan.md`
+- `agent-collaboration-system-v1-design.md`
+- `agent-collaboration-system-v1-implementation-plan.md`
+- `agent-collaboration-system-v1-governance-agent-implementation-plan.md`
+- [agent-collaboration-system-v1-governance-cycle-implementation-plan.md](agent-collaboration-system-v1-governance-cycle-implementation-plan.md)
+- `self-hosted-runner.md` (trialed on PR9)
+- `dual-agent-collaboration-foundation-design.md` (legacy subset reference)
+
+## 3. Migration Notes
+
+- Historical sources may exist under `docs/superpowers/specs/` and `docs/superpowers/plans/`.
+- Those original paths are kept as compatibility stubs（兼容壳）for old links and PR discussions.

@@ -108,6 +108,98 @@ class BuildLifecyclePayloadTests(unittest.TestCase):
         self.assertTrue(payload["task_card_present"])
         self.assertTrue(payload["shared_files_declared"])
 
+    def test_design_review_from_different_reviewer_counts_as_non_owner_review(self):
+        raw = {
+            "branch": "agent/solo/lifecycle-docs",
+            "pr_body": "## Owner Agent\nOwner Agent: SOLO\n",
+            "comments": [
+                "[方案评审记录 / DESIGN_REVIEW]\n\n"
+                "Reviewer: Claude Code\n"
+                "Scope:\n"
+                "- review lifecycle docs\n\n"
+                "Decision: APPROVED\n"
+            ],
+            "review_count": 0,
+        }
 
+        payload = MODULE.build_payload(raw)
+
+        self.assertTrue(payload["design_review_present"])
+        self.assertTrue(payload["non_owner_review_present"])
+
+    def test_design_review_from_owner_does_not_count_as_non_owner_review(self):
+        raw = {
+            "branch": "agent/solo/lifecycle-docs",
+            "pr_body": "## Owner Agent\nOwner Agent: SOLO\n",
+            "comments": [
+                "[方案评审记录 / DESIGN_REVIEW]\n\n"
+                "Reviewer: SOLO\n"
+                "Scope:\n"
+                "- self review lifecycle docs\n\n"
+                "Decision: APPROVED\n"
+            ],
+            "review_count": 0,
+        }
+
+        payload = MODULE.build_payload(raw)
+
+        self.assertTrue(payload["design_review_present"])
+        self.assertFalse(payload["non_owner_review_present"])
+
+    def test_started_comment_extracts_phase_broadcast_execution_mode(self):
+        raw = {
+            "branch": "agent/solo/lifecycle-docs",
+            "pr_body": "## Owner Agent\nOwner Agent: SOLO\n",
+            "comments": [
+                "[协作开工声明 / STARTED]\n\n"
+                "Agent: SOLO\n"
+                "任务: 生命周期收口\n"
+                "分支: agent/solo/lifecycle-docs\n"
+                "计划修改:\n"
+                "- AGENT协作工具/docs/agent-standard-dev-lifecycle-design.md\n\n"
+                "预期产出:\n"
+                "- 文档草案\n\n"
+                "占用范围:\n"
+                "- AGENT协作工具/docs/\n\n"
+                "Execution Mode: PHASE_BROADCAST\n"
+                "冲突门禁结果:\n"
+                "- decision: SAFE\n"
+                "- reason_codes: []\n\n"
+                "状态: STARTED\n"
+            ],
+        }
+
+        payload = MODULE.build_payload(raw)
+
+        self.assertEqual(payload["execution_mode"], "PHASE_BROADCAST")
+        self.assertFalse(payload["direct_takeover"])
+
+    def test_takeover_keywords_are_detected_from_structured_comment(self):
+        raw = {
+            "branch": "agent/solo/lifecycle-docs",
+            "pr_body": "## Owner Agent\nOwner Agent: SOLO\n",
+            "comments": [
+                "[协作开工声明 / STARTED]\n\n"
+                "Agent: SOLO\n"
+                "任务: 接力修复 review 问题\n"
+                "分支: agent/solo/lifecycle-docs\n"
+                "计划修改:\n"
+                "- AGENT协作工具/github-actions/check_agent_lifecycle.py\n\n"
+                "预期产出:\n"
+                "- checker hotfix\n\n"
+                "占用范围:\n"
+                "- AGENT协作工具/github-actions/\n\n"
+                "冲突门禁结果:\n"
+                "- decision: WARNING\n"
+                "- reason_codes: [\"USER_AUTHORIZED_TAKEOVER\"]\n\n"
+                "说明: 本次为接力修复 / direct takeover。\n"
+                "状态: STARTED\n"
+            ],
+        }
+
+        payload = MODULE.build_payload(raw)
+
+        self.assertEqual(payload["execution_mode"], "STANDARD")
+        self.assertTrue(payload["direct_takeover"])
 if __name__ == "__main__":
     unittest.main()

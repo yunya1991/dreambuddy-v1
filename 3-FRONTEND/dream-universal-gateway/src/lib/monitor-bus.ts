@@ -19,11 +19,16 @@ import { EventEmitter } from 'events';
 // 类型定义
 // ============================================================
 
-export type MonitorLayer = 'frontend' | 'gateway' | 'artifact_hub' | 'workbuddy';
-export type MonitorStatus = 'received' | 'processing' | 'completed' | 'failed' | 'timeout';
+export type MonitorLayer = 'frontend' | 'gateway' | 'artifact_hub' | 'workbuddy' | 'intent' | 'router';
+export type MonitorStatus = 'received' | 'processing' | 'completed' | 'failed' | 'timeout' | 'denied';
 export type MonitorPhase =
   | 'user_input'
   | 'intent_recognized'
+  | 'recognized'
+  | 'fallback_rule'
+  | 'fallback_default'
+  | 'rule_follow_up'
+  | 'routed'
   | 'chain_started'
   | 'task_created'
   | 'inline_exec_start'
@@ -186,6 +191,8 @@ class MonitorBus extends EventEmitter {
         gateway: { total: 0, completed: 0, failed: 0 },
         workbuddy: { total: 0, completed: 0, failed: 0 },
         artifact_hub: { total: 0, completed: 0, failed: 0 },
+        intent: { total: 0, completed: 0, failed: 0 },
+        router: { total: 0, completed: 0, failed: 0 },
       },
       activeTraces: new Set(),
     };
@@ -430,6 +437,8 @@ class MonitorBus extends EventEmitter {
       gateway: { total: 0, completed: 0, failed: 0 },
       workbuddy: { total: 0, completed: 0, failed: 0 },
       artifact_hub: { total: 0, completed: 0, failed: 0 },
+      intent: { total: 0, completed: 0, failed: 0 },
+      router: { total: 0, completed: 0, failed: 0 },
     };
     const activeTraces = new Set<string>();
 

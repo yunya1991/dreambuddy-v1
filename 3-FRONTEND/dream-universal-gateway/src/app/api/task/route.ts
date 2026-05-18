@@ -12,6 +12,7 @@ import {
   TASKS_DIR,
   RESULTS_DIR,
   type TaskStatus,
+  type TaskFile,
 } from '@/lib/task-manager';
 import { emitMonitorEvent } from '@/lib/monitor-bus';
 import * as fs from 'fs';
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
     });
 
     // v2.0 核心：创建并立即执行
-    const { task, result, needAsync } = createAndExecuteTask({
+    const { task, result, needAsync } = await createAndExecuteTask({
       message: message.trim(),
       thinking_mode: thinking_mode || 'quick',
       session_id,
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
       intent_method,
     });
 
-    const estimatedTime = getEstimatedTimeMs(task.intent.type, task.thinking_mode);
+    const estimatedTime = getEstimatedTimeMs(result?.execution_summary?.chain_executed || []);
     const isTrade = isTradeIntent(task.intent.type);
 
     // 📡 监控埋点: 意图识别完成

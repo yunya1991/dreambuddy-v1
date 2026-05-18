@@ -43,12 +43,46 @@ def extract_bullets_after_label(text, label):
     return bullets
 
 
+def first_non_empty(*values):
+    for value in values:
+        if value:
+            return value
+    return ""
+
+
+def detect_execution_mode(text):
+    explicit = first_non_empty(
+        extract_field(text, "Execution Mode"),
+        extract_field(text, "执行模式"),
+    )
+    if explicit:
+        return explicit.strip().upper()
+    if "阶段广播" in text or "phase broadcast" in text.casefold():
+        return "PHASE_BROADCAST"
+    return ""
+
+
+def detect_direct_takeover(text):
+    lowered = text.casefold()
+    takeover_keywords = (
+        "direct takeover",
+        "接力修复",
+        "直接接管",
+        "授权接管",
+        "takeover",
+    )
+    return any(keyword in lowered for keyword in takeover_keywords)
+
+
 def parse_structured_comment(text):
     for header, status in HEADER_TO_STATUS.items():
         if text.startswith(header):
             return {
                 "status": status,
                 "agent": extract_field(text, "Agent"),
+                "reviewer": extract_field(text, "Reviewer"),
+                "execution_mode": detect_execution_mode(text),
+                "direct_takeover": detect_direct_takeover(text),
                 "occupied_paths": extract_bullets_after_label(text, "占用范围")
                 or extract_bullets_after_label(text, "当前占用范围"),
             }
@@ -83,6 +117,13 @@ def build_payload(raw):
         or parse_pr_template_field(raw.get("pr_body", ""), "Owner Agent")
         or "UNKNOWN"
     )
+    owner_agent_key = owner_agent.strip().casefold()
+    non_owner_review_present = any(
+        comment["status"] == "DESIGN_REVIEW"
+        and comment.get("reviewer")
+        and comment["reviewer"].strip().casefold() != owner_agent_key
+        for comment in structured_comments
+    )
     shared_files_declared = any(comment["occupied_paths"] for comment in structured_comments)
     if not shared_files_declared:
         shared_declared = parse_pr_template_field(
@@ -93,17 +134,34 @@ def build_payload(raw):
     task_card_present = bool(
         parse_pr_template_field(raw.get("pr_body", ""), "Task Card")
     )
+    execution_mode = (
+        (started_comment or {}).get("execution_mode")
+        or first_non_empty(
+            parse_pr_template_field(raw.get("pr_body", ""), "Execution Mode"),
+            parse_pr_template_field(raw.get("pr_body", ""), "执行模式"),
+        ).upper()
+        or "STANDARD"
+    )
+    direct_takeover = any(
+        comment.get("direct_takeover") for comment in structured_comments
+    )
+    scope_change_declared = "UPDATED" in comments
+    block_declared = "BLOCKED" in comments
 
     return {
         "branch": raw.get("branch", ""),
         "owner_agent": owner_agent,
+        "execution_mode": execution_mode,
+        "direct_takeover": direct_takeover,
         "shared_files_declared": shared_files_declared,
         "task_card_present": task_card_present,
         "design_review_present": "DESIGN_REVIEW" in comments,
         "test_report_present": "TEST_REPORT" in comments,
-        "non_owner_review_present": raw.get("review_count", 0) > 0,
-        "scope_changed": "UPDATED" in comments,
-        "execution_blocked": "BLOCKED" in comments,
+        "non_owner_review_present": non_owner_review_present,
+        "scope_change_declared": scope_change_declared,
+        "block_declared": block_declared,
+        "scope_changed": scope_change_declared,
+        "execution_blocked": block_declared,
         "comments": comments,
     }
 
