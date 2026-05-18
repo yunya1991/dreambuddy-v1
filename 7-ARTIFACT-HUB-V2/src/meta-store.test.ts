@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import fs from "node:fs";
 import { MetaStore } from "./meta-store.js";
+import { MinisterAgent } from "./types.js";
 import type { BoardProposal, ApprovalGate, ExecutionReview } from "./types.js";
 
 function tmpDir() {
@@ -23,15 +24,15 @@ describe("MetaStore Phase 3: BoardProposal", () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
-  it("addBoardProposal stores and can be retrieved via listExecutionReviews-independent path", () => {
+  it("addBoardProposal stores without error", () => {
     const proposal: BoardProposal = {
       proposal_id: "prop-001",
       trace_id: "trace-abc",
       department: "finance",
-      decision_level: "board",
+      decision_level: "L2",
       title: "Q3 Budget Approval",
       summary: "Approve Q3 operational budget for department",
-      proposer_agent: "minister_finance",
+      proposer_agent: MinisterAgent.GOVERNANCE,
       status: "submitted",
       created_at: "2026-05-18T00:00:00Z",
     };
@@ -43,10 +44,10 @@ describe("MetaStore Phase 3: BoardProposal", () => {
       proposal_id: "prop-001",
       trace_id: "trace-dup",
       department: "ops",
-      decision_level: "standard",
+      decision_level: "L1",
       title: "Duplicate",
       summary: "Should fail",
-      proposer_agent: "minister_ops",
+      proposer_agent: MinisterAgent.OPERATIONS,
       status: "draft",
       created_at: "2026-05-18T01:00:00Z",
     };
@@ -65,10 +66,10 @@ describe("MetaStore Phase 3: ApprovalGate", () => {
       proposal_id: "prop-gate-001",
       trace_id: "trace-gate",
       department: "legal",
-      decision_level: "board",
+      decision_level: "L3",
       title: "Policy Change",
       summary: "Update internal policy",
-      proposer_agent: "minister_legal",
+      proposer_agent: MinisterAgent.GOVERNANCE,
       status: "under_review",
       created_at: "2026-05-18T00:00:00Z",
     };
@@ -83,7 +84,7 @@ describe("MetaStore Phase 3: ApprovalGate", () => {
     const gate: ApprovalGate = {
       gate_id: "gate-001",
       proposal_id: "prop-gate-001",
-      required_approvers: ["minister_ceo", "minister_legal"],
+      required_approvers: [MinisterAgent.GOVERNANCE, MinisterAgent.RESEARCH],
       received_approvals: [],
       status: "pending",
     };
@@ -94,8 +95,8 @@ describe("MetaStore Phase 3: ApprovalGate", () => {
     const gate: ApprovalGate = {
       gate_id: "gate-002",
       proposal_id: "prop-gate-001",
-      required_approvers: ["minister_ceo"],
-      received_approvals: ["minister_ceo"],
+      required_approvers: [MinisterAgent.GOVERNANCE],
+      received_approvals: [MinisterAgent.GOVERNANCE],
       status: "approved",
       decided_at: "2026-05-18T06:00:00Z",
     };
@@ -121,7 +122,7 @@ describe("MetaStore Phase 3: ExecutionReview", () => {
       review_id: "rev-001",
       trace_id: "trace-x",
       execution_id: "exec-001",
-      reviewer_agent: "minister_audit",
+      reviewer_agent: MinisterAgent.GOVERNANCE,
       verdict: "pass",
       findings: "All steps completed correctly",
       recommendations: "None",
@@ -131,7 +132,7 @@ describe("MetaStore Phase 3: ExecutionReview", () => {
       review_id: "rev-002",
       trace_id: "trace-y",
       execution_id: "exec-002",
-      reviewer_agent: "minister_audit",
+      reviewer_agent: MinisterAgent.OPERATIONS,
       verdict: "pass_with_notes",
       findings: "Minor deviation in step 3",
       recommendations: "Update workflow template",
@@ -161,7 +162,7 @@ describe("MetaStore Phase 3: ExecutionReview", () => {
       review_id: "rev-003",
       trace_id: "trace-z",
       execution_id: "exec-003",
-      reviewer_agent: "minister_ops",
+      reviewer_agent: MinisterAgent.RESEARCH,
       verdict: "escalate",
       findings: "Critical anomaly detected",
       recommendations: "Escalate to board immediately",
@@ -172,6 +173,6 @@ describe("MetaStore Phase 3: ExecutionReview", () => {
     assert.equal(results.length, 1);
     assert.equal(results[0].verdict, "escalate");
     assert.equal(results[0].findings, "Critical anomaly detected");
-    assert.equal(results[0].reviewer_agent, "minister_ops");
+    assert.equal(results[0].reviewer_agent, MinisterAgent.RESEARCH);
   });
 });
