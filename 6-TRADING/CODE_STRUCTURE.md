@@ -1,137 +1,166 @@
-# 6-TRADING 代码结构索引 v1.0
+# 6-TRADING 代码结构索引 v2.0
 
 > **创建日期**: 2026-05-15
-> **数据来源**: 44304工作区（内部系统）
-> **用途**: 6-TRADING对外服务系统
+> **更新日期**: 2026-05-16
+> **用途**: 工程代码索引、关键路径速查
 
 ---
 
-## 📁 目录结构
+## 一、目录结构
 
 ```
 6-TRADING/
-├── scripts/              # A系列Python脚本
-├── skills/               # SKILL模块
-├── config/               # 配置文件（6-TRADING专用）
-├── config_44304/         # 44304原始配置（参照）
-├── automation/            # 自动化脚本
-├── data/                 # 数据目录
-│   ├── episodes/         # 交易决策记录
-│   └── reports/           # 分析报告样本
-├── docs/                 # 架构文档
-├── dream-universal-gateway/  # 前端项目
-└── .workbuddy/           # 记忆系统
+├── bridge/                    # Bridge API服务（端口3847）
+│   ├── api/                   # API端点（9个模块）
+│   │   ├── dream_api_server.py       # 主服务器
+│   │   ├── trade_exec_api.py         # 交易执行（含余额查询）
+│   │   ├── market_data_api.py        # 行情数据
+│   │   ├── skill_router_api.py       # SKILL路由
+│   │   ├── intent_router_api.py      # 意图识别路由
+│   │   ├── bridge_management_api.py  # Bridge管理
+│   │   ├── monitoring.py             # 监控
+│   │   ├── realtime_api.py           # 实时数据
+│   │   └── websocket_manager.py      # WebSocket
+│   ├── utils/                  # 工具函数
+│   ├── requirements.txt        # Python依赖
+│   └── run_server.py           # 启动入口
+│
+├── scripts/                   # 核心脚本（18个）
+│   ├── backtest_strategy.py         # 马丁策略定义（v2.0）
+│   ├── backtest_engine.py           # 回测引擎（v2.0，200U资金）
+│   ├── backtest_data_fetcher.py     # 数据获取
+│   ├── backtest_report.py           # 回测报告生成
+│   ├── mailbox_scanner.py           # 6-TRADING邮箱扫描器
+│   ├── dream_strategy_pipeline.py   # 策略流水线（88KB）
+│   ├── master_strategy_retriever.py # 大师策略检索（42KB）
+│   ├── a2_first_principles_v2.6_auto.py  # A2第一性原理
+│   ├── a4_validation_executor.py    # A4战术验证
+│   ├── a5_guards.py                 # A5门禁
+│   ├── dream_trade_exec.py          # 交易执行
+│   ├── dream_stop_loss_monitor.py   # 止损监控
+│   ├── okx_cli.py                   # OKX CLI封装（v1.3.4）
+│   ├── okx_unified_toolkit.py       # OKX统一工具包（37KB）
+│   ├── stress_test.py               # 压力测试
+│   ├── a1_research.py               # A1调研
+│   ├── sync_from_44304.sh           # 同步44304
+│   └── sync_frontend.sh             # 同步3-FRONTEND
+│
+├── skills/                    # 项目级SKILL（22个）
+│   ├── dream-systematic-trading/   # ★ 三屏交易总入口SKILL
+│   ├── dream-contradiction-theory/  # A0
+│   ├── dream-strategy-research/     # A1
+│   ├── dream-first-principles/      # A2
+│   ├── dream-tactical-validator/    # A4
+│   ├── dream-tactical-executor/     # A5
+│   ├── dream-intelligence-monitor/  # A6
+│   ├── A7-practice-theory/          # A7
+│   ├── A8-theory-practice-verification/  # A8
+│   ├── dream-exit-skill-v2/         # A9
+│   ├── master-seminar/              # A3
+│   ├── dream-regime-detector/       # Regime检测
+│   ├── dream-signal-scoring-spec/   # 信号评分
+│   ├── dream-risk-position-sizing/  # 仓位管理
+│   ├── dream-pretrade-gatekeeper/   # 交易前门禁
+│   ├── dream-strategy-parser/       # 策略解析
+│   ├── dream-strategy-designer/     # 策略设计
+│   ├── dream-data-analysis/         # 数据分析
+│   ├── dream-knowledge/             # 知识库
+│   ├── dream-oneirology/            # 做梦部
+│   ├── dream-bailian-integration/   # 百炼集成
+│   └── learning-episode-writer/     # Episode记录
+│
+├── data/                      # 数据目录
+│   ├── backtest/              # 回测数据（BTC-USDT-SWAP 1D CSV）
+│   ├── episodes/              # 交易Episode记录（11个JSON）
+│   └── reports/               # 分析报告（4个MD）
+│
+├── reports/                   # 回测报告
+│   ├── backtest_result_v2.json      # 200U回测结果
+│   └── backtest_v2_10k.json         # 10kU回测结果
+│
+├── docs/                      # 架构与规范文档（10个）
+│   ├── ARCHITECTURE_DESIGN_v2.0.md       # 架构设计（120KB）
+│   ├── ARCHITECTURE_DIAGRAM_v2.0.svg     # 架构图
+│   ├── TRADING_WORKFLOW_SPEC_v1.md       # 工作流规范（v1.0）
+│   ├── BRIDGE_ARCHITECTURE_v1.0.md       # Bridge架构
+│   ├── A0_A9_SKILL_COVERAGE_v1.0.md     # SKILL覆盖
+│   ├── ARCHITECTURE_REVIEW_v1.0.md       # 架构评审
+│   ├── GAP_ANALYSIS_v1.0.md             # GAP分析
+│   ├── dream-systematic-trading-SKILL-design.md
+│   └── dream-systematic-trading-SKILL-research-report.md
+│
+├── automation/                # 自动化脚本
+│   └── a2_automation_prompt_v2.6.1.md
+│
+├── config/                    # 配置文件
+│   └── strategy_library.yaml  # 策略库（v2.2）
+│
+├── .workbuddy/memory/         # 工作记忆
+│   ├── MEMORY.md              # 核心长期记忆
+│   ├── 2026-05-15.md          # 日志
+│   └── 2026-05-16.md          # 日志
+│
+├── DOC_INDEX.md               # ★ 文档总入口
+├── FAQ.md                     # 常见问题（20条）
+├── CODE_STRUCTURE.md          # 本文档
+├── TRADING_SYSTEM.md          # 交易系统完整设计（v2.2）
+├── A_SERIES_DETAIL.md         # A0-A9详解
+├── README.md                  # 系统概述
+└── API_CONFIG_GUIDE.md        # API配置指南
 ```
 
 ---
 
-## 📜 一、Scripts 目录（A系列脚本）
+## 二、关键路径速查
 
-| 文件 | 功能 | 对应A系 |
-|------|------|---------|
-| `a1_research.py` | A1调研分析 | A1 |
-| `a2_first_principles_v2.6_auto.py` | A2第一性原理 | A2 |
-| `a4_validation_executor.py` | A4战术验证 | A4 |
-| `a5_guards.py` | A5门禁检查 | A5 |
-| `dream_trade_exec.py` | 交易执行 | A5 |
-| `dream_strategy_pipeline.py` | 策略流水线 | A3 |
-| `master_strategy_retriever.py` | 大师策略检索 | A3 |
-| `dream_stop_loss_monitor.py` | 止损监控 | A9 |
-| `okx_cli.py` | OKX CLI封装 | 执行层 |
-| `okx_unified_toolkit.py` | OKX统一工具包 | 执行层 |
+### 数据路径
 
-### 脚本使用说明
+| 路径 | 说明 |
+|:-----|:-----|
+| `data/backtest/BTC_USDT_SWAP_1D_20250101_20260516.csv` | BTC日线回测数据（136MB） |
+| `data/episodes/*.json` | 交易Episode记录 |
+| `reports/backtest_result_v2.json` | 200U回测结果 |
+| `reports/backtest_v2_10k.json` | 10kU回测结果 |
 
-```bash
-# 运行A2第一性原理分析
-python scripts/a2_first_principles_v2.6_auto.py
+### 配置路径
 
-# 运行A4战术验证
-python scripts/a4_validation_executor.py
+| 路径 | 说明 |
+|:-----|:-----|
+| `config/strategy_library.yaml` | 策略库（v2.2） |
+| `~/.workbuddy/6-trading-env.sh` | 环境变量（TAVILY/OKX） |
+| `dream_gateway.db` | 前端SQLite数据库 |
 
-# 运行交易执行
-python scripts/dream_trade_exec.py
+### 自动化路径
 
-# 运行OKX工具包
-python scripts/okx_unified_toolkit.py
-```
+| 路径 | 说明 |
+|:-----|:-----|
+| `~/.workbuddy/skills/boss-secretary/reports/trading/6-trading/` | 6-TRADING邮箱 |
+| `scripts/mailbox_scanner.py` | 邮箱扫描器 |
+| `~/.workbuddy/workbuddy.db` | 自动化存储（SQLite） |
 
----
+### 外部项目路径
 
-## 🧩 二、Skills 目录（SKILL模块）
-
-| SKILL | 功能 | 对应A系 |
-|-------|------|---------|
-| `dream-exit-skill-v2/` | A9离场决策 | A9 |
-| `dream-pretrade-gatekeeper/` | 预交易门禁 | A5 |
-| `dream-strategy-designer/` | 策略设计 | A3 |
-| `A7-practice-theory/` | 理论与实践 | A7 |
-| `A8-theory-practice-verification/` | 自我批评验证 | A8 |
-| `dream-bailian-integration/` | 百炼集成 | 工具 |
-| `dream-knowledge/` | 知识库 | 工具 |
-| `dream-data-analysis/` | 数据分析 | 工具 |
-| `master-seminar/` | 大师研讨 | A3 |
+| 路径 | 说明 |
+|:-----|:-----|
+| `../3-FRONTEND/dream-universal-gateway/` | Next.js前端（端口3000） |
+| `~/.workbuddy/skills/` | 用户级SKILL |
+| `~/.workbuddy/skills/boss-secretary/` | 秘书部（邮箱管理） |
+| `~/.workbuddy/skills/dream-constitution/` | 系统宪法 |
 
 ---
 
-## ⚙️ 三、Config 目录（配置文件）
+## 三、版本信息
 
-| 文件 | 说明 |
-|------|------|
-| `strategy_library.yaml` | 策略库（v2.2） |
-| `config_44304/` | 44304原始配置参照目录 |
-
----
-
-## 🔄 四、Automation 目录（自动化）
-
-| 文件 | 说明 |
-|------|------|
-| `a2_automation_prompt_v2.6.1.md` | A2每日自动化脚本 |
+| 组件 | 版本 | 说明 |
+|:-----|:-----|:-----|
+| 策略引擎 | v2.0 | 固定20%止损+三级ATR止盈+取消WAIT |
+| 回测引擎 | v2.0 | 200U初始资金，与10kU线性缩放 |
+| Bridge API | v1.3.4 | OKX CLI封装 |
+| 策略库 | v2.2 | strategy_library.yaml |
+| 前端 | Next.js | 端口3000 |
+| 邮箱扫描器 | v1.0 | 每小时扫描 |
+| 工作流规范 | v1.0 | TRADING_WORKFLOW_SPEC |
 
 ---
 
-## 📊 五、Data 目录（数据）
-
-### Episodes（交易决策记录）
-
-| 文件 | 说明 |
-|------|------|
-| `A5_HOLD_*.json` | 持仓决策 |
-| `a4_episode_*.json` | A4验证决策 |
-| `EP*.json` | 完整决策记录 |
-
-### Reports（分析报告样本）
-
-| 文件 | 说明 |
-|------|------|
-| `ARCHITECTURE_VERIFICATION_REPORT_*.md` | 架构验证报告 |
-| `SKILL_ACTIVATION_PLAN_*.md` | SKILL激活计划 |
-| `THREE_MAILBOX_SYSTEM_*.md` | 三邮箱系统文档 |
-
----
-
-## 🔗 六、同步脚本
-
-```bash
-# 从44304同步最新代码
-./scripts/sync_from_44304.sh
-
-# 或者手动同步
-rsync -av /Users/zhangjiangtao/WorkBuddy/20260415144304/scripts/ scripts/
-rsync -av /Users/zhangjiangtao/WorkBuddy/20260415144304/1-TRADE/ skills/
-```
-
----
-
-## 🚀 七、下一步
-
-1. **桥接层开发**: 创建API封装调用scripts/
-2. **前端集成**: 与dream-universal-gateway对接
-3. **用户系统**: 基于意图识别路由到不同SKILL
-4. **测试验证**: 模拟盘验证后服务用户
-
----
-
-> **状态**: ✅ 代码已从44304同步
-> **维护**: 通过sync_from_44304.sh保持同步
+*最后更新: 2026-05-16*
