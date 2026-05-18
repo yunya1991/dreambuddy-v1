@@ -68,3 +68,62 @@ export interface Intent {
   entities?: Record<string, unknown>;
   constraints?: Record<string, unknown>;
 }
+
+// Phase 1 governance object model — task-pr9-ahv2-object-model-align-1
+
+export type ExecutionStatus = "in_progress" | "delivered" | "accepted" | "failed";
+
+export type DecisionVerdict = "accepted" | "rework" | "block";
+
+export interface Artifact {
+  artifact_id: string;
+  title: string;
+  department: string;
+  category: string;
+  type: ArtifactType;
+  chain_phase: string;
+  workflow_id: string;
+  workflow_type: string;
+  trace_id: string;
+  status: ArtifactStatus;
+  relative_path: string;
+  created_at: ISODateString;
+}
+
+export interface Decision {
+  decision_id: string;
+  trace_id: string;
+  intent_id: string;
+  department: string;
+  policy_version: string;
+  selected_route: string;
+  reason: string;
+  evidence_refs: string[];
+  decision_level: string;
+  created_at: ISODateString;
+}
+
+export interface Execution {
+  execution_id: string;
+  trace_id: string;
+  intent_id: string;
+  decision_id: string;
+  workflow_id: string;
+  workflow_type: string;
+  department: string;
+  status: ExecutionStatus;
+  started_at: ISODateString;
+  finished_at?: ISODateString;
+}
+
+export interface AuditRecord {
+  audit_id: string;
+  trace_id: string;
+  department: string;
+  decision_snapshot: unknown;
+  execution_snapshot: unknown;
+  events: unknown[];
+  risk_flags?: string[];
+  review_notes?: string;
+  created_at: ISODateString;
+}
