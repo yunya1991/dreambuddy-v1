@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import type { BoardProposal, ApprovalGate, ExecutionReview } from "./types.js";
 
 export class MetaStore {
   private readonly db: DatabaseSync;
@@ -59,6 +60,39 @@ export class MetaStore {
         risk_flags_json TEXT,
         review_notes TEXT,
         created_at INTEGER NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS board_proposals (
+        proposal_id TEXT PRIMARY KEY,
+        trace_id TEXT NOT NULL,
+        department TEXT NOT NULL,
+        decision_level TEXT NOT NULL,
+        title TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        proposer_agent TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'draft',
+        created_at TEXT NOT NULL,
+        resolved_at TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS approval_gates (
+        gate_id TEXT PRIMARY KEY,
+        proposal_id TEXT NOT NULL,
+        required_approvers_json TEXT NOT NULL,
+        received_approvals_json TEXT NOT NULL DEFAULT '[]',
+        status TEXT NOT NULL DEFAULT 'pending',
+        decided_at TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS execution_reviews (
+        review_id TEXT PRIMARY KEY,
+        trace_id TEXT NOT NULL,
+        execution_id TEXT NOT NULL,
+        reviewer_agent TEXT NOT NULL,
+        verdict TEXT NOT NULL,
+        findings TEXT NOT NULL,
+        recommendations TEXT NOT NULL,
+        reviewed_at TEXT NOT NULL
       );
     `);
   }
@@ -178,5 +212,70 @@ export class MetaStore {
       reviewNotes ?? null,
       createdAt
     );
+  }
+
+  addBoardProposal(proposal: BoardProposal): void {
+    const stmt = this.db.prepare(
+      `INSERT INTO board_proposals(proposal_id,trace_id,department,decision_level,title,summary,proposer_agent,status,created_at,resolved_at) VALUES(?,?,?,?,?,?,?,?,?,?)`
+    );
+    stmt.run(
+      proposal.proposal_id,
+      proposal.trace_id,
+      proposal.department,
+      proposal.decision_level,
+      proposal.title,
+      proposal.summary,
+      proposal.proposer_agent,
+      proposal.status,
+      proposal.created_at,
+      proposal.resolved_at ?? null
+    );
+  }
+
+  addApprovalGate(gate: ApprovalGate): void {
+    const stmt = this.db.prepare(
+      `INSERT INTO approval_gates(gate_id,proposal_id,required_approvers_json,received_approvals_json,status,decided_at) VALUES(?,?,?,?,?,?)`
+    );
+    stmt.run(
+      gate.gate_id,
+      gate.proposal_id,
+      JSON.stringify(gate.required_approvers),
+      JSON.stringify(gate.received_approvals),
+      gate.status,
+      gate.decided_at ?? null
+    );
+  }
+
+  addExecutionReview(review: ExecutionReview): void {
+    const stmt = this.db.prepare(
+      `INSERT INTO execution_reviews(review_id,trace_id,execution_id,reviewer_agent,verdict,findings,recommendations,reviewed_at) VALUES(?,?,?,?,?,?,?,?)`
+    );
+    stmt.run(
+      review.review_id,
+      review.trace_id,
+      review.execution_id,
+      review.reviewer_agent,
+      review.verdict,
+      review.findings,
+      review.recommendations,
+      review.reviewed_at
+    );
+  }
+
+  listExecutionReviews(traceId?: string): ExecutionReview[] {
+    const stmt = traceId
+      ? this.db.prepare(`SELECT * FROM execution_reviews WHERE trace_id=? ORDER BY reviewed_at ASC`)
+      : this.db.prepare(`SELECT * FROM execution_reviews ORDER BY reviewed_at ASC`);
+    const rows = traceId ? (stmt.all(traceId) as any[]) : (stmt.all() as any[]);
+    return rows.map((r) => ({
+      review_id: r.review_id,
+      trace_id: r.trace_id,
+      execution_id: r.execution_id,
+      reviewer_agent: r.reviewer_agent,
+      verdict: r.verdict,
+      findings: r.findings,
+      recommendations: r.recommendations,
+      reviewed_at: r.reviewed_at,
+    }));
   }
 }
