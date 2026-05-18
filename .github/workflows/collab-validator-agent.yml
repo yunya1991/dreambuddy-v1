@@ -16,6 +16,8 @@ on:
         required: false
         default: "7-ARTIFACT-HUB-V2"
         type: string
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: read
@@ -24,41 +26,89 @@ permissions:
   actions: write
 
 concurrency:
-  group: collab-validator-agent-${{ inputs.pr_number }}
+  group: collab-validator-agent-${{ github.event.issue.number || inputs.pr_number }}
   cancel-in-progress: true
 
 jobs:
   validator:
     runs-on: [self-hosted, macOS, workbuddy]
-    env:
-      PR_NUMBER: ${{ inputs.pr_number }}
-      TASK_ID: ${{ inputs.task_id }}
-      WORKSPACE_PATH: ${{ inputs.workspace_path }}
-      GH_TOKEN: ${{ github.token }}
-      GH_REPO: ${{ github.repository }}
+    # For issue_comment: only run on PR comments containing [协作完成回报 / DONE]
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request != null &&
+        contains(github.event.comment.body, '[协作完成回报 / DONE]')
+      )
     steps:
+      - name: Resolve inputs
+        id: inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "pr_number=${{ inputs.pr_number }}" >> "$GITHUB_OUTPUT"
+            echo "task_id=${{ inputs.task_id }}" >> "$GITHUB_OUTPUT"
+            echo "workspace_path=${{ inputs.workspace_path }}" >> "$GITHUB_OUTPUT"
+          else
+            PR_NUM="${{ github.event.issue.number }}"
+            echo "pr_number=${PR_NUM}" >> "$GITHUB_OUTPUT"
+
+            # Parse Task ID from comment body
+            TASK_ID=$(echo "${COMMENT_BODY}" | grep -oP '(?<=Task ID:\s)[\w\-]+' | head -1)
+            if [ -z "${TASK_ID}" ]; then
+              TASK_ID=$(echo "${COMMENT_BODY}" | grep -oP '(?<=任务:\s)[\w\-一-鿿]+' | head -1)
+            fi
+            echo "task_id=${TASK_ID}" >> "$GITHUB_OUTPUT"
+
+            # Parse Workspace Path from comment body
+            WS=$(echo "${COMMENT_BODY}" | grep -oP '(?<=Workspace Path:\s)\S+' | head -1)
+            if [ -z "${WS}" ]; then
+              WS="7-ARTIFACT-HUB-V2"
+            fi
+            echo "workspace_path=${WS}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip if task_id missing (auto-trigger only)
+        if: steps.inputs.outputs.task_id == '' && github.event_name == 'issue_comment'
+        run: |
+          echo "No Task ID found in DONE comment, skipping validator."
+          exit 0
+
       - name: Checkout main
         uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Verify gh
         run: gh --version
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Resolve PR head
         id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.inputs.outputs.pr_number }}
         run: |
           echo "head_ref=$(gh pr view ${PR_NUMBER} --json headRefName --jq .headRefName)" >> "$GITHUB_OUTPUT"
           echo "head_sha=$(gh pr view ${PR_NUMBER} --json headRefOid --jq .headRefOid)" >> "$GITHUB_OUTPUT"
 
       - name: Checkout PR head
+        env:
+          PR_NUMBER: ${{ steps.inputs.outputs.pr_number }}
         run: |
           git fetch origin "${{ steps.pr.outputs.head_ref }}"
           git checkout -B "pr${PR_NUMBER}" "origin/${{ steps.pr.outputs.head_ref }}"
 
       - name: Build and test
         id: run
+        env:
+          WORKSPACE_PATH: ${{ steps.inputs.outputs.workspace_path }}
         run: |
           set +e
           cd "${WORKSPACE_PATH}"
@@ -81,6 +131,11 @@ jobs:
           echo "overall=$overall" >> "$GITHUB_OUTPUT"
 
       - name: Post VALIDATION_RESULT comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.inputs.outputs.pr_number }}
+          TASK_ID: ${{ steps.inputs.outputs.task_id }}
         run: |
           hard_gate="PASS"
           score="95"
@@ -88,6 +143,7 @@ jobs:
           reward_multiplier="1.0"
           reason_code="NONE"
           handoff="ledgered"
+          trigger_mode="${{ github.event_name }}"
 
           if [ "${{ steps.run.outputs.overall }}" != "0" ]; then
             hard_gate="BLOCK"
@@ -112,6 +168,7 @@ jobs:
               "Reward Multiplier: ${reward_multiplier}" \
               "Ledger Update: ${TASK_ID}" \
               "Governance Handoff: ${handoff}" \
+              "Trigger: ${trigger_mode}" \
               '' \
               'Evidence:' \
               "- pr_number=${PR_NUMBER}" \
@@ -126,6 +183,9 @@ jobs:
           gh pr comment ${PR_NUMBER} --body-file pr_validation_result.md
 
       - name: Write collab context artifact
+        env:
+          PR_NUMBER: ${{ steps.inputs.outputs.pr_number }}
+          TASK_ID: ${{ steps.inputs.outputs.task_id }}
         run: |
           {
             printf '{\n'
