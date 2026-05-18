@@ -345,3 +345,49 @@ export interface ExecutionReview {
   reviewed_at: ISODateString;
 }
 
+
+// =============================================================================
+// Phase 6 Objects: Distribution / Performance / MarketIntel
+// task-ahv2-impl-20260518-dist-obj-6a / perf-obj-6b / market-intel-6c
+// =============================================================================
+
+export type DistributionStatus = "pending" | "sent" | "failed" | "cancelled";
+export type DistributionChannel = "email" | "webhook" | "push" | "internal" | "other";
+
+export interface Distribution {
+  distribution_id: string;
+  trace_id: string;
+  artifact_id: string;
+  channel: DistributionChannel;
+  recipient: string;
+  status: DistributionStatus;
+  policy_version: string;
+  sent_at?: ISODateString;
+  created_at: ISODateString;
+}
+
+export interface Performance {
+  perf_id: string;
+  trace_id: string;
+  workflow_id: string;
+  workflow_type: WorkflowType;
+  department: string;
+  total_trades: number;
+  win_rate: number;
+  pnl: number;
+  latency_ms: number;
+  recorded_at: ISODateString;
+}
+
+export interface MarketIntel {
+  intel_id: string;
+  trace_id: string;
+  department: string;
+  symbol: string;
+  direction: "long" | "short" | "neutral";
+  confidence: number;
+  regime: string;
+  source: string;
+  summary: string;
+  created_at: ISODateString;
+}
