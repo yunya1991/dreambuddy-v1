@@ -60,6 +60,16 @@ export class MetaStore {
         review_notes TEXT,
         created_at INTEGER NOT NULL
       );
+
+      CREATE TABLE IF NOT EXISTS execution_reviews (
+        review_id TEXT PRIMARY KEY,
+        trace_id TEXT NOT NULL,
+        execution_id TEXT NOT NULL,
+        reviewer_agent_id TEXT NOT NULL,
+        rating INTEGER NOT NULL,
+        comment TEXT NOT NULL,
+        created_at INTEGER NOT NULL
+      );
     `);
   }
 
@@ -153,30 +163,41 @@ export class MetaStore {
     stmt.run(status, finishedAt, executionId);
   }
 
-  addAuditRecord(
-    auditId: string,
+  addExecutionReview(
+    reviewId: string,
     traceId: string,
-    department: string,
-    decisionSnapshot: unknown,
-    executionSnapshot: unknown,
-    events: unknown[] = [],
-    riskFlags?: string[],
-    reviewNotes?: string,
+    executionId: string,
+    reviewerAgentId: string,
+    rating: number,
+    comment: string,
     createdAt = Date.now()
   ): void {
     const stmt = this.db.prepare(
-      `INSERT INTO audit_records(audit_id,trace_id,department,decision_snapshot_json,execution_snapshot_json,events_json,risk_flags_json,review_notes,created_at) VALUES(?,?,?,?,?,?,?,?,?)`
+      `INSERT INTO execution_reviews(review_id,trace_id,execution_id,reviewer_agent_id,rating,comment,created_at) VALUES(?,?,?,?,?,?,?)`
     );
-    stmt.run(
-      auditId,
-      traceId,
-      department,
-      JSON.stringify(decisionSnapshot),
-      JSON.stringify(executionSnapshot),
-      JSON.stringify(events),
-      riskFlags ? JSON.stringify(riskFlags) : null,
-      reviewNotes ?? null,
-      createdAt
+    stmt.run(reviewId, traceId, executionId, reviewerAgentId, rating, comment, createdAt);
+  }
+
+  getExecutionReviews(traceId: string): Array<{
+    review_id: string;
+    trace_id: string;
+    execution_id: string;
+    reviewer_agent_id: string;
+    rating: number;
+    comment: string;
+    created_at: string;
+  }> {
+    const stmt = this.db.prepare(
+      `SELECT review_id,trace_id,execution_id,reviewer_agent_id,rating,comment,created_at FROM execution_reviews WHERE trace_id=? ORDER BY created_at DESC`
     );
+    return (stmt.all(traceId) as any[]).map((r) => ({
+      review_id: r.review_id,
+      trace_id: r.trace_id,
+      execution_id: r.execution_id,
+      reviewer_agent_id: r.reviewer_agent_id,
+      rating: r.rating,
+      comment: r.comment,
+      created_at: new Date(Number(r.created_at)).toISOString(),
+    }));
   }
 }

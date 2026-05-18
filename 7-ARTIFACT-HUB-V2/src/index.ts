@@ -148,6 +148,15 @@ const server = createServer(async (req, res) => {
     });
   }
 
+  if (url.pathname === "/chain/reviews") {
+    if (req.method !== "GET") return methodNotAllowed(res);
+    const traceId = url.searchParams.get("traceId");
+    if (!traceId) return sendJson(res, 400, { error: "missing_traceId" });
+
+    const reviews = meta.getExecutionReviews(traceId);
+    return sendJson(res, 200, { trace_id: traceId, reviews });
+  }
+
   return notFound(res);
 });
 

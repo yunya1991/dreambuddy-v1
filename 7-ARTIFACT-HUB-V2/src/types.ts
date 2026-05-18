@@ -131,6 +131,20 @@ export interface AuditRecord {
   created_at: ISODateString;
 }
 
+/**
+ * Execution Review (GOVERNANCE_SPEC.md Phase 3)
+ * Review of an execution for quality and compliance
+ */
+export interface ExecutionReview {
+  review_id: string;
+  trace_id: string;
+  execution_id: string;
+  reviewer_agent_id: string;
+  rating: number; // 1-5
+  comment: string;
+  created_at: ISODateString;
+}
+
 // =============================================================================
 // GOVERNANCE_SPEC Phase 1 — task-pr9-ahv2-governance-spec-impl-1
 // Based on GOVERNANCE_SPEC.md v1.1 Section 4-8
