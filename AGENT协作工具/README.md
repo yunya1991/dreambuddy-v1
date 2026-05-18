@@ -72,8 +72,10 @@ AGENT协作工具/
 3. 门禁结果为 `SAFE` 或 `WARNING` 后，必须先在当前协作 PR 发 `STARTED` 评论，再开始修改文件
 4. `STARTED / UPDATED / BLOCKED / DONE` 仍为强制广播层，但默认按阶段广播，不要求为每个微小动作单独评论
 5. `gatekeeper_config.json` 是双方共同维护的边界协议，变更需经双方确认
-6. owner 目录内默认并行开发；白名单直接接管项允许修复方直接接手，修后广播结果
-7. Solo 拉取本目录后与 Claude Code 共同遵守
+6. 当前协作以 `7-ARTIFACT-HUB-V2` 为核心工作区，默认占用范围为 `7-ARTIFACT-HUB-V2/**`，每个 AGENT 自建 `agent/*` 分支并提独立 PR
+7. 允许少量例外文件用于支撑 `7-ARTIFACT-HUB-V2` 的 build/test/运行，但必须在 `STARTED/UPDATED` 显式声明例外范围
+8. owner 目录内默认并行开发；白名单直接接管项允许修复方直接接手，修后广播结果
+9. Solo 拉取本目录后与 Claude Code 共同遵守
 
 ## 快速使用
 
