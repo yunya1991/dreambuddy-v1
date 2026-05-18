@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import type { BoardProposal, ApprovalGate, ExecutionReview } from "./types.js";
+import type { BoardProposal, ApprovalGate, ExecutionReview, Distribution, Performance, MarketIntel } from "./types.js";
 
 export class MetaStore {
   private readonly db: DatabaseSync;
@@ -82,6 +82,45 @@ export class MetaStore {
         received_approvals_json TEXT NOT NULL DEFAULT '[]',
         status TEXT NOT NULL DEFAULT 'pending',
         decided_at TEXT
+      );
+
+
+      CREATE TABLE IF NOT EXISTS distributions (
+        distribution_id TEXT PRIMARY KEY,
+        trace_id TEXT NOT NULL,
+        artifact_id TEXT NOT NULL,
+        channel TEXT NOT NULL,
+        recipient TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        policy_version TEXT NOT NULL DEFAULT 'v0',
+        sent_at TEXT,
+        created_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS performance_records (
+        perf_id TEXT PRIMARY KEY,
+        trace_id TEXT NOT NULL,
+        workflow_id TEXT NOT NULL,
+        workflow_type TEXT NOT NULL,
+        department TEXT NOT NULL,
+        total_trades INTEGER NOT NULL DEFAULT 0,
+        win_rate REAL NOT NULL DEFAULT 0,
+        pnl REAL NOT NULL DEFAULT 0,
+        latency_ms INTEGER NOT NULL DEFAULT 0,
+        recorded_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS market_intel (
+        intel_id TEXT PRIMARY KEY,
+        trace_id TEXT NOT NULL,
+        department TEXT NOT NULL,
+        symbol TEXT NOT NULL,
+        direction TEXT NOT NULL,
+        confidence REAL NOT NULL DEFAULT 0,
+        regime TEXT NOT NULL DEFAULT '',
+        source TEXT NOT NULL DEFAULT '',
+        summary TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL
       );
 
       CREATE TABLE IF NOT EXISTS execution_reviews (
@@ -277,5 +316,49 @@ export class MetaStore {
       recommendations: r.recommendations,
       reviewed_at: r.reviewed_at,
     }));
+  }
+  addDistribution(d: Distribution): void {
+    const stmt = this.db.prepare(
+      `INSERT INTO distributions(distribution_id,trace_id,artifact_id,channel,recipient,status,policy_version,sent_at,created_at) VALUES(?,?,?,?,?,?,?,?,?)`
+    );
+    stmt.run(d.distribution_id, d.trace_id, d.artifact_id, d.channel, d.recipient, d.status, d.policy_version, d.sent_at ?? null, d.created_at);
+  }
+
+  listDistributions(traceId?: string): Distribution[] {
+    const stmt = traceId
+      ? this.db.prepare(`SELECT * FROM distributions WHERE trace_id=? ORDER BY created_at DESC`)
+      : this.db.prepare(`SELECT * FROM distributions ORDER BY created_at DESC`);
+    const rows = traceId ? (stmt.all(traceId) as any[]) : (stmt.all() as any[]);
+    return rows.map((r) => ({ distribution_id: r.distribution_id, trace_id: r.trace_id, artifact_id: r.artifact_id, channel: r.channel, recipient: r.recipient, status: r.status, policy_version: r.policy_version, sent_at: r.sent_at ?? undefined, created_at: r.created_at }));
+  }
+
+  addPerformance(p: Performance): void {
+    const stmt = this.db.prepare(
+      `INSERT INTO performance_records(perf_id,trace_id,workflow_id,workflow_type,department,total_trades,win_rate,pnl,latency_ms,recorded_at) VALUES(?,?,?,?,?,?,?,?,?,?)`
+    );
+    stmt.run(p.perf_id, p.trace_id, p.workflow_id, p.workflow_type, p.department, p.total_trades, p.win_rate, p.pnl, p.latency_ms, p.recorded_at);
+  }
+
+  listPerformance(workflowId?: string): Performance[] {
+    const stmt = workflowId
+      ? this.db.prepare(`SELECT * FROM performance_records WHERE workflow_id=? ORDER BY recorded_at DESC`)
+      : this.db.prepare(`SELECT * FROM performance_records ORDER BY recorded_at DESC`);
+    const rows = workflowId ? (stmt.all(workflowId) as any[]) : (stmt.all() as any[]);
+    return rows.map((r) => ({ perf_id: r.perf_id, trace_id: r.trace_id, workflow_id: r.workflow_id, workflow_type: r.workflow_type, department: r.department, total_trades: r.total_trades, win_rate: r.win_rate, pnl: r.pnl, latency_ms: r.latency_ms, recorded_at: r.recorded_at }));
+  }
+
+  addMarketIntel(m: MarketIntel): void {
+    const stmt = this.db.prepare(
+      `INSERT INTO market_intel(intel_id,trace_id,department,symbol,direction,confidence,regime,source,summary,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)`
+    );
+    stmt.run(m.intel_id, m.trace_id, m.department, m.symbol, m.direction, m.confidence, m.regime, m.source, m.summary, m.created_at);
+  }
+
+  listMarketIntel(symbol?: string): MarketIntel[] {
+    const stmt = symbol
+      ? this.db.prepare(`SELECT * FROM market_intel WHERE symbol=? ORDER BY created_at DESC`)
+      : this.db.prepare(`SELECT * FROM market_intel ORDER BY created_at DESC`);
+    const rows = symbol ? (stmt.all(symbol) as any[]) : (stmt.all() as any[]);
+    return rows.map((r) => ({ intel_id: r.intel_id, trace_id: r.trace_id, department: r.department, symbol: r.symbol, direction: r.direction, confidence: r.confidence, regime: r.regime, source: r.source, summary: r.summary, created_at: r.created_at }));
   }
 }
