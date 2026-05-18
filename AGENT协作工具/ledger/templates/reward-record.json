@@ -1,0 +1,9 @@
+{
+  "task_id": "task-example",
+  "reward_type": "effective_delivery",
+  "base_reward": 10,
+  "quality_multiplier": 1.0,
+  "final_reward": 10,
+  "credited_agent": "SOLO",
+  "credited_at": "1970-01-01T00:00:00Z"
+}

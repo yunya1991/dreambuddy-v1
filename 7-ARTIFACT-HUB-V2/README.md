@@ -14,22 +14,35 @@
 
 详细设计见：
 
-- [治理中枢化设计](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/docs/superpowers/specs/2026-05-16-artifact-hub-v2-governance-central-design.md)
-- [公司中枢设计](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/1-ARCHITECTURE/中台设计/COMPANY_CENTRAL_HUB.md)
-- [Ops Console 设计](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/docs/superpowers/specs/2026-05-15-artifact-hub-v2-ops-console-design.md)
-- [Ops UI 说明](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/7-ARTIFACT-HUB-V2/OPS_UI_README.md)
-- [市场化中台设计](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/7-ARTIFACT-HUB-V2/MARKET_CONSOLE_DESIGN.md)
-- [董事会总览台设计](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/7-ARTIFACT-HUB-V2/BOARD_CONSOLE_DESIGN.md)
+- [治理中枢化设计](../docs/superpowers/specs/2026-05-16-artifact-hub-v2-governance-central-design.md)
+- [公司中枢设计](../1-ARCHITECTURE/中台设计/COMPANY_CENTRAL_HUB.md)
+- [Ops UI 说明](./OPS_UI_README.md)
+- [市场化中台设计](./MARKET_CONSOLE_DESIGN.md)
+- [董事会总览台设计](./BOARD_CONSOLE_DESIGN.md)
+
+## 0. 当前实现状态
+
+下表区分“主仓当前实现”“遗留实现”和“规划目标”，避免把目标形态误写成现状。
+
+| 项目 | 状态 | 位置 / 说明 |
+|---|---|---|
+| Hub 核心服务 | 已实现 | `7-ARTIFACT-HUB-V2/src/` 下已有 `index.ts`、`artifact-store.ts`、`meta-store.ts`、`router-engine.ts`、`work-order.ts` |
+| `route/decide` / `route/execute` / `traces` / `events` | 已实现 | 属于当前 Node/TypeScript Hub 服务 |
+| 研究中台 `/feed` | 遗留实现 | 遗留代码在 `7-ARTIFACT_HUB/app/feed/`，当前主仓 `3-FRONTEND/dream-universal-gateway/src/app/` 下未合并该路由 |
+| 交易链路页 `/chain` | 遗留实现 | 遗留代码在 `7-ARTIFACT_HUB/app/chain/`，当前主仓 `3-FRONTEND/dream-universal-gateway/src/app/` 下未合并该路由 |
+| `ops-ui` 子服务 | 规划中 | 本文档将其定义为未来的 `7-ARTIFACT-HUB-V2/src/ops-ui/` 子服务；当前主仓尚无该目录 |
+| 市场化中台 | 规划中 | 目标为同仓双入口中的运营部分发入口，当前主仓尚无实现 |
+| 董事会总览台 | 规划中 | 目标为治理委员会管理视图，当前主仓尚无实现 |
 
 ## 1. 系统定位
 
 当前阶段，`7-ARTIFACT-HUB-V2` 的系统定位是：
 
-- 一个共享底层能力的中枢系统；
-- 一套代码、双中台入口；
-- 研究内容治理与市场化运营分发并存；
-- 保留现有 `/feed` 和 `/chain` 基线；
-- 用 route/trace/event/task/result/audit 统一治理 AI 黑箱。
+- 一个共享底层能力的中枢方向；
+- 当前已实现 Hub 核心服务；
+- 当前保留研究中台 `/feed` 与 `/chain` 的遗留设计基线；
+- 后续以同仓双入口方式扩展研究中台与市场化中台；
+- 用 route/trace/event/task/result/audit 逐步统一治理 AI 黑箱。
 
 ## 2. 核心治理目标
 
@@ -53,15 +66,15 @@
 
 并在其上增加由 6 位部长 Agent 组成的“六人董事会（治理委员会）”：
 
-- 处理小问题；
-- 协调中问题；
-- 将重大事项上报人工审批。
+- 作为目标组织模型中的治理委员会；
+- 规划中用于处理小问题；
+- 规划中用于协调中问题并将重大事项上报人工审批。
 
 ## 4. 双中台与链路页面
 
 ### 研究中台
 
-- 以现有 `/feed` 为基线；
+- 以遗留实现的 `/feed` 设计为基线；
 - 保留旧版产物中台的内容治理与 Feed/详情页心智。
 
 ### 市场化中台
@@ -71,14 +84,15 @@
 
 ### 交易链路监控
 
-- 以现有 `/chain` 为核心工作流监控页；
-- 保留现有交易闭环工作流；
+- 以遗留实现的 `/chain` 设计为核心工作流监控基线；
+- 保留现有交易闭环工作流设计；
 - 逐步新增基于 `6-TRADING` 的第二套交易工作流；
 - 用可视化工作流展示检测链路畅通性。
 
 ### 治理控制台
 
-- 独立入口：`ops-ui`
+- 目标形态：独立 `ops-ui` 子服务
+- 第一阶段规划技术形态：`7-ARTIFACT-HUB-V2` 包内的 Node/TypeScript 子服务，而不是独立 React 应用
 - 用于健康检查、Route Sandbox、Trace 回放、策略库、归档治理。
 
 ## 5. 单一真相源
@@ -102,14 +116,9 @@ npm run build
 node dist/index.js
 ```
 
-### Ops UI
+### 规划中的 Ops UI
 
-```bash
-cd 7-ARTIFACT-HUB-V2
-npm install
-npm run build
-npm run start:ops
-```
+当前主仓尚无 `start:ops` 入口。后续若按 `7-ARTIFACT-HUB-V2/src/ops-ui/` 子服务方案实现，再补充对应运行命令。
 
 ## 7. 核心 API
 
@@ -121,7 +130,9 @@ npm run start:ops
 - `GET /traces/:traceId`
 - `GET /events/stream?traceId=...` (SSE)
 
-### Ops UI
+### 规划中的 Ops UI
+
+当前主仓尚未落地 `ops-ui` 目录，以下接口为目标形态而非主仓现状：
 
 - `GET /`
 - `GET /ui-map`
@@ -173,12 +184,12 @@ Path: `dreambuddy/artifacts/results/result_<taskId>.json`
 
 当前已补齐：
 
-- [GOVERNANCE_SPEC.md](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/7-ARTIFACT-HUB-V2/GOVERNANCE_SPEC.md)
-- [OBJECT_MODEL.md](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/7-ARTIFACT-HUB-V2/OBJECT_MODEL.md)
-- [CHAIN_WORKFLOWS.md](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/7-ARTIFACT-HUB-V2/CHAIN_WORKFLOWS.md)
-- [OPS_UI_README.md](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/7-ARTIFACT-HUB-V2/OPS_UI_README.md)
-- [MARKET_CONSOLE_DESIGN.md](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/7-ARTIFACT-HUB-V2/MARKET_CONSOLE_DESIGN.md)
-- [BOARD_CONSOLE_DESIGN.md](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/7-ARTIFACT-HUB-V2/BOARD_CONSOLE_DESIGN.md)
+- [GOVERNANCE_SPEC.md](./GOVERNANCE_SPEC.md)
+- [OBJECT_MODEL.md](./OBJECT_MODEL.md)
+- [CHAIN_WORKFLOWS.md](./CHAIN_WORKFLOWS.md)
+- [OPS_UI_README.md](./OPS_UI_README.md)
+- [MARKET_CONSOLE_DESIGN.md](./MARKET_CONSOLE_DESIGN.md)
+- [BOARD_CONSOLE_DESIGN.md](./BOARD_CONSOLE_DESIGN.md)
 
 建议继续补齐：
 

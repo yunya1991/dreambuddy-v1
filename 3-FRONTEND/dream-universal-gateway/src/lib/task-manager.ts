@@ -15,6 +15,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as child_process from 'child_process';
 import { emitMonitorEvent } from './monitor-bus';
+import {
+  recognizeIntent,
+  routeIntent,
+  CHAIN_STEPS,
+  type IntentType,
+  type IntentRecognitionResult,
+  type RoutingDecision,
+} from './intent';
 
 function resolveRepoRoot(): string {
   const cwd = process.cwd();
@@ -50,7 +58,8 @@ const POLLER_SCRIPT = path.join(GATEWAY_DIR, 'scripts', 'task_poller.py');
 
 // 对话类意图 - 中台直接内联执行
 const CONVERSATION_INTENTS: IntentType[] = [
-  'market_query', 'deep_analysis', 'simple_qa', 'scenario_sim', 'strategy_verify', 'command'
+  'market_query', 'deep_analysis', 'simple_qa', 'scenario_sim', 'strategy_verify', 'command',
+  'credits_query', 'artifact_query', 'system_config', 'risk_alert_response',
 ];
 
 // 交易类意图 - 需用户确认执行时间
@@ -62,16 +71,13 @@ const TRADE_INTENTS: IntentType[] = ['execute_trade'];
 export type TaskStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'timeout' | 'scheduled' | 'cancelled';
 
 /**
- * 意图类型
+ * 意图类型 (re-exported from intent module)
  */
-export type IntentType =
-  | 'market_query'
-  | 'deep_analysis'
-  | 'scenario_sim'
-  | 'strategy_verify'
-  | 'execute_trade'
-  | 'simple_qa'
-  | 'command';
+export type { IntentType } from './intent';
+
+/**
+ * 思考模式
+ */
 
 /**
  * 思考模式
@@ -158,80 +164,44 @@ export function generateTaskId(): string {
 }
 
 /**
- * 意图识别（基于规则 - 与chat/route.ts对齐）
+ * 将新的 IntentRecognitionResult 转换为 TaskFile 格式 (兼容旧格式)
  */
-export function recognizeIntent(message: string, thinkingMode: ThinkingMode): TaskFile['intent'] {
-  const msg = message.toLowerCase().trim();
-
-  // 命令识别
-  if (msg.startsWith('/')) {
-    const commandMap: Record<string, IntentType> = {
-      '/行情': 'market_query',
-      '/分析': 'deep_analysis',
-      '/推演': 'scenario_sim',
-      '/验证': 'strategy_verify',
-      '/开仓': 'execute_trade',
-    };
-    for (const [cmd, intent] of Object.entries(commandMap)) {
-      if (msg.startsWith(cmd)) {
-        return { type: intent, confidence: 0.95, entities: extractEntities(msg) };
-      }
-    }
-  }
-
-  // 关键词识别
-  if (msg.includes('行情') || msg.includes('价格') || msg.includes('涨') || msg.includes('跌')) {
-    return { type: 'market_query', confidence: 0.8, entities: extractEntities(msg) };
-  }
-  if (msg.includes('分析') || msg.includes('怎么看') || msg.includes('走势')) {
-    return { type: 'deep_analysis', confidence: 0.85, entities: extractEntities(msg) };
-  }
-  if (msg.includes('推演') || msg.includes('情景') || msg.includes('如果')) {
-    return { type: 'scenario_sim', confidence: 0.8, entities: extractEntities(msg) };
-  }
-  if (msg.includes('验证') || msg.includes('回测')) {
-    return { type: 'strategy_verify', confidence: 0.8, entities: extractEntities(msg) };
-  }
-  if (msg.includes('开仓') || msg.includes('下单') || msg.includes('交易')) {
-    return { type: 'execute_trade', confidence: 0.75, entities: extractEntities(msg) };
-  }
-
-  return { type: 'simple_qa', confidence: 0.6 };
-}
-
-/**
- * 提取实体
- */
-function extractEntities(msg: string): TaskFile['intent']['entities'] {
-  const entities: TaskFile['intent']['entities'] = {};
-  const symbols = ['btc', 'eth', 'sol', 'bnb', 'xrp'];
-  for (const sym of symbols) {
-    if (msg.includes(sym)) {
-      entities.symbol = sym.toUpperCase();
-      break;
-    }
-  }
-  if (msg.includes('1小时') || msg.includes('1h')) entities.timeframe = '1h';
-  if (msg.includes('4小时') || msg.includes('4h')) entities.timeframe = '4h';
-  if (msg.includes('日线') || msg.includes('1d')) entities.timeframe = '1d';
-  return entities;
+function convertIntentToTaskFile(result: IntentRecognitionResult): TaskFile['intent'] {
+  return {
+    type: result.intent,
+    confidence: result.confidence,
+    entities: {
+      symbol: result.entities.symbol,
+      timeframe: result.entities.timeframe,
+      strategy: result.entities.strategy,
+    },
+  };
 }
 
 /**
  * 创建任务
  */
-export function createTask(params: {
+export async function createTask(params: {
   message: string;
   thinking_mode?: ThinkingMode;
   session_id?: string;
   llm_model?: string;
   intent_method?: string;
-}): TaskFile {
+}): Promise<TaskFile> {
   ensureDir(TASKS_DIR);
   ensureDir(RESULTS_DIR);
 
   const thinkingMode = params.thinking_mode || 'quick';
-  const intent = recognizeIntent(params.message, thinkingMode);
+
+  // 使用统一意图识别引擎 (LLM → rule → fallback)
+  const intentResult = await recognizeIntent(params.message, {
+    session_id: params.session_id || `sess_${Date.now()}`,
+    user_role: 'FREE', // TODO: from auth context
+    thinking_mode: thinkingMode,
+    message_history: [],
+  });
+
+  const intent = convertIntentToTaskFile(intentResult);
   const now = new Date().toISOString();
   const taskId = generateTaskId();
 
@@ -249,7 +219,7 @@ export function createTask(params: {
     metadata: {
       user_agent: 'DreamGateway/1.0',
       llm_model: params.llm_model,
-      intent_method: params.intent_method || 'rule',
+      intent_method: intentResult.method,
     },
   };
 
@@ -439,19 +409,10 @@ export function cleanupOldTasks(): number {
 }
 
 /**
- * 意图到SKILL链路映射（用于估算执行时间）
+ * 估算执行时间 (基于 CHAIN_STEPS)
  */
-export function getEstimatedTimeMs(intentType: IntentType, thinkingMode: ThinkingMode): number {
-  const timeMap: Record<IntentType, number> = {
-    'market_query': 10_000,
-    'deep_analysis': thinkingMode === 'deep' ? 120_000 : 60_000,
-    'scenario_sim': thinkingMode === 'deep' ? 180_000 : 90_000,
-    'strategy_verify': 120_000,
-    'execute_trade': 60_000,
-    'simple_qa': 15_000,
-    'command': 30_000,
-  };
-  return timeMap[intentType] || 60_000;
+export function getEstimatedTimeMs(chain: string[]): number {
+  return chain.reduce((sum, step) => sum + (CHAIN_STEPS[step]?.time_ms || 10000), 0);
 }
 
 // ============================================================
@@ -473,30 +434,23 @@ export function isTradeIntent(intentType: IntentType): boolean {
 }
 
 /**
- * 获取意图对应的SKILL链路
- */
-export function getChainForIntent(intentType: IntentType, thinkingMode: ThinkingMode): string[] {
-  const chainMap: Record<IntentType, Record<ThinkingMode, string[]>> = {
-    'market_query':    { quick: ['A6_intelligence'], deep: ['A1_research', 'A6_intelligence'] },
-    'deep_analysis':   { quick: ['A1_research', 'A2_advisor'], deep: ['A1_research', 'A2_advisor', 'A3_strategy'] },
-    'scenario_sim':    { quick: ['A3_strategy'], deep: ['A2_advisor', 'A3_strategy', 'A4_validation'] },
-    'strategy_verify': { quick: ['A4_validation'], deep: ['A3_strategy', 'A4_validation'] },
-    'execute_trade':   { quick: ['A5_execution'], deep: ['A4_validation', 'A5_execution'] },
-    'simple_qa':       { quick: ['A6_intelligence'], deep: ['A1_research', 'A6_intelligence'] },
-    'command':         { quick: ['A6_intelligence'], deep: ['A6_intelligence'] },
-  };
-  return chainMap[intentType]?.[thinkingMode] || ['A6_intelligence'];
-}
-
-/**
  * 中台内联执行对话任务（秒级响应）
  * 直接在Node.js进程中执行，无需调用外部脚本
  */
-export function executeConversationTaskInline(task: TaskFile): ResultFile {
+export async function executeConversationTaskInline(task: TaskFile): Promise<ResultFile> {
   const startTime = Date.now();
   const intentType = task.intent.type;
   const thinkingMode = task.thinking_mode;
-  const chain = getChainForIntent(intentType, thinkingMode);
+
+  // 使用智能路由获取链路
+  const routing = routeIntent(intentType, 'moderate', {
+    session_id: task.session_id,
+    user_role: 'FREE',
+    thinking_mode: thinkingMode,
+    message_history: [task.message],
+  });
+  const chain = routing.chain.length > 0 ? routing.chain : ['direct_answer'];
+
   const entities = task.intent.entities || {};
   const symbol = entities.symbol || 'BTC';
   const timeframe = entities.timeframe || '4h';
@@ -538,7 +492,7 @@ export function executeConversationTaskInline(task: TaskFile): ResultFile {
   } else if (intentType === 'strategy_verify') {
     content = generateStrategyVerifyResponse(chain);
   } else {
-    // simple_qa / command
+    // simple_qa / command / others
     content = generateSimpleQAResponse(message, chain);
   }
 
@@ -563,7 +517,7 @@ export function executeConversationTaskInline(task: TaskFile): ResultFile {
     metadata: {
       executor: 'gateway_inline_v2',
       model: task.metadata.llm_model,
-      cost_credits: calculateCredits(chain, thinkingMode),
+      cost_credits: routing.credits_cost,
     },
   };
 
@@ -578,7 +532,7 @@ export function executeConversationTaskInline(task: TaskFile): ResultFile {
   const taskPath = path.join(TASKS_DIR, `${task.task_id}.json`);
   fs.writeFileSync(taskPath, JSON.stringify(task, null, 2), 'utf-8');
 
-  console.log(`[TaskManager] Inline exec completed: ${task.task_id} (${executionTimeMs}ms)`);
+  console.log(`[TaskManager] Inline exec completed: ${task.task_id} (${executionTimeMs}ms, loop: ${routing.loop_type})`);
 
   // 📡 监控埋点: 内联执行完成
   emitMonitorEvent({
@@ -602,7 +556,13 @@ export function executeConversationTaskInline(task: TaskFile): ResultFile {
  * 交易任务不自动执行，返回确认提示让用户确定执行时间
  */
 export function generateTradePendingResult(task: TaskFile): ResultFile {
-  const chain = getChainForIntent(task.intent.type, task.thinking_mode);
+  const routing = routeIntent(task.intent.type, 'moderate', {
+    session_id: task.session_id,
+    user_role: 'FREE',
+    thinking_mode: task.thinking_mode,
+    message_history: [task.message],
+  });
+  const chain = routing.chain.length > 0 ? routing.chain : ['A4_validation', 'A5_execution', 'A9_exit'];
   const entities = task.intent.entities || {};
   const symbol = entities.symbol || 'BTC';
   const now = new Date().toISOString();
@@ -721,6 +681,12 @@ export async function triggerWorkBuddyAsync(taskId: string): Promise<void> {
     console.log(`[TaskManager] Spawned detached poller for ${taskId} (PID: ${child.pid})`);
 
     // 📡 监控埋点: 异步触发WorkBuddy
+    const routing = routeIntent(task.intent.type, 'moderate', {
+      session_id: task.session_id,
+      user_role: 'FREE',
+      thinking_mode: task.thinking_mode,
+      message_history: [task.message],
+    });
     emitMonitorEvent({
       trace_id: taskId,
       uid: task.session_id,
@@ -729,7 +695,7 @@ export async function triggerWorkBuddyAsync(taskId: string): Promise<void> {
       status: 'processing',
       intent: task.intent.type,
       thinking_mode: task.thinking_mode,
-      chain: getChainForIntent(task.intent.type, task.thinking_mode),
+      chain: routing.chain,
     });
   } catch (error) {
     console.error(`[TaskManager] Spawn failed for ${taskId}:`, error);
@@ -761,16 +727,24 @@ export async function triggerWorkBuddyAsync(taskId: string): Promise<void> {
  * - 对话任务：内联执行，同步返回结果
  * - 交易任务：返回待确认状态
  */
-export function createAndExecuteTask(params: {
+export async function createAndExecuteTask(params: {
   message: string;
   thinking_mode?: ThinkingMode;
   session_id?: string;
   llm_model?: string;
   intent_method?: string;
-}): { task: TaskFile; result: ResultFile | null; needAsync: boolean } {
-  // 1. 创建任务文件
-  const task = createTask(params);
+}): Promise<{ task: TaskFile; result: ResultFile | null; needAsync: boolean }> {
+  // 1. 创建任务文件 (now async due to intent recognition)
+  const task = await createTask(params);
   const intentType = task.intent.type;
+
+  // 获取智能路由
+  const routing = routeIntent(intentType, 'moderate', {
+    session_id: task.session_id,
+    user_role: 'FREE',
+    thinking_mode: task.thinking_mode,
+    message_history: [params.message],
+  });
 
   // 📡 监控埋点: 任务创建
   emitMonitorEvent({
@@ -781,13 +755,13 @@ export function createAndExecuteTask(params: {
     status: 'received',
     intent: intentType,
     thinking_mode: task.thinking_mode,
-    chain: getChainForIntent(intentType, task.thinking_mode),
+    chain: routing.chain,
     message_preview: params.message.slice(0, 50),
   });
 
   // 2. 对话任务 → 内联执行，同步返回结果
   if (isConversationIntent(intentType)) {
-    const result = executeConversationTaskInline(task);
+    const result = await executeConversationTaskInline(task);
     return { task, result, needAsync: false };
   }
 
@@ -938,19 +912,3 @@ function generateSimpleQAResponse(message: string, chain: string[]): string {
 链路: ${chain.join(' → ')}`;
 }
 
-/**
- * 计算积分消耗
- */
-function calculateCredits(chain: string[], thinkingMode: ThinkingMode): number {
-  const base: Record<string, number> = {
-    'A1_research': 50,
-    'A2_advisor': 80,
-    'A3_strategy': 100,
-    'A4_validation': 120,
-    'A5_execution': 150,
-    'A6_intelligence': 30,
-  };
-  let total = chain.reduce((sum, s) => sum + (base[s] || 50), 0);
-  if (thinkingMode === 'deep') total = Math.floor(total * 1.5);
-  return total;
-}

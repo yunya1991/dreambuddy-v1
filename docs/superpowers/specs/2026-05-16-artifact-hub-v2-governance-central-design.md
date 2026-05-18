@@ -3,7 +3,7 @@
 > 仓库：`/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1`  
 > 版本：v1（Governance Central Design）  
 > 日期：2026-05-16  
-> 状态：草案  
+> 状态：v1 候选稿  
 > 目标：把 `7-ARTIFACT-HUB-V2` 从“产物中台 + 路由服务”升级为“公司治理架构驱动的 AI 中枢”。
 
 ## 0. 设计背景
@@ -14,7 +14,7 @@
 - 以 `dreambuddy/meta/artifact_hub.sqlite` 为元数据库。
 - 通过 `tasks/` 与 `results/` 目录对接生产端。
 - 提供 `route/decide`、`route/execute`、`traces/:traceId`、`events/stream` 等路由与追踪能力。
-- 已落地独立 `ops-ui`，用于健康检查、路由测试、策略库与统计聚合。
+- 已形成 `ops-ui` 方向性原型设计，但该子服务尚未合并进当前主仓 `7-ARTIFACT-HUB-V2/src/`。
 
 但当前文档和架构表达仍偏向“服务设计视角”，还没有把它正式定义为：
 
@@ -26,6 +26,23 @@
 - 解决 AI 的决策黑箱、执行黑箱、分发黑箱、审计黑箱。
 
 本设计文档用于补齐这部分顶层设计。
+
+## 0.1 当前实现状态
+
+为避免把“目标形态”误写成“主仓现状”，本文件统一采用以下状态定义：
+
+- `已实现`：当前主仓代码已存在；
+- `遗留实现`：存在于旧版 `7-ARTIFACT_HUB`，但尚未合并到当前主仓前端主线；
+- `规划中`：文档目标，当前主仓未实现。
+
+| 项目 | 状态 | 说明 |
+|---|---|---|
+| Hub 核心 API | 已实现 | 当前 `7-ARTIFACT-HUB-V2/src/` 已有 route / trace / event / task-result 能力 |
+| 研究中台 `/feed` | 遗留实现 | 遗留代码位于 `7-ARTIFACT_HUB/app/feed/`，当前主仓前端主线未合并 |
+| 交易链路页 `/chain` | 遗留实现 | 遗留代码位于 `7-ARTIFACT_HUB/app/chain/`，当前主仓前端主线未合并 |
+| `ops-ui` | 规划中 | 目标物理位置是 `7-ARTIFACT-HUB-V2/src/ops-ui/` 子服务；当前主仓尚无该目录 |
+| 市场化中台 | 规划中 | 目标为同仓双入口中的运营分发入口 |
+| 董事会总览台 | 规划中 | 目标为治理委员会联合管理视图 |
 
 ## 1. 核心定位
 
@@ -57,6 +74,26 @@
 - 让 AI 做出的内容分发可控制；
 - 让整条链路可审计、可回放、可问责；
 - 让系统内部存在持续优化和自我进化的动力。
+
+## 1.3 与 `2-GOVERNANCE/` 的关系
+
+本设计文档不是重写一套独立治理体系，也不是替代 `2-GOVERNANCE/`。
+
+关系定义如下：
+
+- `2-GOVERNANCE/`
+  - 上位治理规则来源；
+  - 负责治理章程、审计、合规、秘书与门禁体系；
+- `7-ARTIFACT-HUB-V2/GOVERNANCE_SPEC.md`
+  - `7-ARTIFACT-HUB-V2` 作为公司中枢时的落地治理规范；
+  - 只定义中枢与 Hub 侧如何承接、执行、记录这些治理要求。
+
+因此，后续任何 Hub 级治理实现，都应显式参考：
+
+- `2-GOVERNANCE/GOVERNANCE_CHARTER.md`
+- `2-GOVERNANCE/GOVERNANCE_SYSTEM.md`
+- `2-GOVERNANCE/AUDIT_LOGS.md`
+- `2-GOVERNANCE/COMPLIANCE_RULES.md`
 
 ## 2. 四类黑箱治理目标
 
@@ -111,44 +148,46 @@
 
 ### 3.2 各部门职责
 
+在目标组织模型中，各部门拟承担如下职责：
+
 #### 研究部
 
-- 负责内容研究中台；
-- 负责研究产物、知识沉淀、策略前置分析；
+- 拟负责内容研究中台；
+- 拟负责研究产物、知识沉淀、策略前置分析；
 - 为交易部、运营部、治理部提供研究依据。
 
 #### 交易部
 
-- 负责交易闭环执行；
-- 负责 `/chain` 链路监控；
-- 负责保留现有交易工作流；
-- 负责新增基于 `6-TRADING` 的第二套交易工作流；
-- 对盈亏表现、异常链路和执行稳定性负责。
+- 拟负责交易闭环执行；
+- 拟负责 `/chain` 链路监控；
+- 拟负责保留现有交易工作流；
+- 拟负责新增基于 `6-TRADING` 的第二套交易工作流；
+- 目标上对盈亏表现、异常链路和执行稳定性负责。
 
 #### 治理部
 
-- 负责 AI 黑箱治理；
-- 负责决策解释、执行追踪、风险控制、审计回放；
-- 负责路由规则、门禁、审批与回滚策略。
+- 拟负责 AI 黑箱治理；
+- 拟负责决策解释、执行追踪、风险控制、审计回放；
+- 拟负责路由规则、门禁、审批与回滚策略。
 
 #### 运营部
 
-- 负责市场化中台；
-- 负责内容路由、用户分层、推送分发、投放管理；
-- 负责 TG、Twitter 等渠道运营与用户引导。
+- 拟负责市场化中台；
+- 拟负责内容路由、用户分层、推送分发、投放管理；
+- 拟负责 TG、Twitter 等渠道运营与用户引导。
 
 #### HR
 
-- 负责绩效评估、人力招聘、部门优化；
-- 负责对交易系统盈亏、运营资源消耗与营收做绩效评估；
-- 负责发现部门低效、提出组织优化建议。
+- 拟负责绩效评估、人力招聘、部门优化；
+- 拟负责对交易系统盈亏、运营资源消耗与营收做绩效评估；
+- 拟负责发现部门低效、提出组织优化建议。
 
 #### 市场部
 
-- 负责外部竞争情报与市场调研；
-- 负责关注 GitHub 同赛道热门项目、热门交易策略、热门 KOL、热门币种；
-- 把外部机会与威胁输入研究部、交易部与运营部；
-- 形成系统自我进化的外部驱动。
+- 拟负责外部竞争情报与市场调研；
+- 拟负责关注 GitHub 同赛道热门项目、热门交易策略、热门 KOL、热门币种；
+- 拟把外部机会与威胁输入研究部、交易部与运营部；
+- 作为系统自我进化的外部驱动之一。
 
 ### 3.3 六人董事会（治理委员会）
 
@@ -161,9 +200,9 @@
 - HR 部长 Agent
 - 市场部长 Agent
 
-这 6 位部长 Agent 组成“六人董事会（治理委员会）”。
+在目标组织模型中，这 6 位部长 Agent 将组成“六人董事会（治理委员会）”。
 
-其职责是：
+其规划职责是：
 
 - 监督部门目标完成情况；
 - 处理小问题；
@@ -178,9 +217,9 @@
 治理分级如下：
 
 - `L1 小问题`
-  - 部长 Agent 可直接处置；
+  - 目标机制下，拟允许部长 Agent 直接处置；
 - `L2 中问题`
-  - 董事会讨论并形成联合建议；
+  - 目标机制下，拟进入董事会讨论环节，并输出联合建议；
 - `L3 重大事项`
   - 必须上报人工审批，不得自动执行最终动作。
 
@@ -194,7 +233,7 @@
 
 ### 4.1 内部研究中台
 
-内部研究中台以现有 `http://localhost:3456/feed` 为基线。
+内部研究中台以遗留 `/feed` 设计为基线。
 
 必须保留旧中台的核心价值：
 
@@ -244,6 +283,13 @@
 - 两个页面入口；
 - 两个业务视角。
 
+第一阶段推荐的技术实现路径是：
+
+- 研究中台与市场化中台优先落在同一前端主线中；
+- 通过新增路由分组或入口页面实现“双入口”；
+- 共享同一套 Hub、Meta、Artifacts、Route / Trace / Event 底层能力；
+- 当前文档只定义方向，不假设市场化中台入口已存在。
+
 共享底层包括：
 
 - `dreambuddy/artifacts`
@@ -255,7 +301,7 @@
 
 ### 5.1 保留现有工作流
 
-`http://localhost:3456/chain` 是交易闭环链路监控页，必须保留。
+遗留 `/chain` 设计是交易闭环链路监控基线，必须保留其业务心智。
 
 它不是普通辅助页，而是：
 
@@ -295,188 +341,44 @@
 
 ## 6. 治理对象模型
 
-这套系统统一围绕以下治理对象建模：
+本设计文档不再在入口层展开所有对象字段细节，统一收口到专项文档：
 
-- `Department`
-- `Intent`
-- `Decision`
-- `Execution`
-- `Artifact`
-- `Distribution`
-- `Audit`
-- `Performance`
-- `MarketIntel`
-- `BoardProposal`
-- `ApprovalGate`
+- `7-ARTIFACT-HUB-V2/OBJECT_MODEL.md`
 
-### 6.1 Department
+当前这里只保留分阶段结论：
 
-表示部门、部门职责与归属。
+- `Phase 1`
+  - 先统一 `Department`、`Intent`、`Decision`、`Execution`、`Artifact`、`Audit`
+- `Phase 2`
+  - 再接入 `Distribution`、`Performance`、`MarketIntel`
+- `Phase 3`
+  - 最后接入 `MinisterAgent`、`BoardProposal`、`ApprovalGate`
 
-关键字段示例：
+这样做的原因是：
 
-- `department_id`
-- `name`
-- `owner_agent`
-- `responsibility_scope`
-- `kpi_definition`
-
-### 6.2 Intent
-
-表示输入目标。
-
-关键字段示例：
-
-- `intent_id`
-- `source`
-- `actor`
-- `payload`
-- `constraints`
-- `priority`
-
-### 6.3 Decision
-
-表示 AI 决策与路由解释。
-
-关键字段示例：
-
-- `decision_id`
-- `trace_id`
-- `policy_version`
-- `reason`
-- `selected_route`
-- `evidence_refs`
-
-### 6.4 Execution
-
-表示实际执行链路。
-
-关键字段示例：
-
-- `execution_id`
-- `trace_id`
-- `workflow_id`
-- `workflow_type`
-- `nodes`
-- `tasks`
-- `results`
-- `status`
-
-### 6.5 Artifact
-
-表示研究产物、策略产物、运营产物、审计产物。
-
-关键字段示例：
-
-- `artifact_id`
-- `department`
-- `category`
-- `type`
-- `chain_phase`
-- `workflow_id`
-- `trace_id`
-- `status`
-
-### 6.6 Distribution
-
-表示分发与投放动作。
-
-关键字段示例：
-
-- `distribution_id`
-- `artifact_id`
-- `target_segment`
-- `channel`
-- `delivery_policy`
-- `result`
-
-### 6.7 Audit
-
-表示审计与回放对象。
-
-关键字段示例：
-
-- `trace_id`
-- `events`
-- `decision_snapshot`
-- `execution_snapshot`
-- `distribution_snapshot`
-- `review_notes`
-
-### 6.8 Performance
-
-表示绩效与部门健康。
-
-关键字段示例：
-
-- `performance_id`
-- `department`
-- `period`
-- `kpi_name`
-- `value`
-- `status`
-
-### 6.9 MarketIntel
-
-表示外部市场与竞争情报。
-
-关键字段示例：
-
-- `intel_id`
-- `source_type`
-- `topic`
-- `symbol`
-- `priority`
-- `forward_to_department`
-
-### 6.10 BoardProposal
-
-表示部长 Agent 或董事会提交的治理议案。
-
-关键字段示例：
-
-- `proposal_id`
-- `source_department`
-- `initiator_agent`
-- `decision_level`
-- `problem_summary`
-- `recommended_action`
-- `rollback_plan`
-- `approval_status`
+- 当前代码已有较强映射的主要是 `Artifact`、`Audit`、`Decision`、`Execution`
+- 其余对象仍应保持职责定义，避免过早进入完整字段设计
+- 入口文档优先承担定位、边界、页面与专项文档索引职责
 
 ## 7. 页面结构
 
 系统页面入口最终应提升为“公司中枢”结构：
 
-- 公司中枢首页
-- 研究中台
-- 交易链路监控 `/chain`
-- 治理控制台 `/ops`
-- 市场化中台
-- HR 绩效与组织优化台
-- 市场情报与外部竞争台
-- 董事会总览台
+- 公司中枢首页：规划中
+- 研究中台：以遗留 `/feed` 为设计基线
+- 交易链路监控 `/chain`：以遗留 `/chain` 为设计基线
+- 治理控制台 `/ops`：规划中的 `ops-ui` 子服务
+- 市场化中台：规划中
+- HR 绩效与组织优化台：规划中
+- 市场情报与外部竞争台：规划中
+- 董事会总览台：规划中
 
-### 7.1 公司中枢首页
+页面细节不再在本入口文档展开，统一由专项文档承接：
 
-用于总览：
-
-- 六部门健康度；
-- 两套交易工作流状态；
-- AI 黑箱治理总览；
-- 董事会议案区；
-- 人工审批待办区；
-- 系统进化信号区。
-
-### 7.2 董事会总览台
-
-用于总览：
-
-- 六部门状态；
-- 跨部门问题；
-- 已自主处理事项；
-- 待会签中问题；
-- 待人工审批重大事项。
+- `7-ARTIFACT-HUB-V2/OPS_UI_README.md`
+- `7-ARTIFACT-HUB-V2/MARKET_CONSOLE_DESIGN.md`
+- `7-ARTIFACT-HUB-V2/BOARD_CONSOLE_DESIGN.md`
+- `7-ARTIFACT-HUB-V2/CHAIN_WORKFLOWS.md`
 
 ## 8. 数据与契约
 
@@ -520,6 +422,9 @@
 本设计文档不是替代以下文档，而是作为它们的上位统一设计：
 
 - `7-ARTIFACT-HUB-V2/README.md`
+- `2-GOVERNANCE/GOVERNANCE_CHARTER.md`
+- `2-GOVERNANCE/GOVERNANCE_SYSTEM.md`
+- `2-GOVERNANCE/AUDIT_LOGS.md`
 - `docs/superpowers/specs/2026-05-15-artifact-hub-v2-ops-console-design.md`
 - `1-ARCHITECTURE/README.md`
 - `1-ARCHITECTURE/中台设计/PRODUCT_HUB.md`

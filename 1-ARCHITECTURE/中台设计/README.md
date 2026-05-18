@@ -76,8 +76,8 @@
 - 正在升级为公司中枢的共享治理底座
 
 **核心文件**:
-- `~/.workbuddy/skills/artifact-alignment-manager/`
-- `~/.workbuddy/artifacts/` - 产物存储
+- `7-ARTIFACT_HUB/artifact-alignment-manager/`（遗留路径，待迁移）
+- `dreambuddy/artifacts/` - 产物存储
 - `./COMPANY_CENTRAL_HUB.md` - 公司中枢设计
 
 ### 网关中台 (Gateway Hub)
@@ -113,7 +113,7 @@
 - [SKILL索引](../工作索引/SKILL_INDEX.md)
 - [部门矩阵](../工作索引/DEPARTMENT_MATRIX.md)
 - [公司中枢设计](./COMPANY_CENTRAL_HUB.md)
-- [治理中枢化设计](file:///Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/docs/superpowers/specs/2026-05-16-artifact-hub-v2-governance-central-design.md)
+- [治理中枢化设计](../../docs/superpowers/specs/2026-05-16-artifact-hub-v2-governance-central-design.md)
 
 ---
 
