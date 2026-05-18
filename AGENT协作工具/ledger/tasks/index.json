@@ -1,14 +1,12 @@
 {
   "version": 1,
-  "generated_at": "2026-05-18T21:40:00.000Z",
+  "generated_at": "2026-05-18T21:45:00.000Z",
   "open_tasks": [
     "task-ahv2-impl-20260518-root-0",
     "task-ahv2-impl-20260518-chain-dual-3",
     "task-ahv2-impl-20260518-chain-wf-field-3a",
     "task-ahv2-impl-20260518-market-ui-4",
     "task-ahv2-impl-20260518-board-ui-5",
-    "task-ahv2-impl-20260518-board-approval-5b",
-    "task-ahv2-impl-20260518-board-review-5c",
     "task-ahv2-impl-20260518-phase2-obj-6",
     "task-ahv2-impl-20260518-dist-obj-6a",
     "task-ahv2-impl-20260518-perf-obj-6b",
@@ -1277,7 +1275,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "accepted",
+      "status": "ledgered",
       "depends_on": [
         "task-ahv2-impl-20260518-board-ui-5"
       ],
@@ -1297,11 +1295,16 @@
       "validation_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/59#issuecomment-4479377286",
       "score": 96,
       "reward": 1.2,
-      "final_credit_agent": "",
-      "archived_at": "",
+      "final_credit_agent": "Claude Code (Developer AGENT)",
+      "archived_at": "2026-05-18T21:45:00.000Z",
       "knowledge_synced_at": "",
-      "next_required_action": "governance: merge PR #59",
-      "governance_closure": {}
+      "next_required_action": "ledgered — no further action required",
+      "governance_closure": {
+        "merge_commit": "5250fc1b37d1078bb7f846c04726d4230ea0d10d",
+        "merged_at": "2026-05-18T21:45:00.000Z",
+        "merged_by": "Governance AGENT",
+        "branch_deleted": true
+      }
     },
     {
       "goal_id": "ahv2-impl-20260518",
@@ -1311,7 +1314,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "accepted",
+      "status": "ledgered",
       "depends_on": [
         "task-ahv2-impl-20260518-board-ui-5"
       ],
@@ -1331,11 +1334,16 @@
       "validation_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/59#issuecomment-4479377286",
       "score": 96,
       "reward": 1.2,
-      "final_credit_agent": "",
-      "archived_at": "",
+      "final_credit_agent": "Claude Code (Developer AGENT)",
+      "archived_at": "2026-05-18T21:45:00.000Z",
       "knowledge_synced_at": "",
-      "next_required_action": "governance: merge PR #59",
-      "governance_closure": {}
+      "next_required_action": "ledgered — no further action required",
+      "governance_closure": {
+        "merge_commit": "5250fc1b37d1078bb7f846c04726d4230ea0d10d",
+        "merged_at": "2026-05-18T21:45:00.000Z",
+        "merged_by": "Governance AGENT",
+        "branch_deleted": true
+      }
     },
     {
       "goal_id": "ahv2-impl-20260518",
