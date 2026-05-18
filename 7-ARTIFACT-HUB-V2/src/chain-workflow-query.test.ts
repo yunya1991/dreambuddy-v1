@@ -127,3 +127,47 @@ test("GET /chain/artifacts?workflow_type=trading_v2 filters correctly", async ()
 
   fs.rmSync(root, { recursive: true, force: true });
 });
+
+test("GET /chain/reviews returns all reviews when no trace_id", async () => {
+  const os = await import("node:os");
+  const path = await import("node:path");
+  const fs = await import("node:fs");
+  const { MetaStore } = await import("./meta-store.js");
+  const { MinisterAgent } = await import("./types.js");
+
+  const dir = fs.default.mkdtempSync(path.default.join(os.default.tmpdir(), "reviews-test-"));
+  const store = new MetaStore(dir);
+
+  store.addExecutionReview({
+    review_id: "rev-r1",
+    trace_id: "trace-route-1",
+    execution_id: "exec-1",
+    reviewer_agent: MinisterAgent.GOVERNANCE,
+    verdict: "pass",
+    findings: "All good",
+    recommendations: "None",
+    reviewed_at: "2026-05-18T10:00:00Z",
+  });
+  store.addExecutionReview({
+    review_id: "rev-r2",
+    trace_id: "trace-route-2",
+    execution_id: "exec-2",
+    reviewer_agent: MinisterAgent.OPERATIONS,
+    verdict: "escalate",
+    findings: "Anomaly",
+    recommendations: "Escalate",
+    reviewed_at: "2026-05-18T11:00:00Z",
+  });
+
+  const all = store.listExecutionReviews();
+  assert.equal(all.length, 2);
+
+  const filtered = store.listExecutionReviews("trace-route-1");
+  assert.equal(filtered.length, 1);
+  assert.equal(filtered[0].verdict, "pass");
+
+  const empty = store.listExecutionReviews("trace-unknown");
+  assert.deepEqual(empty, []);
+
+  fs.default.rmSync(dir, { recursive: true, force: true });
+});
