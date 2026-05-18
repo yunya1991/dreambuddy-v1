@@ -9,6 +9,7 @@ import { MetaStore } from "./meta-store.js";
 import { RouterEngine } from "./router-engine.js";
 import { WorkOrderManager } from "./work-order.js";
 import type { Intent } from "./types.js";
+import { groupByWorkflowType, normalizeWorkflowType } from "./chain-workflow-guard.js";
 
 const repoRoot = resolveRepoRoot();
 const config = loadConfig(repoRoot);
@@ -112,7 +113,43 @@ const server = createServer(async (req, res) => {
     return sendJson(res, 200, { trace_id: traceId, decision, events: ev });
   }
 
+
+  if (url.pathname === "/chain/artifacts") {
+    if (req.method !== "GET") return methodNotAllowed(res);
+    const workflowTypeParam = url.searchParams.get("workflow_type") ?? undefined;
+    const allArtifacts = store.getArtifactsIndex();
+    const groups = groupByWorkflowType(
+      allArtifacts.map(a => ({
+        artifact_id: a.id,
+        title: a.title,
+        department: a.department,
+        category: a.id.split("/")[0] ?? "",
+        type: a.type,
+        chain_phase: a.chain_phase,
+        workflow_id: "",
+        workflow_type: normalizeWorkflowType(a.workflow_type),
+        trace_id: "",
+        status: a.status,
+        relative_path: a.url,
+        created_at: a.date,
+      }))
+    );
+    if (workflowTypeParam === "legacy_chain" || workflowTypeParam === "trading_v2") {
+      return sendJson(res, 200, {
+        workflow_type: workflowTypeParam,
+        items: groups[workflowTypeParam],
+        total: groups[workflowTypeParam].length,
+      });
+    }
+    return sendJson(res, 200, {
+      legacy_chain: groups.legacy_chain,
+      trading_v2: groups.trading_v2,
+      total: allArtifacts.length,
+    });
+  }
+
   return notFound(res);
 });
 
 server.listen(config.server.port, config.server.host);
+
