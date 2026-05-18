@@ -292,3 +292,67 @@ test("ops-ui /api/ops/health includes typed hub_health HealthViewModel when hub 
     await gatewayListener.close();
   }
 });
+
+test("ops-ui /api/ops/strategy-library returns strategy list via HTTP", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "artifact-hub-strategy-http-"));
+  const strategyDir = path.join(root, "strategy");
+  fs.mkdirSync(strategyDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(strategyDir, "alpha.md"),
+    ["---", "title: Alpha Strategy", "---", "", "body"].join("\n"),
+    "utf-8"
+  );
+  fs.writeFileSync(
+    path.join(strategyDir, "beta.md"),
+    ["# Beta Strategy", "", "body"].join("\n"),
+    "utf-8"
+  );
+
+  const prevArtifactsRoot = process.env.ARTIFACTS_ROOT;
+  process.env.ARTIFACTS_ROOT = root;
+  const opsListener = await listen(createOpsServer());
+  try {
+    const res = await fetch(new URL("/api/ops/strategy-library", opsListener.url));
+    assert.equal(res.status, 200);
+    const body = (await res.json()) as { total: number; items: Array<{ id: string; title: string }> };
+    assert.equal(body.total, 2);
+    assert.equal(body.items.length, 2);
+    const titles = body.items.map((x) => x.title).sort();
+    assert.deepEqual(titles, ["Alpha Strategy", "Beta Strategy"]);
+  } finally {
+    process.env.ARTIFACTS_ROOT = prevArtifactsRoot;
+    await opsListener.close();
+  }
+});
+
+test("ops-ui /api/ops/strategy-library/file returns doc content by id", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "artifact-hub-strategy-file-http-"));
+  const strategyDir = path.join(root, "strategy");
+  fs.mkdirSync(strategyDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(strategyDir, "gamma.md"),
+    ["---", "title: Gamma Strategy", "---", "", "# Gamma", "Content here."].join("\n"),
+    "utf-8"
+  );
+
+  const prevArtifactsRoot = process.env.ARTIFACTS_ROOT;
+  process.env.ARTIFACTS_ROOT = root;
+  const opsListener = await listen(createOpsServer());
+  try {
+    const res = await fetch(new URL("/api/ops/strategy-library/file?id=gamma.md", opsListener.url));
+    assert.equal(res.status, 200);
+    const body = (await res.json()) as { ok: boolean; doc: { id: string; content: string } };
+    assert.equal(body.ok, true);
+    assert.equal(body.doc.id, "gamma.md");
+    assert.ok(body.doc.content.includes("Gamma"));
+
+    const missingRes = await fetch(new URL("/api/ops/strategy-library/file?id=notexist.md", opsListener.url));
+    assert.equal(missingRes.status, 404);
+
+    const noIdRes = await fetch(new URL("/api/ops/strategy-library/file", opsListener.url));
+    assert.equal(noIdRes.status, 400);
+  } finally {
+    process.env.ARTIFACTS_ROOT = prevArtifactsRoot;
+    await opsListener.close();
+  }
+});
