@@ -1,8 +1,9 @@
 {
   "version": 1,
-  "generated_at": "2026-05-18T11:02:00Z",
+  "generated_at": "2026-05-18T11:04:00Z",
   "open_tasks": [
-    "task-pr9-central-hub-v2-0"
+    "task-pr9-central-hub-v2-0",
+    "task-pr9-ahv2-chain-workflows-plan-1"
   ],
   "tasks": [
     {
@@ -151,7 +152,7 @@
       "source_type": "derived",
       "task_type": "shared-sync",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-pr9-ahv2-object-model-align-1"
       ],
@@ -176,7 +177,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "governance+validator: publish DESIGN_REVIEW evidence before enabling shared-sync changes",
+      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement chain workflow compatibility guardrails",
       "governance_closure": {
         "archive_summary": "",
         "index_updates": [],
