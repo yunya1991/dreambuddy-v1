@@ -1,12 +1,8 @@
 {
   "version": 1,
-  "generated_at": "2026-05-18T16:15:00.000Z",
+  "generated_at": "2026-05-18T17:00:00.000Z",
   "open_tasks": [
     "task-ahv2-impl-20260518-root-0",
-    "task-ahv2-impl-20260518-ops-ui-skeleton-1a",
-    "task-ahv2-impl-20260518-ops-ui-health-api-1b",
-    "task-ahv2-impl-20260518-ops-ui-queue-api-1c",
-    "task-ahv2-impl-20260518-ops-ui-proxy-api-1d",
     "task-ahv2-impl-20260518-ops-ui-web-2",
     "task-ahv2-impl-20260518-ops-ui-console-2a",
     "task-ahv2-impl-20260518-ops-ui-map-2b",
@@ -635,7 +631,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "ready",
+      "status": "ledgered",
       "depends_on": [
         "task-ahv2-impl-20260518-ops-ui-svc-1"
       ],
@@ -648,18 +644,23 @@
       "governance_agent": "Governance AGENT",
       "exclusive_owner_agent": "",
       "exclusive_until": "",
-      "branch": "",
+      "branch": "agent/claude/ahv2-impl-ops-ui-phase1-leaves",
       "workspace_path": "7-ARTIFACT-HUB-V2",
-      "claim_pointer": "",
-      "delivery_pointer": "",
-      "validation_pointer": "",
-      "score": 0,
-      "reward": 1,
-      "final_credit_agent": "",
-      "archived_at": "",
+      "claim_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/51#issuecomment-4478856805",
+      "delivery_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/51#issuecomment-4478861507",
+      "validation_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/51#issuecomment-4478874780",
+      "score": 97,
+      "reward": 1.2,
+      "final_credit_agent": "Claude Code (Developer AGENT)",
+      "archived_at": "2026-05-18T17:00:00.000Z",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: claim task, post STARTED, implement",
-      "governance_closure": {}
+      "next_required_action": "ledgered — no further action required",
+      "governance_closure": {
+        "merge_commit": "251b5746e14a019adf5f498810a299bb76e8cc60",
+        "merged_at": "2026-05-18T17:00:00.000Z",
+        "merged_by": "Governance AGENT",
+        "branch_deleted": true
+      }
     },
     {
       "goal_id": "ahv2-impl-20260518",
@@ -669,7 +670,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "ready",
+      "status": "ledgered",
       "depends_on": [
         "task-ahv2-impl-20260518-ops-ui-skeleton-1a"
       ],
@@ -682,18 +683,23 @@
       "governance_agent": "Governance AGENT",
       "exclusive_owner_agent": "",
       "exclusive_until": "",
-      "branch": "",
+      "branch": "agent/claude/ahv2-impl-ops-ui-phase1-leaves",
       "workspace_path": "7-ARTIFACT-HUB-V2",
-      "claim_pointer": "",
-      "delivery_pointer": "",
-      "validation_pointer": "",
-      "score": 0,
-      "reward": 1,
-      "final_credit_agent": "",
-      "archived_at": "",
+      "claim_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/51#issuecomment-4478856805",
+      "delivery_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/51#issuecomment-4478861507",
+      "validation_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/51#issuecomment-4478874780",
+      "score": 97,
+      "reward": 1.2,
+      "final_credit_agent": "Claude Code (Developer AGENT)",
+      "archived_at": "2026-05-18T17:00:00.000Z",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: claim task, post STARTED, implement",
-      "governance_closure": {}
+      "next_required_action": "ledgered — no further action required",
+      "governance_closure": {
+        "merge_commit": "251b5746e14a019adf5f498810a299bb76e8cc60",
+        "merged_at": "2026-05-18T17:00:00.000Z",
+        "merged_by": "Governance AGENT",
+        "branch_deleted": true
+      }
     },
     {
       "goal_id": "ahv2-impl-20260518",
@@ -703,7 +709,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "ready",
+      "status": "ledgered",
       "depends_on": [
         "task-ahv2-impl-20260518-ops-ui-skeleton-1a"
       ],
@@ -716,18 +722,23 @@
       "governance_agent": "Governance AGENT",
       "exclusive_owner_agent": "",
       "exclusive_until": "",
-      "branch": "",
+      "branch": "agent/claude/ahv2-impl-ops-ui-phase1-leaves",
       "workspace_path": "7-ARTIFACT-HUB-V2",
-      "claim_pointer": "",
-      "delivery_pointer": "",
-      "validation_pointer": "",
-      "score": 0,
-      "reward": 1,
-      "final_credit_agent": "",
-      "archived_at": "",
+      "claim_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/51#issuecomment-4478856805",
+      "delivery_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/51#issuecomment-4478861507",
+      "validation_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/51#issuecomment-4478874780",
+      "score": 97,
+      "reward": 1.2,
+      "final_credit_agent": "Claude Code (Developer AGENT)",
+      "archived_at": "2026-05-18T17:00:00.000Z",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: claim task, post STARTED, implement",
-      "governance_closure": {}
+      "next_required_action": "ledgered — no further action required",
+      "governance_closure": {
+        "merge_commit": "251b5746e14a019adf5f498810a299bb76e8cc60",
+        "merged_at": "2026-05-18T17:00:00.000Z",
+        "merged_by": "Governance AGENT",
+        "branch_deleted": true
+      }
     },
     {
       "goal_id": "ahv2-impl-20260518",
@@ -737,7 +748,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "ready",
+      "status": "ledgered",
       "depends_on": [
         "task-ahv2-impl-20260518-ops-ui-skeleton-1a"
       ],
@@ -752,18 +763,23 @@
       "governance_agent": "Governance AGENT",
       "exclusive_owner_agent": "",
       "exclusive_until": "",
-      "branch": "",
+      "branch": "agent/claude/ahv2-impl-ops-ui-phase1-leaves",
       "workspace_path": "7-ARTIFACT-HUB-V2",
-      "claim_pointer": "",
-      "delivery_pointer": "",
-      "validation_pointer": "",
-      "score": 0,
-      "reward": 1,
-      "final_credit_agent": "",
-      "archived_at": "",
+      "claim_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/51#issuecomment-4478856805",
+      "delivery_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/51#issuecomment-4478861507",
+      "validation_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/51#issuecomment-4478874780",
+      "score": 97,
+      "reward": 1.2,
+      "final_credit_agent": "Claude Code (Developer AGENT)",
+      "archived_at": "2026-05-18T17:00:00.000Z",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: claim task, post STARTED, implement",
-      "governance_closure": {}
+      "next_required_action": "ledgered — no further action required",
+      "governance_closure": {
+        "merge_commit": "251b5746e14a019adf5f498810a299bb76e8cc60",
+        "merged_at": "2026-05-18T17:00:00.000Z",
+        "merged_by": "Governance AGENT",
+        "branch_deleted": true
+      }
     },
     {
       "goal_id": "ahv2-impl-20260518",
@@ -809,7 +825,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-ahv2-impl-20260518-ops-ui-web-2"
       ],
@@ -832,7 +848,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
+      "next_required_action": "developer: claim task, post STARTED, implement",
       "governance_closure": {}
     },
     {
@@ -843,7 +859,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-ahv2-impl-20260518-ops-ui-web-2"
       ],
@@ -866,7 +882,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
+      "next_required_action": "developer: claim task, post STARTED, implement",
       "governance_closure": {}
     },
     {
