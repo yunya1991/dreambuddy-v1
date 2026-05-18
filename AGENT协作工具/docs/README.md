@@ -13,6 +13,12 @@
 - `agent-collaboration-system-v1-governance-agent-implementation-plan.md`：治理 AGENT 与强治理状态机字段扩展实施计划
 - [agent-collaboration-system-v1-governance-cycle-implementation-plan.md](agent-collaboration-system-v1-governance-cycle-implementation-plan.md)：治理账本最小闭环控制器实施计划
 
+## 当前协作约定（7-ARTIFACT-HUB-V2）
+
+当前协作以 `7-ARTIFACT-HUB-V2` 为核心工作区，默认规则为“每个 AGENT 自建 `agent/*` 分支 + 独立 PR + 围绕工作区协作”。
+
+细则见：`agent-efficient-collaboration-mode.md` 中的 “核心工作区协作（7-ARTIFACT-HUB-V2）”。
+
 ## 迁移说明
 
 - 原 `docs/superpowers/specs/` 与 `docs/superpowers/plans/` 下的对应文档已迁移到本目录
