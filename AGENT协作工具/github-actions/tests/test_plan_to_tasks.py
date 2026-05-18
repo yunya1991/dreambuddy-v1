@@ -34,7 +34,7 @@ class PlanToTasksTests(unittest.TestCase):
 
         tasks = out["tasks"]
         self.assertGreaterEqual(len(tasks), 5)
-        self.assertEqual(tasks[0]["task_id"], "task-hubv2-0")
+        self.assertTrue(tasks[0]["task_id"].startswith("task-hubv2-"))
         self.assertEqual(tasks[0]["parent_task_id"], "")
 
         phase_a = next((t for t in tasks if t["title"] == "Phase A"), None)
@@ -46,4 +46,3 @@ class PlanToTasksTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

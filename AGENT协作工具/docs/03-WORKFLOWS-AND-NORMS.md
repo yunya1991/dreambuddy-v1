@@ -11,10 +11,11 @@
 4. Post `STARTED` (declare workspace, scope, occupied boundaries).
 5. Implement within scope.
 6. If scope changes, post `UPDATED` first.
-7. Post `TEST_REPORT` with evidence.
-8. Validator posts `VALIDATION_RESULT` with score and decision.
-9. Post `DONE` with delivery summary.
-10. Governance AGENT merges after all gates pass.
+7. If ledger/task status changes, run `ledger_sync.py push-status` and post `LEDGER_SYNC`.
+8. Post `TEST_REPORT` with evidence.
+9. Validator posts `VALIDATION_RESULT` with score and decision.
+10. Post `DONE` with delivery summary.
+11. Governance AGENT merges after all gates pass.
 
 ## 2. Role-Specific Norms
 

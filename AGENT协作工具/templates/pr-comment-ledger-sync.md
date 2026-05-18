@@ -8,4 +8,8 @@ Changed Tasks:
 Workspace Updated: <workspace>/PLAN.md
 Ledger SHA: <sha_before> → <sha_after>
 Sync Time: <ISO8601>
+Workspace: <workspace_path>
+Sync State File: <workspace>/.ledger-sync.json
+Protocol Version: v1
+Generator: collab-ledger-planner@2.0
 状态: LEDGER_SYNC
