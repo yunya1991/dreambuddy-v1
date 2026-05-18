@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-18T11:04:00Z",
+  "generated_at": "2026-05-18T11:07:47.785Z",
   "open_tasks": [
     "task-pr9-central-hub-v2-0",
     "task-pr9-ahv2-chain-workflows-plan-1"
@@ -107,7 +107,7 @@
       "source_type": "derived",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "accepted",
+      "status": "ledgered",
       "depends_on": [
         "task-pr9-artifact-hub-v2-build-1"
       ],
@@ -130,9 +130,9 @@
       "score": 97,
       "reward": 1.2,
       "final_credit_agent": "Claude Code (Developer AGENT)",
-      "archived_at": "",
+      "archived_at": "2026-05-18T11:07:47.785Z",
       "knowledge_synced_at": "",
-      "next_required_action": "ledger: advance to ledgered",
+      "next_required_action": "archived: task complete",
       "governance_closure": {
         "archive_summary": "",
         "index_updates": [],
@@ -197,7 +197,7 @@
       "source_type": "derived",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "accepted",
+      "status": "ledgered",
       "depends_on": [
         "task-pr9-artifact-hub-v2-build-1"
       ],
@@ -220,9 +220,9 @@
       "score": 96,
       "reward": 1.2,
       "final_credit_agent": "Claude Code (Developer AGENT)",
-      "archived_at": "",
+      "archived_at": "2026-05-18T11:07:47.785Z",
       "knowledge_synced_at": "",
-      "next_required_action": "ledger: advance to ledgered",
+      "next_required_action": "archived: task complete",
       "governance_closure": {
         "archive_summary": "",
         "index_updates": [],
