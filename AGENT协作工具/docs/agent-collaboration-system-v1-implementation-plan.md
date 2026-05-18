@@ -8,42 +8,44 @@
 
 **Tech Stack:** Markdown, JSON, YAML, Python 3 standard library, GitHub Actions, existing `AGENT协作工具` docs/templates/github-actions layout.
 
+说明：本文档中的文件路径以“仓库相对路径”为准；历史遗留的绝对路径示例不再作为规范。
+
 ---
 
 ## Repository Layout Changes
 
 **Create**
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/ledger/README.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/ledger/tasks/index.json`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/ledger/rewards/index.json`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/ledger/templates/task-record.json`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/ledger/templates/reward-record.json`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-exploration-proposal.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-validation-result.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-ledger-entry.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/github-actions/build_agent_collaboration_payload.py`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/github-actions/check_agent_collaboration.py`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/github-actions/update_agent_ledger.py`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/github-actions/tests/test_build_agent_collaboration_payload.py`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/github-actions/tests/test_check_agent_collaboration.py`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/github-actions/tests/test_update_agent_ledger.py`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/.github/workflows/agent-collaboration-claim-guard.yml`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/.github/workflows/agent-ledger-maintenance.yml`
+- `AGENT协作工具/ledger/README.md`
+- `AGENT协作工具/ledger/tasks/index.json`
+- `AGENT协作工具/ledger/rewards/index.json`
+- `AGENT协作工具/ledger/templates/task-record.json`
+- `AGENT协作工具/ledger/templates/reward-record.json`
+- `AGENT协作工具/templates/pr-comment-exploration-proposal.md`
+- `AGENT协作工具/templates/pr-comment-validation-result.md`
+- `AGENT协作工具/templates/pr-comment-ledger-entry.md`
+- `AGENT协作工具/github-actions/build_agent_collaboration_payload.py`
+- `AGENT协作工具/github-actions/check_agent_collaboration.py`
+- `AGENT协作工具/github-actions/update_agent_ledger.py`
+- `AGENT协作工具/github-actions/tests/test_build_agent_collaboration_payload.py`
+- `AGENT协作工具/github-actions/tests/test_check_agent_collaboration.py`
+- `AGENT协作工具/github-actions/tests/test_update_agent_ledger.py`
+- `.github/workflows/agent-collaboration-claim-guard.yml`
+- `.github/workflows/agent-ledger-maintenance.yml`
 
 **Modify**
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/README.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/docs/README.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/docs/agent-collaboration-system-v1-design.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/docs/agent-collaboration-system-v1-implementation-plan.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-started.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-updated.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-done.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/test-report-comment.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/docs/superpowers/templates/agent-task-card.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/SKILLS/dual-agent-conflict-gate/gatekeeper_config.json`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/SKILLS/dual-agent-conflict-gate/conflict_gate.py`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/SKILLS/dual-agent-conflict-gate/test_conflict_gate.py`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/.github/pull_request_template.md`
+- `AGENT协作工具/README.md`
+- `AGENT协作工具/docs/README.md`
+- `AGENT协作工具/docs/agent-collaboration-system-v1-design.md`
+- `AGENT协作工具/docs/agent-collaboration-system-v1-implementation-plan.md`
+- `AGENT协作工具/templates/pr-comment-started.md`
+- `AGENT协作工具/templates/pr-comment-updated.md`
+- `AGENT协作工具/templates/pr-comment-done.md`
+- `AGENT协作工具/templates/test-report-comment.md`
+- `docs/superpowers/templates/agent-task-card.md`
+- `AGENT协作工具/SKILLS/dual-agent-conflict-gate/gatekeeper_config.json`
+- `AGENT协作工具/SKILLS/dual-agent-conflict-gate/conflict_gate.py`
+- `AGENT协作工具/SKILLS/dual-agent-conflict-gate/test_conflict_gate.py`
+- `.github/pull_request_template.md`
 
 ---
 

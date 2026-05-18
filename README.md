@@ -78,6 +78,18 @@ dream-multiSkill-architecture/
 
 统一管理所有AI执行产物，支持邮件路由、产物投递、归档管理。
 
+## 🤝 AGENT 协作（入口）
+
+仓库内的 AGENT 协作规则、流程与协议主入口位于：
+
+- `AGENT协作工具/docs/README.md`
+
+当前默认协作方式：
+
+- 以 `7-ARTIFACT-HUB-V2/**` 为核心工作区
+- 每个 AGENT 自建 `agent/*` 分支并提交独立 PR
+- 协作职责拆分为“账本协议AGENT（维护任务清单与协议文档）”与“治理AGENT（合并门禁与冲突收口）”
+
 **依赖**:
 - `~/.workbuddy/artifacts/` - 产物存储目录
 - `~/.workbuddy/scripts/sync_artifact.py` - 同步脚本

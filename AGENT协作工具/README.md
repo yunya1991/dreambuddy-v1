@@ -65,6 +65,15 @@ AGENT协作工具/
 
 详细规则见：`AGENT协作工具/docs/agent-efficient-collaboration-mode.md`
 
+## 角色拆分（账本协议 / 治理）
+
+为降低冲突处置与协议维护互相干扰，协作角色拆分为：
+
+- 账本协议AGENT：维护任务清单与协议文档（不负责合并与冲突）
+- 治理AGENT：负责合并门禁与冲突收口（不维护任务清单与协议字段）
+
+详见：`AGENT协作工具/docs/agent-ledger-protocol-vs-governance-short-spec.md`
+
 ## 使用规则
 
 1. **每次任务开始前**，两个 agent 都必须运行冲突门禁检查

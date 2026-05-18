@@ -1,6 +1,6 @@
 # 双代理协作底座设计
 
-> 仓库：`/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1`  
+> 仓库：`dreambuddy-v1`  
 > 版本：v1  
 > 日期：2026-05-16  
 > 状态：草案  

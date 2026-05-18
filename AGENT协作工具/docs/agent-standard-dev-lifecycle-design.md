@@ -1,6 +1,6 @@
 # AGENT 标准开发生命周期与协作监督体系设计
 
-> 仓库：`/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1`  
+> 仓库：`dreambuddy-v1`  
 > 版本：v1（Agent Standard Dev Lifecycle Design）  
 > 日期：2026-05-17  
 > 状态：v1 候选稿  
