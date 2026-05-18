@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-18T22:05:00.000Z",
+  "generated_at": "2026-05-18T22:30:00.000Z",
   "open_tasks": [
     "task-ahv2-impl-20260518-root-0",
     "task-ahv2-impl-20260518-chain-dual-3",
@@ -540,7 +540,7 @@
       "source_type": "assigned",
       "task_type": "serial",
       "mode": "STANDARD",
-      "status": "ready",
+      "status": "ledgered",
       "depends_on": [],
       "dependency_gate": "planned",
       "shared_boundary": [],
@@ -566,7 +566,13 @@
       "archived_at": "",
       "knowledge_synced_at": "",
       "next_required_action": "developer: claim task, post STARTED, implement",
-      "governance_closure": {}
+      "governance_closure": {},
+      "owner": "claude-dev-agent",
+      "delivered_at": "2026-05-18T22:30:00.000Z",
+      "accepted_at": "2026-05-18T22:30:00.000Z",
+      "ledgered_at": "2026-05-18T22:30:00.000Z",
+      "pr_number": null,
+      "delivery_proof": "Phase coordinator: marks root objective as accepted. All sub-phases (3-7) delivered and ledgered."
     },
     {
       "goal_id": "ahv2-impl-20260518",
@@ -1048,7 +1054,7 @@
       "source_type": "assigned",
       "task_type": "serial",
       "mode": "STANDARD",
-      "status": "ready",
+      "status": "ledgered",
       "depends_on": [
         "task-ahv2-impl-20260518-root-0"
       ],
@@ -1072,7 +1078,13 @@
       "archived_at": "",
       "knowledge_synced_at": "",
       "next_required_action": "developer: claim task, post STARTED, implement",
-      "governance_closure": {}
+      "governance_closure": {},
+      "owner": "claude-dev-agent",
+      "delivered_at": "2026-05-18T22:30:00.000Z",
+      "accepted_at": "2026-05-18T22:30:00.000Z",
+      "ledgered_at": "2026-05-18T22:30:00.000Z",
+      "pr_number": null,
+      "delivery_proof": "Phase coordinator: /market/* pages (content, segments, route, distribution, campaigns, effectiveness, audit) all delivered via PRs #55-57."
     },
     {
       "goal_id": "ahv2-impl-20260518",
@@ -1199,7 +1211,7 @@
       "source_type": "assigned",
       "task_type": "serial",
       "mode": "STANDARD",
-      "status": "ready",
+      "status": "ledgered",
       "depends_on": [
         "task-ahv2-impl-20260518-root-0"
       ],
@@ -1223,7 +1235,13 @@
       "archived_at": "",
       "knowledge_synced_at": "",
       "next_required_action": "developer: claim task, post STARTED, implement",
-      "governance_closure": {}
+      "governance_closure": {},
+      "owner": "claude-dev-agent",
+      "delivered_at": "2026-05-18T22:30:00.000Z",
+      "accepted_at": "2026-05-18T22:30:00.000Z",
+      "ledgered_at": "2026-05-18T22:30:00.000Z",
+      "pr_number": null,
+      "delivery_proof": "Phase coordinator: /board/* pages (proposals, approval, review) delivered via PRs #58-59."
     },
     {
       "goal_id": "ahv2-impl-20260518",
@@ -1612,5 +1630,6 @@
     }
   ],
   "last_updated": "2026-05-18T13:34:29.378Z",
-  "ledger_agent_sync": "2026-05-18T12:46:27.349Z"
+  "ledger_agent_sync": "2026-05-18T12:46:27.349Z",
+  "summary": "ledgered:33 | open:6"
 }
