@@ -1,8 +1,11 @@
 {
   "version": 1,
-  "generated_at": "2026-05-18T11:19:49.821Z",
+  "generated_at": "2026-05-18T11:32:35.125Z",
   "open_tasks": [
-    "task-pr9-central-hub-v2-0"
+    "task-pr9-central-hub-v2-0",
+    "task-pr9-ahv2-governance-spec-impl-1",
+    "task-pr9-ahv2-ops-ui-health-wiring-1",
+    "task-pr9-ahv2-chain-workflow-query-1"
   ],
   "tasks": [
     {
@@ -13,7 +16,7 @@
       "source_type": "assigned",
       "task_type": "serial",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [],
       "dependency_gate": "none",
       "shared_boundary": [],
@@ -42,7 +45,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "governance: confirm task tree + publish STARTED requirements for each child task",
+      "next_required_action": "developer: claim and implement next Phase 2 child task after governance defines STARTED requirements",
       "governance_closure": {
         "archive_summary": "",
         "index_updates": [],
@@ -222,6 +225,145 @@
       "archived_at": "2026-05-18T11:07:47.785Z",
       "knowledge_synced_at": "",
       "next_required_action": "archived: task complete",
+      "governance_closure": {
+        "archive_summary": "",
+        "index_updates": [],
+        "faq_decision": "",
+        "faq_entries": [],
+        "rollup_effect": "",
+        "followup_tasks": [],
+        "closure_agent": "",
+        "closure_completed_at": ""
+      }
+    },
+    {
+      "goal_id": "goal-pr9-central-hub",
+      "task_id": "task-pr9-ahv2-governance-spec-impl-1",
+      "parent_task_id": "task-pr9-central-hub-v2-0",
+      "title": "PR9: GOVERNANCE_SPEC Phase 1 — decision_level tagging on route_decisions + AuditRecord wire-up",
+      "source_type": "derived",
+      "task_type": "parallel",
+      "mode": "PHASE_BROADCAST",
+      "status": "planned",
+      "depends_on": [
+        "task-pr9-ahv2-object-model-align-1"
+      ],
+      "dependency_gate": "ledgered",
+      "shared_boundary": [
+        "7-ARTIFACT-HUB-V2/src/types.ts"
+      ],
+      "sync_checkpoint": [
+        "7-ARTIFACT-HUB-V2/GOVERNANCE_SPEC.md"
+      ],
+      "current_sync_state": "none",
+      "owner_agent": "",
+      "validator_agent": "Validator AGENT",
+      "governance_agent": "Governance AGENT",
+      "exclusive_owner_agent": "",
+      "exclusive_until": "",
+      "branch": "",
+      "workspace_path": "7-ARTIFACT-HUB-V2",
+      "claim_pointer": "",
+      "delivery_pointer": "",
+      "validation_pointer": "",
+      "score": null,
+      "reward": null,
+      "final_credit_agent": "",
+      "archived_at": "",
+      "knowledge_synced_at": "",
+      "next_required_action": "governance: define acceptance checklist → developer: implement",
+      "governance_closure": {
+        "archive_summary": "",
+        "index_updates": [],
+        "faq_decision": "",
+        "faq_entries": [],
+        "rollup_effect": "",
+        "followup_tasks": [],
+        "closure_agent": "",
+        "closure_completed_at": ""
+      }
+    },
+    {
+      "goal_id": "goal-pr9-central-hub",
+      "task_id": "task-pr9-ahv2-ops-ui-health-wiring-1",
+      "parent_task_id": "task-pr9-central-hub-v2-0",
+      "title": "PR9: ops-ui Phase 2 — wire /api/ops/health + /api/ops/queues routes with real upstream checks",
+      "source_type": "derived",
+      "task_type": "parallel",
+      "mode": "PHASE_BROADCAST",
+      "status": "planned",
+      "depends_on": [
+        "task-pr9-ahv2-ops-ui-skeleton-1"
+      ],
+      "dependency_gate": "ledgered",
+      "shared_boundary": [],
+      "sync_checkpoint": [
+        "7-ARTIFACT-HUB-V2/OPS_UI_README.md"
+      ],
+      "current_sync_state": "none",
+      "owner_agent": "",
+      "validator_agent": "Validator AGENT",
+      "governance_agent": "Governance AGENT",
+      "exclusive_owner_agent": "",
+      "exclusive_until": "",
+      "branch": "",
+      "workspace_path": "7-ARTIFACT-HUB-V2",
+      "claim_pointer": "",
+      "delivery_pointer": "",
+      "validation_pointer": "",
+      "score": null,
+      "reward": null,
+      "final_credit_agent": "",
+      "archived_at": "",
+      "knowledge_synced_at": "",
+      "next_required_action": "governance: define acceptance checklist → developer: implement",
+      "governance_closure": {
+        "archive_summary": "",
+        "index_updates": [],
+        "faq_decision": "",
+        "faq_entries": [],
+        "rollup_effect": "",
+        "followup_tasks": [],
+        "closure_agent": "",
+        "closure_completed_at": ""
+      }
+    },
+    {
+      "goal_id": "goal-pr9-central-hub",
+      "task_id": "task-pr9-ahv2-chain-workflow-query-1",
+      "parent_task_id": "task-pr9-central-hub-v2-0",
+      "title": "PR9: /chain Phase 2 — groupByWorkflowType query integration in MetaStore + index route",
+      "source_type": "derived",
+      "task_type": "serial",
+      "mode": "PHASE_BROADCAST",
+      "status": "planned",
+      "depends_on": [
+        "task-pr9-ahv2-chain-workflows-plan-1"
+      ],
+      "dependency_gate": "ledgered",
+      "shared_boundary": [
+        "7-ARTIFACT-HUB-V2/src/index.ts"
+      ],
+      "sync_checkpoint": [
+        "7-ARTIFACT-HUB-V2/CHAIN_WORKFLOWS.md"
+      ],
+      "current_sync_state": "none",
+      "owner_agent": "",
+      "validator_agent": "Validator AGENT",
+      "governance_agent": "Governance AGENT",
+      "exclusive_owner_agent": "",
+      "exclusive_until": "",
+      "branch": "",
+      "workspace_path": "7-ARTIFACT-HUB-V2",
+      "claim_pointer": "",
+      "delivery_pointer": "",
+      "validation_pointer": "",
+      "score": null,
+      "reward": null,
+      "final_credit_agent": "",
+      "archived_at": "",
+      "knowledge_synced_at": "",
+      "next_required_action": "governance: define acceptance checklist → developer: implement",
       "governance_closure": {
         "archive_summary": "",
         "index_updates": [],
