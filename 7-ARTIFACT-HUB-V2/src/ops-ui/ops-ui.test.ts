@@ -387,3 +387,47 @@ test("ops-ui GET /health.html returns health HTML page", async () => {
     await opsListener.close();
   }
 });
+
+test("ops-ui GET / serves governance console with three-panel layout", async () => {
+  const opsListener = await listen(createOpsServer());
+  try {
+    const res = await fetch(new URL("/", opsListener.url));
+    assert.equal(res.status, 200);
+    const ct = res.headers.get("content-type") ?? "";
+    assert.ok(ct.includes("text/html"), "content-type should be text/html");
+    const html = await res.text();
+    // Three-panel layout: Aggregated Health, Queues Snapshot, Strategy Stats
+    assert.ok(html.includes("Aggregated Health"), "should include Aggregated Health panel");
+    assert.ok(html.includes("Queues Snapshot"), "should include Queues Snapshot panel");
+    assert.ok(html.includes("Strategy Stats"), "should include Strategy Stats panel");
+    // Route Sandbox section
+    assert.ok(html.includes("Route Sandbox"), "should include Route Sandbox");
+    // Live data panel IDs
+    assert.ok(html.includes('id="healthJson"'), "should have healthJson panel");
+    assert.ok(html.includes('id="queuesJson"'), "should have queuesJson panel");
+    assert.ok(html.includes('id="strategyStatsJson"'), "should have strategyStatsJson panel");
+  } finally {
+    await opsListener.close();
+  }
+});
+
+test("ops-ui GET /ui-map exposes all five architecture stage nodes", async () => {
+  const opsListener = await listen(createOpsServer());
+  try {
+    const res = await fetch(new URL("/ui-map", opsListener.url));
+    assert.equal(res.status, 200);
+    const html = await res.text();
+    // All five stage nodes must be present
+    assert.ok(html.includes('id="stage-feed"'), "should have stage-feed node");
+    assert.ok(html.includes('id="stage-ops"'), "should have stage-ops node");
+    assert.ok(html.includes('id="stage-query"'), "should have stage-query node");
+    assert.ok(html.includes('id="stage-hub"'), "should have stage-hub node");
+    assert.ok(html.includes('id="stage-data"'), "should have stage-data node");
+    // Architecture section labels
+    assert.ok(html.includes("Feed Content Portal") || html.includes("Feed"), "should include Feed section");
+    assert.ok(html.includes("Ops Governance Console") || html.includes("Ops"), "should include Ops section");
+    assert.ok(html.includes("Artifact Hub V2") || html.includes("Hub"), "should include Hub section");
+  } finally {
+    await opsListener.close();
+  }
+});
