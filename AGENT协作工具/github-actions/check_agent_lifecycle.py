@@ -85,6 +85,7 @@ CHECKERS = {
     "check_shared_files_declared": check_shared_files_declared,
 }
 
+
 def build_rule_checkers(rules):
     rule_checkers = {}
     for rule in rules:

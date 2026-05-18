@@ -31,6 +31,54 @@ export type PushMessageType =
   | "trade_signal" | "risk_alert" | "intel_update" | "daily_report"
   | "dream_insight" | "strategy_update" | "strategy_executed" | "system_notice" | "verification_code";
 
+// === 意图识别 (v2) ===
+
+export type IntentType =
+  | "market_query" | "deep_analysis" | "scenario_sim" | "strategy_verify"
+  | "execute_trade" | "simple_qa" | "command" | "system_config"
+  | "credits_query" | "artifact_query" | "risk_alert_response";
+
+export type ComplexityLevel = "simple" | "moderate" | "complex" | "urgent";
+export type LoopType = "execution" | "intelligence" | "governance" | "general";
+
+export interface IntentRecognitionResult {
+  intent: IntentType;
+  confidence: number;
+  entities: Record<string, string>;
+  complexity: ComplexityLevel;
+  reasoning: string;
+  method: "llm" | "rule" | "default";
+  context_aware: boolean;
+}
+
+export interface RoutingDecision {
+  loop_type: LoopType;
+  chain: string[];
+  estimated_time_ms: number;
+  credits_cost: number;
+  requires_confirmation: boolean;
+  role_check: "pass" | "upgrade_required" | "denied";
+  fallback_chain: string[];
+  reasoning: string;
+}
+
+// === 意图识别路由响应 (API 返回格式) ===
+
+export interface IntentRouteResponse {
+  success: boolean;
+  data: {
+    content: string;
+    intent: IntentType;
+    confidence: number;
+    routing: RoutingDecision;
+    complexity: ComplexityLevel;
+    method: "llm" | "rule" | "default";
+    llm_status: "online" | "offline" | "degraded";
+    llm_model: string;
+    timestamp: string;
+  };
+}
+
 // === 用户配置列表 (聚合视图) ===
 
 export interface UserProfileView {

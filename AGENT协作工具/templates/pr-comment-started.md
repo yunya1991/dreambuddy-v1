@@ -2,9 +2,18 @@
 
 Agent: <owner_agent>
 任务: <task_name>
+Task ID: <task_id>
 分支: <agent/* branch>
+Workspace Path: 7-ARTIFACT-HUB-V2
 Execution Mode: <STANDARD | PHASE_BROADCAST | STRONG_SYNC>
 Direct Takeover: <no | allowed | active>
+Governance Agent: <agent>
+Ledger Protocol Agent: <agent>
+Task Type: <parallel | serial | shared-sync>
+Dependency Gate: <planned | accepted | ledgered | none>
+Current Sync State: <none | pending | in_review | cleared>
+Next Required Action: <governance / developer / validator step>
+Claim Target: <task id or proposal>
 计划修改:
 - <path 1>
 - <path 2>

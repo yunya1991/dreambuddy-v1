@@ -9,6 +9,26 @@
 - Execution Mode: STANDARD | PHASE_BROADCAST | STRONG_SYNC
 - Direct Takeover: no | allowed | active
 
+## Ledger Binding
+- Task ID:
+- Source Type: assigned | derived | exploratory
+- Validator Agent:
+- Exclusive Window:
+- Claim Pointer:
+- Delivery Pointer:
+
+## Governance
+- Governance Agent:
+- Goal ID:
+- Parent Task ID:
+- Task Type:
+- Depends On:
+- Dependency Gate:
+- Shared Boundary:
+- Sync Checkpoint:
+- Current Sync State:
+- Next Required Action:
+
 ## Goal
 - What this task must achieve:
 

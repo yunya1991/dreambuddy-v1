@@ -1,21 +1,19 @@
 import fs from "node:fs";
 import path from "node:path";
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
 
 export class MetaStore {
-  private readonly db: Database.Database;
+  private readonly db: DatabaseSync;
 
   constructor(metaRoot: string) {
     fs.mkdirSync(metaRoot, { recursive: true });
     const dbPath = path.join(metaRoot, "artifact_hub.sqlite");
-    this.db = new Database(dbPath);
+    this.db = new DatabaseSync(dbPath);
     this.bootstrap();
   }
 
   private bootstrap(): void {
     this.db.exec(`
-      PRAGMA journal_mode=WAL;
-
       CREATE TABLE IF NOT EXISTS events (
         trace_id TEXT NOT NULL,
         event_id TEXT NOT NULL,
@@ -54,9 +52,11 @@ export class MetaStore {
     const stmt = this.db.prepare(
       `SELECT type,payload_json,ts FROM events WHERE trace_id=? ORDER BY ts ASC`
     );
-    return stmt
-      .all(traceId)
-      .map((r: any) => ({ type: r.type, payload: JSON.parse(r.payload_json), ts: r.ts }));
+    return (stmt.all(traceId) as any[]).map((r) => ({
+      type: r.type,
+      payload: JSON.parse(r.payload_json),
+      ts: r.ts,
+    }));
   }
 
   addRouteDecision(
@@ -86,13 +86,12 @@ export class MetaStore {
     const stmt = this.db.prepare(
       `SELECT intent_json,decision_json,created_at FROM route_decisions WHERE trace_id=? ORDER BY created_at DESC LIMIT 1`
     );
-    const row: any = stmt.get(traceId);
+    const row = stmt.get(traceId) as any;
     if (!row) return null;
     return {
       intent: JSON.parse(row.intent_json),
       decision: JSON.parse(row.decision_json),
-      created_at: row.created_at
+      created_at: row.created_at,
     };
   }
 }
-

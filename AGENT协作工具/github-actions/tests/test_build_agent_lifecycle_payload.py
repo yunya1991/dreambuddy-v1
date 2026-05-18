@@ -201,6 +201,5 @@ class BuildLifecyclePayloadTests(unittest.TestCase):
 
         self.assertEqual(payload["execution_mode"], "STANDARD")
         self.assertTrue(payload["direct_takeover"])
-
 if __name__ == "__main__":
     unittest.main()

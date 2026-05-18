@@ -1,12 +1,12 @@
 ---
 name: dual-agent-conflict-gate
-description: 双代理协作冲突前置门禁。每次 agent 开始任务前调用，读取 git status / 分支状态，检查文件边界、共享文件占用、契约冻结级别与并行条件，输出 SAFE / WARNING / BLOCK + reason_codes。触发词：冲突检查、协作门禁、任务前检查、conflict gate、开始任务
+description: AGENT 协作冲突前置门禁（兼容双 AGENT 场景）。每次 AGENT 开始任务前调用，读取 git status / 分支状态，检查文件边界、共享文件占用、契约冻结级别与并行条件，输出 SAFE / WARNING / BLOCK + reason_codes。触发词：冲突检查、协作门禁、任务前检查、conflict gate、开始任务
 version: "1.0"
 created: "2026-05-17"
 status: "已上线"
 ---
 
-# Dual-Agent Conflict Gate：双代理协作冲突前置门禁
+# Dual-Agent Conflict Gate：AGENT 协作冲突前置门禁（兼容双 AGENT 场景）
 
 > 每次 agent 开始一个任务前**必须**主动调用本 SKILL。
 > 输出 `BLOCK` 时不得继续执行任务，必须先解决冲突。
@@ -16,7 +16,7 @@ status: "已上线"
 
 ## 目标
 
-在双代理并行开发中，防止以下四类问题在任务执行后才被发现：
+在 AGENT 并行开发中，防止以下四类问题在任务执行后才被发现：
 
 - **文件边界冲突**：触碰对方主责域的文件
 - **共享文件占用冲突**：共享文件已被另一代理修改中
@@ -29,7 +29,7 @@ status: "已上线"
 
 ```json
 {
-  "agent_id": "claude | solo",
+  "agent_id": "<agent_id>",
   "task_name": "任务名称",
   "task_description": "任务描述（可选）",
   "files_to_modify": ["路径1", "路径2"],
@@ -40,7 +40,7 @@ status: "已上线"
 
 | 字段 | 必填 | 说明 |
 |------|------|------|
-| `agent_id` | ✅ | 当前代理身份：`claude` 或 `solo` |
+| `agent_id` | ✅ | 当前 agent_id（默认配置内置 `claude`/`solo`，可按需扩展） |
 | `task_name` | ✅ | 任务名称，用于审计记录 |
 | `files_to_modify` | ✅ | 本次任务计划修改的文件列表 |
 | `contracts_depended` | ✅ | 本次任务依赖的契约名称列表（无依赖传 `[]`） |
@@ -100,9 +100,8 @@ status: "已上线"
 
 对照主责域配置（`gatekeeper_config.json`）：
 
-- `claude` 计划修改 SOLO 主责域文件 → `BLOCK` + `BOUNDARY_VIOLATION`
-- `solo` 计划修改 Claude Code 主责域文件 → `BLOCK` + `BOUNDARY_VIOLATION`
-- 双方均不能直接修改"需申请"共享文件，未在任务板中登记占用 → `BLOCK` + `SHARED_FILE_CONFLICT`
+- 若 `agent_id` 计划修改的文件属于其他 owner 主责域 → `BLOCK` + `BOUNDARY_VIOLATION`
+- 共享边界文件（`shared_boundaries`）触碰后必须显式声明并进入强同步收口
 
 ### 3. git status 检查
 
@@ -142,8 +141,8 @@ status: "已上线"
 6. 输出 `BLOCK` 时任务**必须暂停**，不得绕过
 7. 冲突裁决规则：
    - 小冲突（`WARNING`）：agent 自行记录，继续推进
-   - 中冲突（`BLOCK` 单项）：由 SOLO 裁决并更新协作底座
-   - 大冲突（`BLOCK` 多项）：暂停并行，退回上一冻结点，用户介入
+   - 中冲突（`BLOCK` 单项）：由治理AGENT裁决并更新协作协议/边界
+   - 大冲突（`BLOCK` 多项）：暂停并行，退回上一冻结点，必要时用户介入
 8. 每次检查结果应写入任务卡的"冲突检查记录"字段
 
 ---
@@ -170,7 +169,7 @@ status: "已上线"
 ```md
 [协作开工声明 / STARTED]
 
-Agent: SOLO | Claude Code
+Agent: <agent_id>
 任务: <任务名称>
 分支: <agent/* 分支>
 计划修改:
@@ -197,7 +196,7 @@ Agent: SOLO | Claude Code
 ```md
 [协作状态更新 / UPDATED]
 
-Agent: <SOLO | Claude Code>
+Agent: <agent_id>
 任务: <任务名称>
 变更说明:
 - <新增范围或缩减范围>
@@ -209,7 +208,7 @@ Agent: <SOLO | Claude Code>
 ```md
 [协作阻塞通知 / BLOCKED]
 
-Agent: <SOLO | Claude Code>
+Agent: <agent_id>
 任务: <任务名称>
 阻塞原因:
 - <门禁 BLOCK 或中途发现的冲突>
@@ -221,7 +220,7 @@ Agent: <SOLO | Claude Code>
 ```md
 [协作完成回报 / DONE]
 
-Agent: <SOLO | Claude Code>
+Agent: <agent_id>
 任务: <任务名称>
 提交: <commit sha>
 已完成:
@@ -236,8 +235,8 @@ Agent: <SOLO | Claude Code>
 ## 调用示例
 
 ```bash
-python3 scripts/conflict_gate.py \
-  --agent claude \
+python3 AGENT协作工具/SKILLS/dual-agent-conflict-gate/conflict_gate.py \
+  --agent <agent_id> \
   --task "搭建 ops-ui 页面壳" \
   --files "7-ARTIFACT-HUB-V2/src/ops-ui/index.ts,7-ARTIFACT-HUB-V2/src/ops-ui/health.ts" \
   --contracts "health-summary.v1"

@@ -8,35 +8,37 @@
 
 **Tech Stack:** Markdown, JSON, Python 3 standard library, GitHub Actions YAML, existing `AGENT协作工具`, `AGENT协作工具/docs`, and `docs/superpowers/templates` layout.
 
+说明：本文档中的文件路径以“仓库相对路径”为准；历史遗留的绝对路径示例不再作为规范。
+
 ---
 
 ## Repository Layout Changes
 
 **Create**
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/SKILLS/agent-standard-dev-lifecycle/SKILL.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/SKILLS/agent-design-review/SKILL.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/SKILLS/agent-dev-execution/SKILL.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/SKILLS/agent-quality-test/SKILL.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/SKILLS/agent-collab-supervisor/SKILL.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/SKILLS/agent-collab-supervisor/rules.json`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-started.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-updated.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-blocked.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-done.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/design-review-comment.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/test-report-comment.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/github-actions/README.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/github-actions/check_agent_lifecycle.py`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/github-actions/tests/test_check_agent_lifecycle.py`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/.github/workflows/agent-lifecycle-guard.yml`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/.github/pull_request_template.md`
+- `AGENT协作工具/SKILLS/agent-standard-dev-lifecycle/SKILL.md`
+- `AGENT协作工具/SKILLS/agent-design-review/SKILL.md`
+- `AGENT协作工具/SKILLS/agent-dev-execution/SKILL.md`
+- `AGENT协作工具/SKILLS/agent-quality-test/SKILL.md`
+- `AGENT协作工具/SKILLS/agent-collab-supervisor/SKILL.md`
+- `AGENT协作工具/SKILLS/agent-collab-supervisor/rules.json`
+- `AGENT协作工具/templates/pr-comment-started.md`
+- `AGENT协作工具/templates/pr-comment-updated.md`
+- `AGENT协作工具/templates/pr-comment-blocked.md`
+- `AGENT协作工具/templates/pr-comment-done.md`
+- `AGENT协作工具/templates/design-review-comment.md`
+- `AGENT协作工具/templates/test-report-comment.md`
+- `AGENT协作工具/github-actions/README.md`
+- `AGENT协作工具/github-actions/check_agent_lifecycle.py`
+- `AGENT协作工具/github-actions/tests/test_check_agent_lifecycle.py`
+- `.github/workflows/agent-lifecycle-guard.yml`
+- `.github/pull_request_template.md`
 
 **Modify**
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/README.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/docs/README.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/docs/agent-standard-dev-lifecycle-design.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/docs/agent-standard-dev-lifecycle-implementation-plan.md`
-- `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/docs/superpowers/templates/agent-task-card.md`
+- `AGENT协作工具/README.md`
+- `AGENT协作工具/docs/README.md`
+- `AGENT协作工具/docs/agent-standard-dev-lifecycle-design.md`
+- `AGENT协作工具/docs/agent-standard-dev-lifecycle-implementation-plan.md`
+- `docs/superpowers/templates/agent-task-card.md`
 
 ---
 
@@ -79,8 +81,8 @@ Reference document:
 ### Task 1: Expand the collaboration entrypoints
 
 **Files:**
-- Modify: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/README.md`
-- Modify: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/docs/superpowers/templates/agent-task-card.md`
+- Modify: `AGENT协作工具/README.md`
+- Modify: `docs/superpowers/templates/agent-task-card.md`
 
 - [ ] **Step 1: Update the main collaboration README with the lifecycle stack**
 
@@ -179,8 +181,8 @@ Replace the existing template content in `docs/superpowers/templates/agent-task-
 Run:
 
 ```bash
-grep -n "agent-standard-dev-lifecycle\\|Phase 0\\|Phase 8" /Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/README.md
-grep -n "Lifecycle Evidence\\|Supervision passed" /Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/docs/superpowers/templates/agent-task-card.md
+grep -n "agent-standard-dev-lifecycle\\|Phase 0\\|Phase 8" AGENT协作工具/README.md
+grep -n "Lifecycle Evidence\\|Supervision passed" docs/superpowers/templates/agent-task-card.md
 ```
 
 Expected:
@@ -202,12 +204,12 @@ git commit -m "docs(collaboration): expand lifecycle entrypoints"
 ### Task 2: Add reusable PR and review templates
 
 **Files:**
-- Create: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-started.md`
-- Create: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-updated.md`
-- Create: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-blocked.md`
-- Create: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/pr-comment-done.md`
-- Create: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/design-review-comment.md`
-- Create: `/Users/zhangjiangtao/WorkBuddy/dreambuddy-v1/AGENT协作工具/templates/test-report-comment.md`
+- Create: `AGENT协作工具/templates/pr-comment-started.md`
+- Create: `AGENT协作工具/templates/pr-comment-updated.md`
+- Create: `AGENT协作工具/templates/pr-comment-blocked.md`
+- Create: `AGENT协作工具/templates/pr-comment-done.md`
+- Create: `AGENT协作工具/templates/design-review-comment.md`
+- Create: `AGENT协作工具/templates/test-report-comment.md`
 
 - [ ] **Step 1: Create the `STARTED` and `UPDATED` templates**
 

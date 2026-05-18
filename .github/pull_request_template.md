@@ -4,6 +4,10 @@ Task Card: <link or inline summary>
 ## Execution Mode
 Execution Mode: <STANDARD | PHASE_BROADCAST | STRONG_SYNC>
 Direct Takeover: <no | allowed | active>
+Governance Agent: <agent>
+Task Type: <parallel | serial | shared-sync>
+Dependency Gate: <planned | accepted | ledgered | none>
+Next Required Action: <who does what next>
 Next Sync Checkpoint: <design | implementation | closeout>
 
 ## Design Review
@@ -14,6 +18,13 @@ Implementation Plan: <plan link>
 
 ## Test Report
 Test Report: <comment url or artifact path>
+
+## Collaboration Ledger
+Task ID: <task_id>
+Source Type: <assigned | derived | exploratory>
+Validator Agent: <agent>
+Claim Pointer: <comment url>
+Delivery Pointer: <comment url>
 
 ## Collaboration Protocol
 - [ ] 已发 `STARTED`

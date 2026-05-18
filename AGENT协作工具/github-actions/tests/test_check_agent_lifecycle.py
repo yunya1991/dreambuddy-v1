@@ -188,7 +188,6 @@ class LifecycleCheckerTests(unittest.TestCase):
         self.assertEqual(result["reason_codes"], ["RULE_RUNTIME_DONE_REQUIRED"])
         self.assertEqual(result["evaluated_rule_count"], 1)
 
-if __name__ == "__main__":
-    unittest.main()
+
 if __name__ == "__main__":
     unittest.main()
