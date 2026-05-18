@@ -39,3 +39,18 @@
 - step-by-step workflow: `03-WORKFLOWS-AND-NORMS.md`
 - where to edit: `04-ENGINEERING-INDEX.md`
 - skill selection: `06-SKILLS-INVENTORY.md`
+
+## 8) 什么是 approve-and-run？如何手动触发 workflow？
+
+- Symptom: 在 GitHub Actions 中某些 run 处于 “Waiting for approval / Approve and run” 状态，或你需要手动触发 `workflow_dispatch` 类 workflow。
+- Fix:
+  - GitHub UI：进入对应 workflow 的页面 → Run workflow / Approve and run → 选择 ref（通常 `main`）→ 填写 inputs → 运行。
+  - CLI（gh）：用 `gh workflow run` 触发 `workflow_dispatch`，并用 `-f` 传入 inputs，例如：
+
+```bash
+gh workflow run collab-validator-agent.yml \
+  --ref main \
+  -f pr_number=9 \
+  -f task_id="ledger://tasks/20260518-xxxx" \
+  -f workspace_path="7-ARTIFACT-HUB-V2"
+```

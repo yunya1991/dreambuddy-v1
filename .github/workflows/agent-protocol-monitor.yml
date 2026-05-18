@@ -1,4 +1,4 @@
-name: Agent Protocol Monitor
+name: ledger-protocol-agent
 
 on:
   schedule:
