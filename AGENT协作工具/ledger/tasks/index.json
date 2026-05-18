@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-18T21:15:00.000Z",
+  "generated_at": "2026-05-18T21:20:00.000Z",
   "open_tasks": [
     "task-ahv2-impl-20260518-root-0",
     "task-ahv2-impl-20260518-chain-dual-3",
@@ -1239,7 +1239,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "ready",
+      "status": "accepted",
       "depends_on": [
         "task-ahv2-impl-20260518-board-ui-5"
       ],
@@ -1252,17 +1252,17 @@
       "governance_agent": "Governance AGENT",
       "exclusive_owner_agent": "",
       "exclusive_until": "",
-      "branch": "",
+      "branch": "agent/claude/ahv2-impl-board-list-5a",
       "workspace_path": "7-ARTIFACT-HUB-V2",
-      "claim_pointer": "",
-      "delivery_pointer": "",
-      "validation_pointer": "",
-      "score": 0,
-      "reward": 1,
+      "claim_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/58#issuecomment-4479351035",
+      "delivery_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/58#issuecomment-4479351325",
+      "validation_pointer": "https://github.com/yunya1991/dreambuddy-v1/pull/58#issuecomment-4479351325",
+      "score": 97,
+      "reward": 1.2,
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: claim task, post STARTED, implement",
+      "next_required_action": "governance: merge PR #58",
       "governance_closure": {}
     },
     {
