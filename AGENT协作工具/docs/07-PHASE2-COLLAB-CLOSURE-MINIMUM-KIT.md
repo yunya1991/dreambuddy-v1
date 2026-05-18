@@ -194,3 +194,90 @@
 2. 验收清单具备机读形态（1.2），治理/验证自动化能据此判断是否可执行与如何验收；
 3. 运行态 evidence 能回指 ledger_task（至少具备 ledger_task_id join key 或等价可解析证据）。
 
+## 附录 A：Phase 2 “ready(accepted) 推进 + 验收清单机读落点”一页 SOP
+
+> 适用对象：治理AGENT、账本协作AGENT。
+>
+> 目标：把 Phase 2 的唯一阻塞点（planned->ready + 发布验收清单）变成一套固定操作，不再依赖人工“临场补写账本”。
+
+### A1. 输入（必须齐全）
+
+- 主工作区：例如 `7-ARTIFACT-HUB-V2`
+- 架构/设计真源文档集合（作为验收依据）：例如
+  - `1-ARCHITECTURE/中台设计/COMPANY_CENTRAL_HUB.md`
+  - `7-ARTIFACT-HUB-V2/BOARD_CONSOLE_DESIGN.md`
+  - `7-ARTIFACT-HUB-V2/CHAIN_WORKFLOWS.md`
+  - `7-ARTIFACT-HUB-V2/GOVERNANCE_SPEC.md`
+  - `7-ARTIFACT-HUB-V2/MARKET_CONSOLE_DESIGN.md`
+  - `7-ARTIFACT-HUB-V2/OBJECT_MODEL.md`
+  - `7-ARTIFACT-HUB-V2/OPS_UI_README.md`
+
+### A2. 从“文档集”生成可解析 Project Plan（自然语言完成）
+
+用 LLM 生成一个规划文件（强制结构）：
+
+- 文件名（推荐）：`7-ARTIFACT-HUB-V2/PROJECT_PLAN.md`
+- 输出必须严格满足：
+  - 顶层 `# <项目名>`
+  - 至少 1 个 `## Phase ...`
+  - Phase 下使用 `- [ ] <任务>` 列表项
+  - 每条任务一句话，并能落到明确路径（`7-ARTIFACT-HUB-V2/...` 或 `AGENT协作工具/...`）
+
+### A3. 将 Project Plan 拆解写入协作账本（脚本化完成）
+
+在仓库根目录执行：
+
+```bash
+python3 AGENT协作工具/SKILLS/collab-ledger-planner/plan_to_tasks.py \
+  --plan 7-ARTIFACT-HUB-V2/PROJECT_PLAN.md \
+  --goal-id goal-phase2-7-artifact-hub-v2 \
+  --task-prefix phase2-ahv2 \
+  --workspace-path 7-ARTIFACT-HUB-V2 \
+  --apply
+```
+
+产物：
+- `AGENT协作工具/ledger/tasks/index.json` 新增 tasks 草案（默认 status=planned）
+
+### A4. 为“planned -> accepted(ready)”准备验收清单（自然语言生成 + 机读落点）
+
+对每个准备推进到 accepted 的 task，准备两类信息（二选一即可，推荐 A）：
+
+- 机读落点 A（推荐）：写入任务字段
+  - `next_required_action`: 一句话明确“谁在何处完成什么，如何验收”
+  - `sync_checkpoint[]`: 至少 1 条引用本任务相关真源文档路径（上面 A1 的那组路径是最小集）
+- 机读落点 B（文件化）：生成 `7-ARTIFACT-HUB-V2/acceptance/task-<task_id>.md`，并将该文件路径写入 `sync_checkpoint[]`
+
+### A5. 推进 planned -> accepted（脚本化完成，强制校验验收清单）
+
+在仓库根目录执行（示例一次推进 3 个 Phase 2 任务）：
+
+```bash
+python3 AGENT协作工具/github-actions/ledger_governance_promote.py \
+  --workspace-path 7-ARTIFACT-HUB-V2 \
+  --to accepted \
+  --task-id <task_id_1> \
+  --task-id <task_id_2> \
+  --task-id <task_id_3> \
+  --next-required-action "developer: implement; validator: validate; governance: merge" \
+  --sync-checkpoint 7-ARTIFACT-HUB-V2/OBJECT_MODEL.md \
+  --sync-checkpoint 7-ARTIFACT-HUB-V2/GOVERNANCE_SPEC.md
+```
+
+硬约束：
+- 若 `next_required_action` 与 `sync_checkpoint[]` 均为空：脚本必须拒绝推进（避免“空验收清单 accepted”）
+- 若 task 不属于 `workspace_path`：脚本必须拒绝推进（避免误写其他工作区）
+
+### A6. 验证“ready 后不再黑箱”（脚本化观测）
+
+用桥聚合视图检查 open tasks 是否能 join 到工作区运行态证据：
+
+```bash
+python3 AGENT协作工具/github-actions/ledger_workspace_bridge.py \
+  --workspace-path 7-ARTIFACT-HUB-V2 \
+  --limit 50
+```
+
+验收要点：
+- `open_tasks_total` 与 `items[].ledger_task` 对齐
+- 若 `hub_task/hub_result` 长期为空，说明执行链路未写入 `ledger_task_id`（需要在工作区执行入口补齐 ledger_task_id 传递）
