@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-18T17:00:00.000Z",
+  "generated_at": "2026-05-18T17:30:00.000Z",
   "open_tasks": [
     "task-ahv2-impl-20260518-root-0",
     "task-ahv2-impl-20260518-ops-ui-web-2",
@@ -932,7 +932,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-ahv2-impl-20260518-chain-dual-3"
       ],
@@ -958,7 +958,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
+      "next_required_action": "developer: claim task, post STARTED, implement",
       "governance_closure": {}
     },
     {
@@ -969,7 +969,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-ahv2-impl-20260518-chain-wf-field-3a"
       ],
@@ -992,7 +992,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
+      "next_required_action": "developer: claim task, post STARTED, implement",
       "governance_closure": {}
     },
     {
@@ -1003,7 +1003,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-ahv2-impl-20260518-chain-dual-3"
       ],
@@ -1026,7 +1026,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
+      "next_required_action": "developer: claim task, post STARTED, implement",
       "governance_closure": {}
     },
     {
@@ -1071,7 +1071,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-ahv2-impl-20260518-market-ui-4"
       ],
@@ -1094,7 +1094,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
+      "next_required_action": "developer: claim task, post STARTED, implement",
       "governance_closure": {}
     },
     {
@@ -1105,7 +1105,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-ahv2-impl-20260518-market-ui-4"
       ],
@@ -1128,7 +1128,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
+      "next_required_action": "developer: claim task, post STARTED, implement",
       "governance_closure": {}
     },
     {
@@ -1139,7 +1139,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-ahv2-impl-20260518-market-ui-4"
       ],
@@ -1162,7 +1162,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
+      "next_required_action": "developer: claim task, post STARTED, implement",
       "governance_closure": {}
     },
     {
@@ -1207,7 +1207,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-ahv2-impl-20260518-board-ui-5"
       ],
@@ -1230,7 +1230,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
+      "next_required_action": "developer: claim task, post STARTED, implement",
       "governance_closure": {}
     },
     {
@@ -1241,7 +1241,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-ahv2-impl-20260518-board-ui-5"
       ],
@@ -1264,7 +1264,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
+      "next_required_action": "developer: claim task, post STARTED, implement",
       "governance_closure": {}
     },
     {
@@ -1275,7 +1275,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-ahv2-impl-20260518-board-ui-5"
       ],
@@ -1298,7 +1298,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
+      "next_required_action": "developer: claim task, post STARTED, implement",
       "governance_closure": {}
     },
     {
@@ -1349,7 +1349,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-ahv2-impl-20260518-phase2-obj-6"
       ],
@@ -1375,7 +1375,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
+      "next_required_action": "developer: claim task, post STARTED, implement",
       "governance_closure": {}
     },
     {
@@ -1386,7 +1386,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-ahv2-impl-20260518-phase2-obj-6"
       ],
@@ -1412,7 +1412,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
+      "next_required_action": "developer: claim task, post STARTED, implement",
       "governance_closure": {}
     },
     {
@@ -1423,7 +1423,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-ahv2-impl-20260518-phase2-obj-6"
       ],
@@ -1449,7 +1449,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
+      "next_required_action": "developer: claim task, post STARTED, implement",
       "governance_closure": {}
     },
     {
@@ -1494,7 +1494,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-ahv2-impl-20260518-feed-restore-7"
       ],
@@ -1517,7 +1517,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
+      "next_required_action": "developer: claim task, post STARTED, implement",
       "governance_closure": {}
     },
     {
@@ -1528,7 +1528,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "planned",
+      "status": "ready",
       "depends_on": [
         "task-ahv2-impl-20260518-feed-restore-7"
       ],
@@ -1551,7 +1551,7 @@
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
-      "next_required_action": "developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
+      "next_required_action": "developer: claim task, post STARTED, implement",
       "governance_closure": {}
     }
   ],
