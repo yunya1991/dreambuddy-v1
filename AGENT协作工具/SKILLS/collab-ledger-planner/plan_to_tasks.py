@@ -40,6 +40,7 @@ def make_task(
     task_type,
     status,
     workspace_path,
+    next_required_action="",
 ):
     return {
         "goal_id": goal_id,
@@ -70,7 +71,7 @@ def make_task(
         "final_credit_agent": "",
         "archived_at": "",
         "knowledge_synced_at": "",
-        "next_required_action": "",
+        "next_required_action": next_required_action,
         "governance_closure": empty_governance_closure(),
     }
 
@@ -144,6 +145,7 @@ def generate_tasks(*, goal_id, task_prefix, workspace_path, plan_text):
         goal_id=goal_id, task_id=root_id, parent_task_id="",
         title=root_title, source_type="assigned", task_type="serial",
         status="planned", workspace_path=workspace_path,
+        next_required_action="governance: review scope and open child tasks for claiming",
     ))
 
     for phase in phases:
@@ -158,6 +160,7 @@ def generate_tasks(*, goal_id, task_prefix, workspace_path, plan_text):
                 goal_id=goal_id, task_id=phase_id, parent_task_id=root_id,
                 title=phase_title, source_type="derived", task_type="serial",
                 status="planned", workspace_path=workspace_path,
+                next_required_action="developer: claim and implement child tasks in parallel; governance: monitor phase completion",
             ))
             parent_id = phase_id
 
@@ -168,6 +171,7 @@ def generate_tasks(*, goal_id, task_prefix, workspace_path, plan_text):
                 goal_id=goal_id, task_id=tid, parent_task_id=parent_id,
                 title=item, source_type="derived", task_type="parallel",
                 status="planned", workspace_path=workspace_path,
+                next_required_action="developer: run dual-agent-conflict-gate, post STARTED, implement, post DONE with delivery proof",
             ))
 
     open_tasks = [t["task_id"] for t in tasks if t["status"] in OPEN_STATUSES]
