@@ -1,18 +1,15 @@
 import express from "express";
-import { createRouter } from "./routes/index.js";
-import type { OpsUIConfig } from "./types.js";
+import { buildOpsRouter } from "./routes/index.js";
 
-export function createApp(config?: Partial<OpsUIConfig>) {
+export function startOpsUiServer(opts?: { port?: number; host?: string }): void {
   const app = express();
-  app.use(express.json());
-  app.use("/", createRouter());
-  return app;
+  app.use(express.json({ limit: "2mb" }));
+  app.use(buildOpsRouter());
+
+  const port = opts?.port ?? Number(process.env.OPS_UI_PORT || 3457);
+  const host = opts?.host ?? String(process.env.OPS_UI_HOST || "127.0.0.1");
+
+  app.listen(port, host);
 }
 
-export function startServer(config: OpsUIConfig = { port: 3457, artifactHubUrl: "http://127.0.0.1:8787", gatewayUrl: "http://127.0.0.1:3000" }) {
-  const app = createApp(config);
-  app.listen(config.port, () => {
-    console.log(`ops-ui listening on port ${config.port}`);
-  });
-  return app;
-}
+startOpsUiServer();
