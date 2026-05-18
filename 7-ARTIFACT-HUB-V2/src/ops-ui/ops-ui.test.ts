@@ -356,3 +356,34 @@ test("ops-ui /api/ops/strategy-library/file returns doc content by id", async ()
     await opsListener.close();
   }
 });
+
+test("ops-ui GET /health returns service self-check JSON", async () => {
+  const opsListener = await listen(createOpsServer());
+  try {
+    const res = await fetch(new URL("/health", opsListener.url));
+    assert.equal(res.status, 200);
+    const body = (await res.json()) as { service: string; status: string; timestamp: string; dependencies: Record<string, string> };
+    assert.equal(body.service, "ops-ui");
+    assert.equal(body.status, "ok");
+    assert.ok(typeof body.timestamp === "string" && body.timestamp.length > 0);
+    assert.ok(body.dependencies && typeof body.dependencies === "object");
+    assert.equal(body.dependencies.artifact_hub, "unknown");
+    assert.equal(body.dependencies.gateway, "unknown");
+    assert.equal(body.dependencies.meta_db, "unknown");
+  } finally {
+    await opsListener.close();
+  }
+});
+
+test("ops-ui GET /health.html returns health HTML page", async () => {
+  const opsListener = await listen(createOpsServer());
+  try {
+    const res = await fetch(new URL("/health.html", opsListener.url));
+    assert.equal(res.status, 200);
+    const html = await res.text();
+    assert.ok(html.startsWith("<!doctype html") || html.startsWith("<html") || html.includes("<html"), "should be HTML");
+    assert.ok(html.includes("health") || html.includes("Health"), "should include health content");
+  } finally {
+    await opsListener.close();
+  }
+});
