@@ -19,10 +19,14 @@
 ## K3 双代理已完成第一次并行且无覆盖冲突
 - [ ] SOLO 首批任务已明确
 - [ ] Claude Code 首批任务已明确
-- [ ] 共享文件占用规则已写入任务板
+- [ ] 默认执行模式已明确为 `PHASE_BROADCAST`
+- [ ] 共享边界与强同步触发条件已写入任务板
+- [ ] 白名单直接接管规则已写入任务板
 - [ ] 至少完成一次 mock 联调准备
 
 ## K4 第一个功能里程碑准备启动
 - [ ] 已建立 `milestone/dual-agent-foundation`
 - [ ] 已确定下一功能优先级
 - [ ] 已确认是否进入 `ops-ui` / `/feed` / `/chain`
+- [ ] 当前任务卡或 PR 评论已声明 `Execution Mode`
+- [ ] 若涉及接力修复，已声明 `Direct Takeover`
