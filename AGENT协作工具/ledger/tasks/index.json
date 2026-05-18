@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-18T22:30:00.000Z",
+  "generated_at": "2026-05-18T22:45:00.000Z",
   "open_tasks": [
     "task-ahv2-impl-20260518-root-0",
     "task-ahv2-impl-20260518-chain-dual-3",
@@ -939,7 +939,7 @@
       "source_type": "assigned",
       "task_type": "parallel",
       "mode": "PHASE_BROADCAST",
-      "status": "ready",
+      "status": "ledgered",
       "depends_on": [
         "task-ahv2-impl-20260518-chain-dual-3"
       ],
@@ -960,13 +960,19 @@
       "claim_pointer": "",
       "delivery_pointer": "",
       "validation_pointer": "",
-      "score": 0,
+      "score": 92,
       "reward": 1,
       "final_credit_agent": "",
       "archived_at": "",
       "knowledge_synced_at": "",
       "next_required_action": "developer: claim task, post STARTED, implement",
-      "governance_closure": {}
+      "governance_closure": {},
+      "owner": "claude-dev-agent",
+      "delivered_at": "2026-05-18T22:45:00.000Z",
+      "accepted_at": "2026-05-18T22:45:00.000Z",
+      "ledgered_at": "2026-05-18T22:45:00.000Z",
+      "pr_number": 61,
+      "delivery_proof": "PR #61: workflow_id field added to ArtifactIndexItem + artifact-store + index.ts"
     },
     {
       "goal_id": "ahv2-impl-20260518",
@@ -1631,5 +1637,5 @@
   ],
   "last_updated": "2026-05-18T13:34:29.378Z",
   "ledger_agent_sync": "2026-05-18T12:46:27.349Z",
-  "summary": "ledgered:33 | open:6"
+  "summary": "ledgered:34 | open:5"
 }
