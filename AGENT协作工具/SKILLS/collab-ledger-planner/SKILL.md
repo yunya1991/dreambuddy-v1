@@ -27,6 +27,11 @@ status: "active"
 
 示例：`7-ARTIFACT-HUB-V2-LEDGER-20260518.md`
 
+约定：
+
+1. 协议文件按天命名，同一天多次 `sync` 会覆盖同名协议文件；可追溯性依赖 Git 提交历史。
+2. 协议 Markdown 当前包含：生成时间、来源文档、Goal ID、账本 SHA、任务清单表与同步状态（见协议正文）。
+
 ## 拆解规则
 
 1. `#` 标题 → 根任务（`task_type: serial`）
@@ -59,8 +64,12 @@ python3 AGENT协作工具/SKILLS/collab-ledger-planner/ledger_sync.py sync \
 ```bash
 python3 AGENT协作工具/SKILLS/collab-ledger-planner/ledger_sync.py push-status \
   --workspace 7-ARTIFACT-HUB-V2 \
-  --print-comment
 ```
+
+说明：
+
+1. 默认输出为纯 JSON（适用于自动化/Action 读取）。
+2. 若需要直接粘贴 PR 评论，可加 `--print-comment`，会在 JSON 后额外输出评论文本。
 
 ## 查看同步状态
 

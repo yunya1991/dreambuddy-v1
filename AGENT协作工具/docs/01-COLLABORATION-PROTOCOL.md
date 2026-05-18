@@ -61,12 +61,21 @@ Templates live in `AGENT协作工具/templates/`.
 
 - `Sync Agent: CLI | GitHub Action`
 - `Protocol File: <path to LEDGER-YYYYMMDD.md>`
-- `Changed Tasks:` list of `<task_id>: <old> → <new>`
+- `Changed Tasks:` list of `<task_id>: <old> → <new>` (CLI may print `old -> new`)
 - `Workspace Updated: <workspace>/PLAN.md`
 - `Ledger SHA: <before> → <after>`
 - `Sync Time: <ISO8601>`
 
 This anchor is posted automatically by `ledger_sync.py push-status --print-comment` or by the `collab-ledger-sync.yml` GitHub Action. It is informational and does not trigger lifecycle gate checks.
+
+Notes:
+
+- `Changed Tasks` is a sync-facing snapshot message, not a strict diff audit. If the old status cannot be derived, `old_status` may be `?`, but `Ledger SHA` MUST be present.
+- Optional fields (backward compatible):
+  - `Workspace: <workspace_path>`
+  - `Sync State File: <workspace>/.ledger-sync.json`
+  - `Protocol Version: v1`
+  - `Generator: collab-ledger-planner@2.0`
 
 ## 3. Scope Change Rule (Fail-Closed)
 
