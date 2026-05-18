@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-dual-agent-conflict-gate — 双代理协作冲突前置门禁
+dual-agent-conflict-gate — AGENT 协作冲突前置门禁（兼容双 AGENT 场景）
 Version: 1.0
 """
 
@@ -95,10 +95,6 @@ def path_in_domain(file_path: str, domain_list: list[str]) -> bool:
     return False
 
 
-def opponent(agent_id: str) -> str:
-    return "solo" if agent_id == "claude" else "claude"
-
-
 def shared_boundaries(cfg: dict) -> list[str]:
     boundaries = cfg.get("shared_boundaries")
     if boundaries:
@@ -124,7 +120,12 @@ def resolve_owner(file_path: str, cfg: dict) -> str | None:
 def check_branch(agent_id: str, branch: str, cfg: dict) -> list[dict]:
     issues = []
     rules = cfg["branch_rules"]
-    expected_prefix = rules[f"{agent_id}_pattern"]
+    agent_patterns = rules.get("agent_patterns") or {}
+    expected_prefix = (
+        agent_patterns.get(agent_id)
+        or rules.get(f"{agent_id}_pattern")
+        or f"agent/{agent_id}/"
+    )
     protected = rules["protected"]
     milestone_prefix = rules["milestone_pattern"]
 
@@ -156,18 +157,18 @@ def check_file_boundaries(
     cfg: dict,
 ) -> list[dict]:
     issues = []
-    other = opponent(agent_id)
     shared_approval = shared_boundaries(cfg)
 
     all_dirty = set(git_snap["modified_files"] + git_snap["staged_files"])
 
     for f in files_to_modify:
+        owner = resolve_owner(f, cfg)
         # 对方主责域
-        if resolve_owner(f, cfg) == other:
+        if owner and owner != agent_id:
             issues.append({
                 "code": "BOUNDARY_VIOLATION",
                 "level": "BLOCK",
-                "detail": f"文件 '{f}' 属于 {other} 主责域，{agent_id} 不得直接修改。"
+                "detail": f"文件 '{f}' 属于 {owner} 主责域，{agent_id} 不得直接修改。"
             })
         # 共享文件 — 检查是否已有脏状态
         elif any(f.startswith(s) or f == s for s in shared_approval):
@@ -186,11 +187,12 @@ def check_file_boundaries(
 
     # git dirty 文件中是否有对方主责域文件（对方正在修改）
     for dirty_file in all_dirty:
-        if resolve_owner(dirty_file, cfg) == other and dirty_file in files_to_modify:
+        owner = resolve_owner(dirty_file, cfg)
+        if owner and owner != agent_id and dirty_file in files_to_modify:
             issues.append({
                 "code": "BOUNDARY_VIOLATION",
                 "level": "BLOCK",
-                "detail": f"git 检测到 '{dirty_file}' 已被修改且属于 {other} 主责域——存在覆盖风险。"
+                "detail": f"git 检测到 '{dirty_file}' 已被修改且属于 {owner} 主责域——存在覆盖风险。"
             })
 
     return issues
@@ -228,12 +230,13 @@ def check_parallel_conditions(
 ) -> list[dict]:
     """三条并行条件综合判断（仅在前面无 BLOCK 时补充）。"""
     issues = []
-    other = opponent(agent_id)
     all_dirty = set(git_snap["modified_files"] + git_snap["staged_files"])
     registry = cfg.get("contracts", {})
 
     # 条件1: 文件边界
-    boundary_ok = not any(resolve_owner(f, cfg) == other for f in files_to_modify)
+    boundary_ok = not any(
+        (resolve_owner(f, cfg) or "") not in ("", agent_id) for f in files_to_modify
+    )
 
     # 条件2: 契约达到 L1
     contracts_ok = all(
@@ -243,7 +246,7 @@ def check_parallel_conditions(
 
     # 条件3: 无同文件依赖（本次要改的文件未被对方 dirty）
     no_same_file = not any(
-        f in all_dirty and resolve_owner(f, cfg) == other
+        f in all_dirty and (resolve_owner(f, cfg) or "") not in ("", agent_id)
         for f in files_to_modify
     )
 
@@ -352,10 +355,9 @@ def run_gate(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="dual-agent-conflict-gate: 双代理协作冲突前置门禁"
+        description="dual-agent-conflict-gate: AGENT 协作冲突前置门禁（兼容双 AGENT 场景）"
     )
-    parser.add_argument("--agent", required=True, choices=["claude", "solo"],
-                        help="当前 agent 身份")
+    parser.add_argument("--agent", required=True, help="当前 agent_id")
     parser.add_argument("--task", required=True, help="任务名称")
     parser.add_argument("--files", default="",
                         help="计划修改的文件列表，逗号分隔")

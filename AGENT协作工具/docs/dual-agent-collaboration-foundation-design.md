@@ -3,8 +3,8 @@
 > 仓库：`dreambuddy-v1`  
 > 版本：v1  
 > 日期：2026-05-16  
-> 状态：草案  
-> 目标：为“你 + SOLO + Claude Code”建立一套可复用的双代理并行开发协作底座，优先服务 `7-ARTIFACT-HUB-V2` 后续实现阶段。
+> 状态：legacy（历史参考；当前以 `agent-ledger-protocol-vs-governance-short-spec.md` 与 `agent-efficient-collaboration-mode.md` 为准）  
+> 目标：记录早期“双 AGENT 并行开发”协作底座的设计取舍，作为多 AGENT 协作的子集参考，优先服务 `7-ARTIFACT-HUB-V2` 的实现阶段。
 
 ## 0. 背景
 
@@ -521,7 +521,7 @@ Claude Code 作为页面与模块实现主力，主责包括：
 ```md
 [协作开工声明 / STARTED]
 
-Agent: SOLO | Claude Code
+Agent: <agent_id>
 任务: <任务名称>
 分支: <agent/* 分支>
 计划修改:
@@ -548,7 +548,7 @@ Agent: SOLO | Claude Code
 ```md
 [协作状态更新 / UPDATED]
 
-Agent: <SOLO | Claude Code>
+Agent: <agent_id>
 任务: <任务名称>
 变更说明:
 - <新增范围或缩减范围>
@@ -560,7 +560,7 @@ Agent: <SOLO | Claude Code>
 ```md
 [协作阻塞通知 / BLOCKED]
 
-Agent: <SOLO | Claude Code>
+Agent: <agent_id>
 任务: <任务名称>
 阻塞原因:
 - <门禁 BLOCK 或中途发现的冲突>
@@ -572,7 +572,7 @@ Agent: <SOLO | Claude Code>
 ```md
 [协作完成回报 / DONE]
 
-Agent: <SOLO | Claude Code>
+Agent: <agent_id>
 任务: <任务名称>
 提交: <commit sha>
 已完成:
@@ -584,9 +584,9 @@ Agent: <SOLO | Claude Code>
 
 ### 13.5 适用范围
 
-本协议适用于：
+本协议适用于（历史试点示例）：
 
-- `PR #9` 当前协作主线；
+- 任意采用本协议的协作 PR（示例：PR9）；
 - 后续 `milestone/*` 集成分支；
 - 所有共享文件、共享契约、共享页面入口相关任务。
 

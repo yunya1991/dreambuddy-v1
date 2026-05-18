@@ -1,4 +1,4 @@
-# Self-Hosted Runner 自动化（PR9）
+# Self-Hosted Runner 自动化（试点：PR9）
 
 本文件描述一种“无人工点击运行”的自动化形态：使用 GitHub Actions 的 `schedule` 触发，但在自托管 `macOS` runner 上执行 `7-ARTIFACT-HUB-V2` 的 build/test，并把结果以结构化 PR 评论写回，最终由现有的账本闭环工作流推进 `tasks/index.json` 与 `rewards/index.json`。
 
@@ -10,7 +10,7 @@
 
 ## Runner 标签约定
 
-PR9 三个自动化工作流使用以下 runner labels：
+试点 PR9 的三个自动化工作流使用以下 runner labels：
 
 - `self-hosted`
 - `macOS`
@@ -36,7 +36,7 @@ PR9 三个自动化工作流使用以下 runner labels：
 - workflow 不自动提交代码、不直接写账本
 - 账本写回仍由 `agent-collaboration-claim-guard.yml` 统一执行
 
-## 工作流清单（PR9）
+## 工作流清单（试点：PR9）
 
 - `.github/workflows/pr9-developer-agent.yml`
   - 定时跑 build/test，输出 `[测试报告 / TEST_REPORT]`
@@ -51,7 +51,7 @@ PR9 三个自动化工作流使用以下 runner labels：
 ## 验收清单
 
 - 三个 workflow 都能在 GitHub Actions 中按计划自动触发（无需人工点运行）
-- PR9 会持续出现结构化评论（STARTED/TEST_REPORT/VALIDATION_RESULT）
+- 试点 PR 会持续出现结构化评论（STARTED/TEST_REPORT/VALIDATION_RESULT）
 - 当 validator 输出 `Decision: ACCEPTED` + `Governance Handoff: ledgered` 时：
   - `agent-collaboration-claim-guard` 会触发并推进 `tasks/index.json` 中目标任务到 `ledgered`
   - `rewards/index.json` 会新增对应奖励记录（仅在状态实际变化且有 score 时写入）

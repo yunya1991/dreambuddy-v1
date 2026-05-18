@@ -1,6 +1,6 @@
 # AGENT 协作工具
 
-本目录存放 Claude Code 与 Solo 双代理协作所用的共同工具与规范。
+本目录存放 AGENT 协作所用的共同工具与规范（兼容双 AGENT 场景）。
 
 ## 目录结构
 
@@ -76,21 +76,21 @@ AGENT协作工具/
 
 ## 使用规则
 
-1. **每次任务开始前**，两个 agent 都必须运行冲突门禁检查
+1. **每次任务开始前**，参与任务的 AGENT 必须运行冲突门禁检查
 2. 输出 `BLOCK` 时任务**必须暂停**，不得绕过
 3. 门禁结果为 `SAFE` 或 `WARNING` 后，必须先在当前协作 PR 发 `STARTED` 评论，再开始修改文件
 4. `STARTED / UPDATED / BLOCKED / DONE` 仍为强制广播层，但默认按阶段广播，不要求为每个微小动作单独评论
-5. `gatekeeper_config.json` 是双方共同维护的边界协议，变更需经双方确认
+5. `gatekeeper_config.json` 是协作共同维护的边界协议，变更需经相关 owner 确认
 6. 当前协作以 `7-ARTIFACT-HUB-V2` 为核心工作区，默认占用范围为 `7-ARTIFACT-HUB-V2/**`，每个 AGENT 自建 `agent/*` 分支并提独立 PR
 7. 允许少量例外文件用于支撑 `7-ARTIFACT-HUB-V2` 的 build/test/运行，但必须在 `STARTED/UPDATED` 显式声明例外范围
 8. owner 目录内默认并行开发；白名单直接接管项允许修复方直接接手，修后广播结果
-9. Solo 拉取本目录后与 Claude Code 共同遵守
+9. 角色拆分与硬约束以主干短规范为准：`AGENT协作工具/docs/agent-ledger-protocol-vs-governance-short-spec.md`
 
 ## 快速使用
 
 ```bash
 python3 AGENT协作工具/SKILLS/dual-agent-conflict-gate/conflict_gate.py \
-  --agent claude \
+  --agent <agent_id> \
   --task "你的任务名称" \
   --files "计划修改的文件,逗号分隔" \
   --contracts "依赖的契约名"
@@ -103,7 +103,7 @@ python3 AGENT协作工具/SKILLS/dual-agent-conflict-gate/conflict_gate.py \
 ```md
 [协作开工声明 / STARTED]
 
-Agent: SOLO | Claude Code
+Agent: <agent_id>
 任务: <任务名称>
 分支: <agent/* 分支>
 计划修改:
@@ -130,7 +130,7 @@ Agent: SOLO | Claude Code
 ```md
 [协作完成回报 / DONE]
 
-Agent: <SOLO | Claude Code>
+Agent: <agent_id>
 任务: <任务名称>
 提交: <commit sha>
 已完成:
