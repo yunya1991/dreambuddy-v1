@@ -45,6 +45,24 @@
 - Purpose: supervision of protocol evidence and branch compliance; used by lifecycle guard.
 - When to use: when PR is blocked by lifecycle guard, to understand missing evidence.
 
+### 1.7 collab-ledger-planner ⭐
+
+- Spec: `AGENT协作工具/SKILLS/collab-ledger-planner/SKILL.md`
+- Purpose: parse a technical plan/design Markdown into structured ledger tasks + sync workspace.
+- When to use: when receiving a technical document to decompose into a `tasks/index.json` task list; when setting up a new workspace plan.
+- Trigger words: 任务拆解、规划拆解、plan to tasks、生成任务清单、生成账本清单协议
+- Output (three artifacts):
+  1. `AGENT协作工具/ledger/tasks/index.json` — new tasks written
+  2. `AGENT协作工具/ledger/protocols/{WORKSPACE}-LEDGER-{YYYYMMDD}.md` — protocol Markdown
+  3. `{workspace}/PLAN.md` — task progress snapshot
+- One-command usage:
+  ```bash
+  python3 AGENT协作工具/SKILLS/collab-ledger-planner/ledger_sync.py sync \
+    --plan <tech-doc.md> --goal-id <goal-x> --workspace 7-ARTIFACT-HUB-V2
+  ```
+- Post-task sync: `ledger_sync.py push-status --workspace 7-ARTIFACT-HUB-V2 --print-comment`
+- Auto-sync: `.github/workflows/collab-ledger-sync.yml` fires on `index.json` changes to main
+
 ## 2. Operational Scripts (Non-SKILL but Critical)
 
 - Lifecycle payload builder: `AGENT协作工具/github-actions/build_agent_lifecycle_payload.py`
@@ -52,3 +70,5 @@
 - Collaboration payload builder/checker: `AGENT协作工具/github-actions/build_agent_collaboration_payload.py`, `check_agent_collaboration.py`
 - Ledger cycle runner: `AGENT协作工具/github-actions/run_governance_ledger_cycle.py`
 - Ledger updater: `AGENT协作工具/github-actions/update_agent_ledger.py`
+- **Ledger sync CLI**: `AGENT协作工具/SKILLS/collab-ledger-planner/ledger_sync.py` (sync/push-status/status)
+- **Plan parser**: `AGENT协作工具/SKILLS/collab-ledger-planner/plan_to_tasks.py`
