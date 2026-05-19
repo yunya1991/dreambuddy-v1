@@ -1,11 +1,13 @@
 import argparse
 import json
 import re
+import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
 
 
 OPEN_STATUSES = {"planned", "open", "accepted", "rework", "blocked"}
+LEDGER_SCHEMA_VERSION = "ledger/tasks/index.json@v1"
 
 
 def utc_now():
@@ -117,6 +119,45 @@ def parse_plan_markdown(text):
     return {"title": title, "phases": phases}
 
 
+def parse_frontmatter(text: str):
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return {}, text
+    meta_lines = []
+    i = 1
+    while i < len(lines):
+        if lines[i].strip() == "---":
+            i += 1
+            break
+        meta_lines.append(lines[i])
+        i += 1
+    meta = {}
+    for raw in meta_lines:
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if ":" not in line:
+            continue
+        k, v = line.split(":", 1)
+        key = k.strip()
+        value = v.strip()
+        lowered = value.casefold()
+        if lowered in {"true", "yes", "y", "1"}:
+            meta[key] = True
+        elif lowered in {"false", "no", "n", "0"}:
+            meta[key] = False
+        else:
+            meta[key] = value
+    rest = "\n".join(lines[i:]) + ("\n" if text.endswith("\n") else "")
+    return meta, rest
+
+
+def sha256_text(text: str):
+    h = hashlib.sha256()
+    h.update(text.encode("utf-8"))
+    return h.hexdigest()[:12]
+
+
 def generate_tasks(*, goal_id, task_prefix, workspace_path, plan_text):
     parsed = parse_plan_markdown(plan_text)
     root_title = parsed["title"] or f"Plan: {task_prefix}"
@@ -179,7 +220,18 @@ def generate_tasks(*, goal_id, task_prefix, workspace_path, plan_text):
 
 
 def render_protocol_markdown(
-    *, workspace, plan_file, goal_id, tasks, ledger_sha="", date_str=""
+    *,
+    workspace,
+    plan_file,
+    goal_id,
+    tasks,
+    ledger_sha="",
+    date_str="",
+    compile_id="",
+    supersedes_compile_id="",
+    generator="",
+    schema_version="",
+    plan_fingerprint="",
 ):
     if not date_str:
         date_str = datetime.now(timezone.utc).strftime("%Y%m%d")
@@ -198,12 +250,25 @@ def render_protocol_markdown(
         if ledger_sha
         else "- 账本 index.json SHA：（首次生成，写入后更新）"
     )
+    meta_lines = []
+    if compile_id:
+        meta_lines.append(f"> Compile ID：{compile_id}\n")
+    if supersedes_compile_id:
+        meta_lines.append(f"> Supersedes：{supersedes_compile_id}\n")
+    if generator:
+        meta_lines.append(f"> Generator：{generator}\n")
+    if schema_version:
+        meta_lines.append(f"> Schema：{schema_version}\n")
+    if plan_fingerprint:
+        meta_lines.append(f"> Plan Fingerprint：{plan_fingerprint}\n")
+    meta_block = "".join(meta_lines)
     return (
         f"# {workspace} 账本清单协议 — {date_str}\n\n"
         f"> 生成时间：{now}\n"
         f"> 来源文档：{plan_file}\n"
         f"> Goal ID：{goal_id}\n"
         f"> 账本 SHA：{ledger_sha or '（写入后更新）'}\n\n"
+        f"{meta_block}\n"
         f"## 任务清单\n\n"
         f"| Task ID | 标题 | 状态 | 类型 | 负责 AGENT | 评分 | PR |\n"
         f"|---------|------|------|------|-----------|------|-----|\n"
@@ -253,32 +318,69 @@ def apply_to_ledger(repo_root, plan_out):
     return {"written": str(ledger_path), "added": len(plan_out["tasks"])}
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Parse a plan Markdown and generate ledger tasks draft."
-    )
-    parser.add_argument("--plan", required=True)
-    parser.add_argument("--goal-id", required=True)
-    parser.add_argument("--task-prefix", required=True)
-    parser.add_argument("--workspace-path", required=True)
-    parser.add_argument("--apply", action="store_true")
-    parser.add_argument("--output-protocol", action="store_true")
-    parser.add_argument("--protocol-dir", default="")
-    parser.add_argument("--dry-run", action="store_true")
-    args = parser.parse_args()
-
+def run(args):
     plan_path = Path(args.plan)
-    plan_text = plan_path.read_text(encoding="utf-8")
+    raw_text = plan_path.read_text(encoding="utf-8")
+    meta, plan_text = parse_frontmatter(raw_text)
+
+    resolved_goal_id = (args.goal_id or meta.get("goal_id") or "").strip()
+    resolved_task_prefix = (args.task_prefix or meta.get("task_prefix") or "").strip()
+    resolved_workspace_path = (args.workspace_path or meta.get("workspace") or "").strip()
+
+    errors = []
+    if not resolved_goal_id:
+        errors.append("missing_goal_id")
+    if not resolved_workspace_path:
+        errors.append("missing_workspace")
+    if not resolved_task_prefix:
+        errors.append("missing_task_prefix")
+
+    plan_fingerprint = sha256_text(raw_text)
+
+    if args.validate:
+        ok = not errors
+        print(
+            json.dumps(
+                {
+                    "ok": ok,
+                    "validated": True,
+                    "errors": errors,
+                    "plan_fingerprint": plan_fingerprint,
+                    "frontmatter": meta,
+                },
+                ensure_ascii=False,
+            )
+        )
+        if not ok:
+            raise SystemExit(2)
+        return
+
+    if errors:
+        print(
+            json.dumps(
+                {"ok": False, "errors": errors, "plan_fingerprint": plan_fingerprint},
+                ensure_ascii=False,
+            )
+        )
+        raise SystemExit(2)
+
     out = generate_tasks(
-        goal_id=args.goal_id,
-        task_prefix=args.task_prefix,
-        workspace_path=args.workspace_path,
+        goal_id=resolved_goal_id,
+        task_prefix=resolved_task_prefix,
+        workspace_path=resolved_workspace_path,
         plan_text=plan_text,
     )
 
     payload = {
         "version": 1,
         "generated_at": utc_now(),
+        "plan_fingerprint": plan_fingerprint,
+        "frontmatter": meta,
+        "resolved": {
+            "goal_id": resolved_goal_id,
+            "task_prefix": resolved_task_prefix,
+            "workspace_path": resolved_workspace_path,
+        },
         "open_tasks": out["open_tasks"],
         "tasks": out["tasks"],
     }
@@ -294,12 +396,18 @@ def main():
 
     if args.output_protocol:
         date_str = datetime.now(timezone.utc).strftime("%Y%m%d")
-        workspace = args.workspace_path.rstrip("/").split("/")[-1]
+        workspace = resolved_workspace_path.rstrip("/").split("/")[-1]
+        now = utc_now()
         protocol_content = render_protocol_markdown(
             workspace=workspace,
             plan_file=str(plan_path),
-            goal_id=args.goal_id,
+            goal_id=resolved_goal_id,
             tasks=out["tasks"],
+            compile_id="",
+            supersedes_compile_id="",
+            generator="",
+            schema_version=LEDGER_SCHEMA_VERSION,
+            plan_fingerprint=plan_fingerprint,
         )
         filename = f"{workspace}-LEDGER-{date_str}.md"
         if args.protocol_dir:
@@ -319,10 +427,71 @@ def main():
                 "content_preview": protocol_content[:300] + "...",
             }
         else:
+            history_path = protocol_path.with_suffix(".history.jsonl")
+            supersedes_compile_id = ""
+            if history_path.exists():
+                lines = [
+                    ln
+                    for ln in history_path.read_text(encoding="utf-8").splitlines()
+                    if ln.strip()
+                ]
+                if lines:
+                    try:
+                        supersedes_compile_id = json.loads(lines[-1]).get("compile_id", "")
+                    except Exception:
+                        supersedes_compile_id = ""
+            compile_id = f"{now}-{plan_fingerprint}"
+            protocol_content = render_protocol_markdown(
+                workspace=workspace,
+                plan_file=str(plan_path),
+                goal_id=resolved_goal_id,
+                tasks=out["tasks"],
+                compile_id=compile_id,
+                supersedes_compile_id=supersedes_compile_id,
+                generator="collab-ledger-planner@2.0",
+                schema_version=LEDGER_SCHEMA_VERSION,
+                plan_fingerprint=plan_fingerprint,
+            )
             protocol_path.write_text(protocol_content, encoding="utf-8")
             payload["protocol_written"] = str(protocol_path)
+            with history_path.open("a", encoding="utf-8") as fh:
+                fh.write(
+                    json.dumps(
+                        {
+                            "compile_id": compile_id,
+                            "compiled_at": now,
+                            "protocol_file": str(protocol_path),
+                            "supersedes_compile_id": supersedes_compile_id,
+                            "plan_fingerprint": plan_fingerprint,
+                            "generator": "collab-ledger-planner@2.0",
+                            "schema_version": LEDGER_SCHEMA_VERSION,
+                            "goal_id": resolved_goal_id,
+                            "workspace_path": resolved_workspace_path,
+                            "task_prefix": resolved_task_prefix,
+                        },
+                        ensure_ascii=False,
+                    )
+                    + "\n"
+                )
 
     print(json.dumps(payload, ensure_ascii=False))
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Parse a plan Markdown and generate ledger tasks draft."
+    )
+    parser.add_argument("--plan", required=True)
+    parser.add_argument("--goal-id", default="")
+    parser.add_argument("--task-prefix", default="")
+    parser.add_argument("--workspace-path", default="")
+    parser.add_argument("--apply", action="store_true")
+    parser.add_argument("--output-protocol", action="store_true")
+    parser.add_argument("--protocol-dir", default="")
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--validate", action="store_true")
+    args = parser.parse_args()
+    run(args)
 
 
 if __name__ == "__main__":

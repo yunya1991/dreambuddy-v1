@@ -188,15 +188,28 @@ def cmd_push_status(args):
     now = utc_now()
     plan_md_path = workspace_dir / "PLAN.md"
 
+    prev_snapshot = sync_state.get("task_status_snapshot") or {}
+    if not isinstance(prev_snapshot, dict):
+        prev_snapshot = {}
+    new_snapshot = {
+        str(t.get("task_id") or ""): str(t.get("status") or "")
+        for t in workspace_tasks
+        if str(t.get("task_id") or "")
+    }
+    h = hashlib.sha256()
+    h.update(
+        json.dumps(new_snapshot, ensure_ascii=False, sort_keys=True).encode("utf-8")
+    )
+    snapshot_sha = h.hexdigest()[:12]
+
     changed = []
     if sha_before != sha_after:
-        for t in workspace_tasks:
-            if t.get("status") not in ("ledgered", "archived"):
-                changed.append({
-                    "task_id": t["task_id"],
-                    "old_status": "?",
-                    "new_status": t["status"],
-                })
+        for tid, new_status in new_snapshot.items():
+            old_status = prev_snapshot.get(tid, "?")
+            if old_status != new_status:
+                changed.append(
+                    {"task_id": tid, "old_status": old_status, "new_status": new_status}
+                )
 
     new_content = render_plan_md(workspace_name, workspace_tasks, protocol_file, now)
 
@@ -204,6 +217,8 @@ def cmd_push_status(args):
         plan_md_path.write_text(new_content, encoding="utf-8")
         sync_state["last_sync"] = now
         sync_state["ledger_sha"] = sha_after
+        sync_state["task_status_snapshot"] = new_snapshot
+        sync_state["task_status_snapshot_sha"] = snapshot_sha
         sync_state_path.write_text(
             json.dumps(sync_state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
         )
