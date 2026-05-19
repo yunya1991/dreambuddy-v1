@@ -30,7 +30,29 @@ status: "active"
 约定：
 
 1. 协议文件按天命名，同一天多次 `sync` 会覆盖同名协议文件；可追溯性依赖 Git 提交历史。
-2. 协议 Markdown 当前包含：生成时间、来源文档、Goal ID、账本 SHA、任务清单表与同步状态（见协议正文）。
+2. 协议 Markdown 除基础字段外，还包含编译链路元数据（Compile ID / Supersedes / Generator / Schema / Plan Fingerprint）。
+3. 同名协议文件的版本链记录写入：`{WORKSPACE}-LEDGER-{YYYYMMDD}.history.jsonl`。
+
+## Plan Frontmatter（推荐）
+
+在 plan 文件头部添加最小 frontmatter，用于可校验编译输入：
+
+```md
+---
+goal_id: goal-x
+workspace: 7-ARTIFACT-HUB-V2
+task_prefix: ahv2-20260518
+acceptance_required: true
+---
+```
+
+校验模式（只校验不写入）：
+
+```bash
+python3 AGENT协作工具/SKILLS/collab-ledger-planner/plan_to_tasks.py \
+  --plan <tech-doc.md> \
+  --validate
+```
 
 ## 拆解规则
 
